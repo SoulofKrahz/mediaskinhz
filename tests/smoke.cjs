@@ -53,7 +53,13 @@ async function run(browser, label, viewport, mobile) {
   ok(em1 && em1 !== em0, 'elegir Azul cambia el color de la app (' + em0 + ' → ' + em1 + ')');
   ok((await p.locator('#s-acn').innerText()) === 'Azul', 'muestra el nombre del color elegido');
   ok(/ms_ic=azul/.test(await p.evaluate(() => document.cookie)), 'el icono de la app tomará el color azul al instalar');
-  await p.reload(); await p.waitForTimeout(1200);
+  await p.reload(); await p.waitForTimeout(600);
+  // Chrome pide el manifest como al instalar (el navegador sin pantalla no lo pide solo)
+  const manReq = p.waitForRequest(r => r.url().endsWith('/manifest.webmanifest'), { timeout: 8000 }).catch(() => null);
+  const cdp = await ctx.newCDPSession(p); const am = await cdp.send('Page.getAppManifest').catch(() => ({}));
+  const mr = await manReq; const mh = mr ? await mr.allHeaders() : {};
+  ok(/ms_ic=azul/.test(mh.cookie || ''), 'Chrome pide el manifest con la cookie del color (si no, el icono al instalar sale verde)');
+  await p.waitForTimeout(1200);
   ok(await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--em').trim()) === em1, 'el color se recuerda al recargar');
   await p.evaluate(() => go({ n: 'settings' })); await p.waitForTimeout(700);
   await tap('#s-acs [data-i="0"]'); await p.waitForTimeout(300);

@@ -2,7 +2,7 @@
 <meta name="description" content="Cambia la apariencia de la radio MediaNav del Renault Clio 4: colores, botones e iconos, desde el móvil.">
 <meta name="author" content="Krahz">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23059669'/%3E%3Cg fill='%2306150f'%3E%3Crect x='9' y='17' width='13' height='13' rx='3'/%3E%3Crect x='25.5' y='17' width='13' height='13' rx='3' fill='%23fff'/%3E%3Crect x='42' y='17' width='13' height='13' rx='3'/%3E%3Crect x='9' y='34' width='13' height='13' rx='3'/%3E%3Crect x='25.5' y='34' width='13' height='13' rx='3'/%3E%3Crect x='42' y='34' width='13' height='13' rx='3'/%3E%3C/g%3E%3C/svg%3E">
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1758,7 +1758,7 @@ function autoEntries(rs,inc){
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-26-4';
+const VER='2026-10-26-4.1';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -1766,7 +1766,8 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Color de la app, como en Noticiahz: 10 colores o cualquiera con el selector, en Ajustes e historial → Pantalla. El contraste se ajusta solo',
+  [VER,['Corregido: el icono al instalar salía siempre verde; ahora toma el color elegido']],
+  ['2026-10-26-4',['Color de la app, como en Noticiahz: 10 colores o cualquiera con el selector, en Ajustes e historial → Pantalla. El contraste se ajusta solo',
     'Al instalar la app, el icono toma el color que tengas en ese momento y ya no cambia (para cambiarlo, reinstálala)']],
   ['2026-10-26-3',['Exportación «Automático»: el ZIP trae un script de MortScript que, en la radio, guarda lo que hay, copia las imágenes, comprueba cada una y deja todo como estaba si algo falla. Ofrece reiniciar al terminar',
     'deshacer.mscr devuelve la radio a como estaba antes de instalar; «Deshacer en el coche» del historial también sale en modo automático']],

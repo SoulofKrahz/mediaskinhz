@@ -9,7 +9,8 @@ core = rd('src/core.js'); h = rd('src/head.html'); a = rd('src/app.js')
 g = rd('src/lgu-data.js') + rd('src/gen.js') + rd('src/settings.js') + rd('src/auto.js') + rd('src/web.js')
 assert a.count("boot();\n") == 1 and h.count('<!--WEBHEAD-->') == 1
 js = "'use strict';\n" + core + a.replace("boot();\n", g + "\nboot();\n")
-WEBHEAD = '''<link rel="manifest" href="manifest.webmanifest">
+# crossorigin="use-credentials": sin esto Chrome pide el manifest SIN cookies y _worker.js no ve el color (icono siempre verde)
+WEBHEAD = '''<link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">

@@ -13,7 +13,7 @@ const shell = JSON.parse((sw.match(/const SHELL = (\[[\s\S]*?\]);/) || [])[1].re
 for (const f of shell) if (f !== './' && !fs.existsSync(path.join(root, f))) fails.push('el service worker guarda un archivo que no existe: ' + f);
 const man = JSON.parse(fs.readFileSync(path.join(root, 'manifest.webmanifest'), 'utf8'));
 for (const ic of man.icons) if (!fs.existsSync(path.join(root, ic.src))) fails.push('falta el icono ' + ic.src);
-if (!html.includes('rel="manifest"')) fails.push('site/index.html no enlaza el manifest');
+if (!html.includes('<link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">')) fails.push('el <link rel=manifest> necesita crossorigin="use-credentials" (si no, el manifest llega sin la cookie del color y el icono sale siempre verde)');
 // _worker.js: con la cookie de cada color sirve el manifest de ese color (y el normal sin cookie o con una rara)
 const W = (await import(path.join(root, '_worker.js'))).default;
 const env = { ASSETS: { fetch: async r => { const f = path.join(root, new URL(r.url).pathname); return fs.existsSync(f) ? new Response(fs.readFileSync(f)) : new Response('no', { status: 404 }); } } };
