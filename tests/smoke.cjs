@@ -53,7 +53,7 @@ async function run(browser, label, viewport, mobile) {
   ok(em1 && em1 !== em0, 'elegir Azul cambia el color de la app (' + em0 + ' → ' + em1 + ')');
   ok((await p.locator('#s-acn').innerText()) === 'Azul', 'muestra el nombre del color elegido');
   ok(/ms_ic=azul/.test(await p.evaluate(() => document.cookie)), 'el icono de la app tomará el color azul al instalar');
-  await p.reload(); await p.waitForTimeout(600);
+  await p.reload(); await p.waitForTimeout(2800); await p.evaluate(() => { const u = document.querySelector('#upd'); if (u) u.hidden = true; }); await p.waitForTimeout(600);
   // Chrome pide el manifest como al instalar (el navegador sin pantalla no lo pide solo)
   const manReq = p.waitForRequest(r => r.url().endsWith('/manifest.webmanifest'), { timeout: 8000 }).catch(() => null);
   const cdp = await ctx.newCDPSession(p); const am = await cdp.send('Page.getAppManifest').catch(() => ({}));
@@ -65,7 +65,7 @@ async function run(browser, label, viewport, mobile) {
   await tap('#s-acs [data-i="0"]'); await p.waitForTimeout(300);
   ok(await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--em').trim()) === em0, 'Esmeralda vuelve al color de partida');
   // Ajuste que se guarda
-  await tap('#s-xm [data-v="lgu"]'); await p.reload(); await p.waitForTimeout(1500);
+  await tap('#s-xm [data-v="lgu"]'); await p.reload(); await p.waitForTimeout(2800); await p.evaluate(() => { const u = document.querySelector('#upd'); if (u) u.hidden = true; }); await p.waitForTimeout(1500);
   ok(await p.evaluate(() => SET.xmode) === 'lgu', 'el modo de exportación por defecto se recuerda al recargar');
   await p.evaluate(() => { SET.xmode = 'tc'; S.xmode = 'tc'; saveSet(); });
 
@@ -105,13 +105,15 @@ async function run(browser, label, viewport, mobile) {
   });
   ok(mine.png === 'png' && mine.fill > .1 && mine.fill < .5, 'un PNG negro sobre blanco se convierte en silueta (no en un cuadrado): ' + Math.round(mine.fill * 100) + ' % relleno');
   ok(mine.svg === 'vec' && mine.parts === 2, 'un SVG de trazo se guarda como vector y sigue el trazo común');
-  await p.reload(); await p.waitForTimeout(1200);
+  await p.reload(); await p.waitForTimeout(2800); await p.evaluate(() => { const u = document.querySelector('#upd'); if (u) u.hidden = true; }); await p.waitForTimeout(1200);
   ok(await p.evaluate(() => MY.list.length) === 2, 'mis iconos se conservan al recargar');
   await p.evaluate(() => { S.ops.global = { ...defOps(), h: 120 }; bump(); }); await p.waitForTimeout(500); // el ejemplo no guarda cambios al recargar
   // Generador con iconos de la biblioteca y propios: la pantalla abre y aplica sin errores
   await p.evaluate(() => { S.gen = defGen(); const fs = genTargets(); fs.forEach((F, i) => S.gen.per[F.path] = { icon: i % 2 ? 't:' + icSuggest(F)[0] : (MY.list[0] ? 'my:' + MY.list[0].id : 't:star') }); S.gen.ifx = 'emboss'; S.gen.ibox = 'circle'; go({ n: 'gen' }); }); await p.waitForTimeout(900);
-  ok(await p.locator('#g-acc').count() === 1 && await p.locator('[data-gb]').count() >= 6, 'el generador abre con iconos de la biblioteca y propios');
-  ok(await p.evaluate(() => { const l = document.querySelector('.gbl'), a = document.querySelector('#g-acc'); return !!l && !!a && (l.compareDocumentPosition(a) & Node.DOCUMENT_POSITION_FOLLOWING) > 0; }), 'la lista «Icono y color de cada botón» va antes de los ajustes');
+  ok(await p.locator('#g-tabs').count() === 1 && await p.locator('[data-gb]').count() >= 6, 'el generador abre con iconos de la biblioteca y propios');
+  await tap('#g-tabs [data-t="icons"]'); await p.waitForTimeout(300);
+  ok(await p.locator('[data-pn="icons"]:not([hidden]) [data-is="fx"] .ocd').count() === 8 && await p.locator('[data-pn="icons"]:not([hidden]) [data-is="w"] button').count() === 5, 'la pestaña Iconos enseña a la vista el trazo, el acabado y el fondo');
+  await tap('#g-tabs [data-t="btn"]'); await p.waitForTimeout(200);
   ok(await p.evaluate(() => { applyGen(); return genTargets().every(F => F.rep && outBytes(F).length === 1078 + (((F.w + 3) & ~3) * F.h)); }), 'aplica el estilo (relieve en círculo) y los BMP salen bien');
   await p.evaluate(() => { undo(); S.gen.ifx = 'none'; S.gen.ibox = 'none'; }); await p.waitForTimeout(300);
   const sty = await p.evaluate(() => { const F = genTargets()[0], bad = []; for (const [k] of GSTYLES) { try { const c = genTile(F, { ...S.gen, style: k }); const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let v = 0; for (let i = 0; i < d.length; i += 4) v += d[i] + d[i + 1] + d[i + 2]; if (!v) bad.push(k); } catch (e) { bad.push(k + ': ' + e.message); } } return { n: GSTYLES.length, bad }; });

@@ -128,7 +128,7 @@ function genSum(g){return {style:(GSTYLES.find(s=>s[0]===g.style)||GSTYLES[0])[1
 function scrGen(v){
   if(!S.gen)S.gen=defGen();const g=S.gen,fs=genTargets();if(!fs.length){v.innerHTML='<p class="empty">No hay botones de Inicio en el backup.</p>';return}
   setTitle('Rediseñar botones',`Inicio · ${fs.length} botones`);
-  if(!S.gsel||!fs.some(F=>F.path===S.gsel))S.gsel=fs[0].path;if(S.gopen===undefined)S.gopen='style';
+  if(!S.gsel||!fs.some(F=>F.path===S.gsel))S.gsel=fs[0].path;if(!S.gtab)S.gtab='btn';
   const ref=()=>S.lc.get(S.gsel.toLowerCase())||fs[0],sm=genSum(g);
   const item=(k,icon,title,sum,body)=>`<div class="acc-i${S.gopen===k?' open':''}" data-k="${k}"><button class="acc-h" aria-expanded="${S.gopen===k}"><span class="ic">${ic(icon)}</span><span class="tx"><b>${title}</b><small data-sum="${k}">${esc(sum)}</small></span>${CHEV}</button>${S.gopen===k?`<div class="acc-b">${body}</div>`:''}</div>`;
   const styleBody=`<div class="ocg">${GSTYLES.map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${g.style===k}"><canvas data-ms="${k}"></canvas><span>${l}</span></button>`).join('')}</div>`;
@@ -139,9 +139,8 @@ function scrGen(v){
     <p class="note">${g.corners==='key'?'Usa el amarillo de transparencia. Los botones originales no lo usan: compruébalo antes con el kit de prueba o podrían salir esquinas amarillas.':'Opción segura: se pintan con el fondo de Inicio que hay detrás de cada botón.'}</p></div>`;
   const colorBody=`<div class="seg" id="g-cm"><button data-v="orig" aria-pressed="${g.color==='orig'}">El de cada botón</button><button data-v="one" aria-pressed="${g.color==='one'}">Uno para todos</button></div>
     ${g.color==='one'?swatches(g.hue,{label:'Color de los botones'}):'<p class="note">Cada botón conserva su color original. Puedes cambiar el de uno solo tocándolo en la pantalla.</p>'}`;
-  const iconBody=`<p class="lbl">Cambiar el icono de</p><div class="chips" id="g-icq">${fs.map(F=>`<button class="chip" data-gb="${esc(F.path)}">${esc(pretty(F))}</button>`).join('')}</div>
-    <p class="lbl" style="margin-top:6px">Estilo de todos los iconos</p>
-    <div id="g-ist">${icStyleHTML()}</div><p class="note">El estilo se aplica a la vez a todos los iconos: los de la biblioteca, los tuyos y el original. Así quedan coherentes.</p>
+  const iconBody=`<p class="note">Cómo se dibujan <b>todos</b> los iconos. Qué icono lleva cada botón se elige en la pestaña <b>Botones</b>.</p>
+    <div id="g-ist">${icStyleHTML()}</div>
     <label class="rg" for="g-is"><span>Tamaño <output>${g.is} px</output></span><input type="range" id="g-is" min="24" max="96" value="${g.is}"></label>
     <label class="rg" for="g-iy"><span>Altura <output>${g.iy} %</output></span><input type="range" id="g-iy" min="20" max="70" value="${g.iy}"></label>
     <p class="note">El MediaNav escribe el nombre debajo, por eso los iconos van por encima del centro.</p>`;
@@ -149,27 +148,26 @@ function scrGen(v){
     <div class="stick sticky-pv"><div class="screen"><canvas id="pv" width="800" height="480" aria-label="Vista previa de los botones rediseñados. Toca un botón para cambiar su icono y su color."></canvas></div>
       <div class="e-bar"><div class="seg" id="g-st" role="group" aria-label="Estado"><button data-s="0" aria-pressed="${!S.gstate}">Reposo</button><button data-s="1" aria-pressed="${S.gstate===1}">Pulsado</button></div><span class="sp"></span><span class="hint" style="padding:0">Toca un botón para cambiarlo</span></div></div>
     <div class="stack">
-    <div class="card gbl"><h3>Icono y color de cada botón</h3><div class="list">${fs.map(F=>{const p=g.per[F.path]||{},ii=genIconSrc(F,g);return `<button class="li" data-gb="${esc(F.path)}"><span class="th"><canvas data-gt="${esc(F.path)}"></canvas></span><span class="tx"><b>${esc(pretty(F))}</b><small>Icono ${ii==='orig'?'original':ii==='png'?'propio':esc(String(ii.startsWith('lib:')?ICONL[ii.slice(4)]||'propio':keyLabel(ii)).toLowerCase())} · ${p.hue!=null?'color '+hueName(p.hue).toLowerCase():'color como el resto'}</small></span><span class="pill p-col">Cambiar</span></button>`}).join('')}</div><p class="note">También puedes tocar el botón en la pantalla de arriba. Para subir tu propio icono: «Cambiar» → «Mis iconos».</p></div>
-    <div class="acc" id="g-acc">
-      ${item('style','M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z','Estilo',sm.style,styleBody)}
-      ${item('shape','M4 4h16v16H4z','Forma',sm.shape,shapeBody)}
-      ${item('color',ROOTS[1][2],'Color',sm.color,colorBody)}
-      ${item('icons','M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9 10h.01M15 10h.01M8.5 14.5a4 4 0 0 0 7 0','Iconos',sm.icons,iconBody)}
-    </div>
+    <div class="seg gtabs" id="g-tabs" role="tablist"><button data-t="btn" role="tab" aria-pressed="${S.gtab==='btn'}">Botones</button><button data-t="style" role="tab" aria-pressed="${S.gtab==='style'}">Estilo</button><button data-t="icons" role="tab" aria-pressed="${S.gtab==='icons'}">Iconos</button><button data-t="color" role="tab" aria-pressed="${S.gtab==='color'}">Color</button><button data-t="shape" role="tab" aria-pressed="${S.gtab==='shape'}">Forma</button></div>
+    <div data-pn="btn"${S.gtab==='btn'?'':' hidden'}><div class="card gbl"><p class="note">Toca un botón para elegir su icono (de la biblioteca o uno tuyo) y su color.</p><div class="list">${fs.map(F=>{const p=g.per[F.path]||{},ii=genIconSrc(F,g);return `<button class="li" data-gb="${esc(F.path)}"><span class="th"><canvas data-gt="${esc(F.path)}"></canvas></span><span class="tx"><b>${esc(pretty(F))}</b><small>Icono ${ii==='orig'?'original':ii==='png'?'propio':esc(String(ii.startsWith('lib:')?ICONL[ii.slice(4)]||'propio':keyLabel(ii)).toLowerCase())} · ${p.hue!=null?'color '+hueName(p.hue).toLowerCase():'color como el resto'}</small></span><span class="pill p-col">Cambiar</span></button>`}).join('')}</div><p class="note">También puedes tocarlo en la pantalla de arriba. Tu propio icono: «Cambiar» → «Mis iconos».</p></div></div>
+    <div class="card" data-pn="style"${S.gtab==='style'?'':' hidden'}><p class="note">Cómo es el botón: el fondo, el borde y cómo se ilumina al pulsarlo.</p>${styleBody}</div>
+    <div class="card" data-pn="icons"${S.gtab==='icons'?'':' hidden'}>${iconBody}</div>
+    <div class="card" data-pn="color"${S.gtab==='color'?'':' hidden'}>${colorBody}</div>
+    <div class="card" data-pn="shape"${S.gtab==='shape'?'':' hidden'}>${shapeBody}</div>
     <p class="note">Solo cambia los botones de la pantalla de Inicio. Hasta que pulses Aplicar, nada se guarda.</p></div></div>
     <div class="gbar"><button class="btn o" id="g-reset">Empezar de cero</button><button class="btn" id="g-ap">Aplicar a ${fs.length} botones</button></div>`;
   const c=$('#pv'),po=()=>({scr:'home',gen:true,state:S.gstate||0});regen();mountPreview(c,po);
   const minis=()=>{const F=ref();$$('[data-ms]',v).forEach(cv=>putMini(cv,miniTile(F,{...g,style:cv.dataset.ms},0)));$$('[data-mf]',v).forEach(cv=>putMini(cv,miniTile(F,{...g,shape:cv.dataset.mf},0)));
     $$('[data-gt]',v).forEach(cv=>{const G=S.lc.get(cv.dataset.gt.toLowerCase());if(G)putMini(cv,miniTile(G,g,0))});const s2=genSum(g);for(const k in s2){const e=$(`[data-sum="${k}"]`,v);if(e)e.textContent=s2[k]}};
   const upd=()=>{regen();drawPreview(c,po());minis();saveState()};minis();
-  $('#g-acc').onclick=e=>{const h=e.target.closest('.acc-h');if(!h)return;const k=h.parentElement.dataset.k;S.gopen=S.gopen===k?null:k;render(true)};
+  $('#g-tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;S.gtab=b.dataset.t;$$('#g-tabs button').forEach(x=>x.setAttribute('aria-pressed',x===b));$$('[data-pn]',v).forEach(p=>p.hidden=p.dataset.pn!==S.gtab);if(S.gtab==='icons'){const ist=$('#g-ist');if(ist)icStyleDraw(ist)}};
   $$('.ocg',v).forEach(gr=>gr.onclick=e=>{const b=e.target.closest('.ocd');if(!b)return;if(b.querySelector('[data-ms]')){g.style=b.dataset.v;gr.querySelectorAll('.ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));upd()}else{g.shape=b.dataset.v;render(true)}});
   const seg=(id,key)=>{const el=$(id);if(el)el.onclick=e=>{const b=e.target.closest('button[data-v]');if(!b)return;g[key]=b.dataset.v;render(true)}};seg('#g-co','corners');seg('#g-cm','color');
   $('#g-st').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;S.gstate=+b.dataset.s;$$('#g-st button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawPreview(c,po())};
   const rng=(id,key,suf)=>{const i=$(id);if(!i)return;paintRange(i);const out=i.closest('.rg').querySelector('output');i.oninput=()=>{g[key]=+i.value;out.textContent=i.value+suf;paintRange(i);upd()}};
-  const ist=$('#g-ist');if(ist)icStyleBind(ist,()=>{const sm=$('[data-sum="icons"]');if(sm)sm.textContent=genSum(S.gen).icons;S.live&&S.live()});
+  const ist=$('#g-ist');if(ist)icStyleBind(ist,()=>{regen();drawPreview(c,po());minis()});
   rng('#g-r','r',' px');rng('#g-in','inset',' px');rng('#g-is','is',' px');rng('#g-iy','iy',' %');
-  const cs=$('#g-acc .swg');if(cs){cs.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;g.hue=+b.dataset.h;cs.querySelectorAll('.swc').forEach(x=>x.setAttribute('aria-pressed',x===b));upd()};const cp=cs.querySelector('[data-pick]');if(cp)cp.onchange=e=>{g.hue=Math.round(hexHsl(e.target.value)[0]);upd()}}
+  const cs=$('[data-pn="color"] .swg',v);if(cs){cs.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;g.hue=+b.dataset.h;cs.querySelectorAll('.swc').forEach(x=>x.setAttribute('aria-pressed',x===b));upd()};const cp=cs.querySelector('[data-pick]');if(cp)cp.onchange=e=>{g.hue=Math.round(hexHsl(e.target.value)[0]);upd()}}
   let down=-1;c.onpointerdown=e=>{const h=slotAt(c,e);down=h.i;if(h.i>=0){S.press=h.i;drawPreview(c,po())}};
   c.onpointerleave=c.onpointercancel=()=>{down=-1;if(S.press!==-1){S.press=-1;drawPreview(c,po())}};
   c.onpointerup=e=>{const h=slotAt(c,e),i=down;down=-1;S.press=-1;drawPreview(c,po());if(i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F&&fs.includes(F))genSheet(F,upd)}};

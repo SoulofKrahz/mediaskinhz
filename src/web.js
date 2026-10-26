@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-26-7.1';
+const VER='2026-10-26-8';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,7 +11,9 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Más fácil de encontrar: en «Rediseñar los botones», la lista «Icono y color de cada botón» va justo debajo de la pantalla, con «Cambiar» en cada uno',
+  [VER,['«Rediseñar los botones» más sencillo: sin desplegables, con pestañas fijas bajo la pantalla (Botones, Estilo, Iconos, Color y Forma)',
+    'Pestaña Iconos: trazo, acabado y fondo del icono a la vista. Pestaña Botones: el icono y el color de cada uno, con «Cambiar»']],
+  ['2026-10-26-7.1',['Más fácil de encontrar: en «Rediseñar los botones», la lista «Icono y color de cada botón» va justo debajo de la pantalla, con «Cambiar» en cada uno',
     'En la hoja de cada botón, «Mis iconos» (para subir el tuyo) y «Ver todos» están explicados']],
   ['2026-10-26-7',['9 estilos de botón nuevos (14 en total): Mosaico, Mínimo, Aluminio, Carbono, Aurora, Futurista, Esmerilado, Suave y Degradado vivo, cada uno con sus 4 estados',
     'Estilo de los iconos completo, común a todos (biblioteca, los tuyos y el original): trazo (ahora también Extra), acabado y fondo',

@@ -71,7 +71,7 @@ function iconPicker(o){
   openBS(`<div class="ipk"><div class="ipk-h"><button class="ib" data-x aria-label="Volver">${ic('M15 6l-6 6 6 6')}</button><h2>${esc(o.title||'Elegir icono')}</h2></div>
     <input type="search" id="ip-q" class="ipq" placeholder="Buscar: radio, música, coche, hoja…" value="${esc(st.q)}" autocomplete="off" enterkeyhint="search">
     <div class="chips scroll" id="ip-c"><button class="chip" data-c="radio" aria-pressed="${st.cat==='radio'}">Para la radio</button><button class="chip" data-c="my" aria-pressed="${st.cat==='my'}">Mis iconos${MY.list.length?' · '+MY.list.length:''}</button><button class="chip" data-c="" aria-pressed="${st.cat===''}">Todos</button>${cats.map((c,i)=>`<button class="chip" data-c="${i}" aria-pressed="${st.cat===String(i)}">${esc(c)}</button>`).join('')}</div>
-    <details class="isd" id="ip-st"${st.open?' open':''}><summary><span>Estilo de todos los iconos</span><b id="ip-ss">${esc(icStyleSum())}</b></summary><div class="isb">${icStyleHTML()}</div></details>
+    <details class="isd" id="ip-st"${st.open?' open':''}><summary><span>Estilo de los iconos<small>Trazo, acabado y fondo</small></span><b id="ip-ss">${esc(icStyleSum())}</b></summary><div class="isb">${icStyleHTML()}</div></details>
     <p class="note" id="ip-nt"><span id="ip-n"></span> · ${st.cat==='my'?'Se guardan en este navegador y sirven para cualquier backup. Lo mejor: SVG de trazo (sigue el trazo común) o PNG de un color.':'Tabler Icons. «Relleno» usa la versión rellena cuando existe.'}</p>
     <div class="icg" id="ip-g"></div><button class="btn o wide" id="ip-more" hidden>Ver más</button></div>`);
   S.icRedraw=()=>{if($('#ip-g'))iconPicker(o)};
