@@ -49,7 +49,7 @@ function pngMask(bmp){const s=96,c=document.createElement('canvas');c.width=c.he
   for(let i=0;i<s*s;i++){d.data[i*4]=d.data[i*4+1]=d.data[i*4+2]=255}x.putImageData(d,0,0);return {cv:c,bx:0,by:0,bw:s,bh:s}}
 
 /* ============ generador ============ */
-const GSTYLES=[['glow','Brillo inferior'],['flat','Plano'],['outline','Contorno'],['glass','Cristal'],['neon','Neón']];
+const GSTYLES=[['glow','Brillo inferior'],['flat','Plano'],['outline','Contorno'],['glass','Cristal'],['neon','Neón'],['tile','Mosaico'],['minimal','Mínimo'],['metal','Aluminio'],['carbon','Carbono'],['aurora','Aurora'],['hud','Futurista'],['frost','Esmerilado'],['soft','Suave'],['vivid','Degradado vivo']];
 const defGen=()=>({style:'glow',shape:'round',r:14,inset:4,corners:'bg',color:'orig',hue:156,is:56,iy:42,per:{}});
 function origHue(F){if(F.oh!=null)return F.oh;const cnt=new Uint32Array(256);for(let i=0;i<F.idx.length;i++)cnt[F.idx[i]]++;let sx=0,sy=0;
   for(let i=0;i<F.n;i++){if(!cnt[i])continue;const r=F.pal[i*3],g=F.pal[i*3+1],b=F.pal[i*3+2];if(isKey(r,g,b))continue;const C=(Math.max(r,g,b)-Math.min(r,g,b))/255;if(C<.2)continue;const [h]=rgb2hsl(r,g,b),w=cnt[i]*C*C;sx+=Math.cos(h*Math.PI/180)*w;sy+=Math.sin(h*Math.PI/180)*w}
@@ -71,11 +71,38 @@ function drawState(x,F,w,h,s,H,g,bgc){
       x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const gl=x.createLinearGradient(0,Y,0,Y+Hh*.5);gl.addColorStop(0,'rgba(255,255,255,.22)');gl.addColorStop(1,'rgba(255,255,255,.02)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh*.5);x.restore();
       x.lineWidth=1.5;x.strokeStyle='rgba(255,255,255,.3)';rrect(x,X+1.5,Y+1.5,W-3,Hh-3,r);x.stroke();ic=on?'#ffffff':dim?'#7d838d':'#eef2f7';break;
     case 'neon':x.fillStyle=on?`hsl(${H} 90% 10%)`:'#020304';x.fill();x.save();x.shadowColor=`hsl(${H} 100% 55%)`;x.shadowBlur=on?18:10;x.lineWidth=2.5;x.strokeStyle=`hsl(${H} 100% ${dim?30:on?70:60}%)`;rrect(x,X+4,Y+4,W-8,Hh-8,Math.max(0,r-3));x.stroke();x.restore();ic=`hsl(${H} 100% ${dim?40:72}%)`;glow=dim?0:on?16:10;break;
+    case 'tile':x.fillStyle=on?`hsl(${H} 85% 34%)`:`hsl(${H} 72% ${dim?20:44}%)`;x.fill();if(on){x.lineWidth=3;x.strokeStyle='rgba(255,255,255,.55)';rrect(x,X+2.5,Y+2.5,W-5,Hh-5,Math.max(0,r-1.5));x.stroke()}ic=dim?`hsl(${H} 25% 62%)`:'#ffffff';break;
+    case 'minimal':x.fillStyle=on?`hsla(${H},85%,50%,.26)`:'rgba(0,0,0,0)';x.fill();x.fillStyle=`hsl(${H} 85% ${on?62:dim?26:50}%)`;x.fillRect(X+W*.2,Y+Hh-(on?5:3),W*.6,on?4:2);ic=on?'#ffffff':`hsl(${H} 80% ${dim?32:64}%)`;break;
+    case 'metal':{x.fillStyle=on?lin('#8d949c','#5c636b','#747b83'):lin(dim?'#5d6268':'#d9dde2',dim?'#3c4045':'#9aa1a9',dim?'#4a4f55':'#c2c8ce');x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();
+      let sd=w*7+h;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;for(let i=0;i<Hh*1.6;i++){x.fillStyle=`rgba(${rnd()<.5?'255,255,255':'0,0,0'},${.03+rnd()*.06})`;x.fillRect(X,Y+rnd()*Hh,W,1)}x.restore();
+      x.fillStyle=`hsl(${H} 85% ${on?58:dim?30:46}%)`;x.fillRect(X+r*.6,Y+Hh-4,W-r*1.2,3);x.lineWidth=1.5;x.strokeStyle='rgba(255,255,255,.45)';rrect(x,X+1.5,Y+1.5,W-3,Hh-3,r);x.stroke();
+      ic=on?`hsl(${H} 70% 85%)`:dim?'#2a2e33':'#1c2026';break}
+    case 'carbon':{x.fillStyle=on?`hsl(${H} 40% 10%)`:'#0d0f12';x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const q=4;
+      for(let yy=Y;yy<Y+Hh;yy+=q)for(let xx=X;xx<X+W;xx+=q){const a=((xx-X)/q+(yy-Y)/q)%2===0;x.fillStyle=a?'rgba(255,255,255,.06)':'rgba(0,0,0,.25)';x.fillRect(xx,yy,q,q/2);x.fillStyle=a?'rgba(0,0,0,.25)':'rgba(255,255,255,.05)';x.fillRect(xx,yy+q/2,q,q/2)}
+      const gl=x.createLinearGradient(0,Y,0,Y+Hh*.45);gl.addColorStop(0,'rgba(255,255,255,.12)');gl.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh*.45);
+      const bl=x.createLinearGradient(0,Y+Hh*.6,0,Y+Hh);bl.addColorStop(0,`hsla(${H},90%,50%,0)`);bl.addColorStop(1,`hsla(${H},90%,${on?60:50}%,${on?.75:dim?.15:.45})`);x.fillStyle=bl;x.fillRect(X,Y+Hh*.6,W,Hh*.4);x.restore();
+      x.lineWidth=1.5;x.strokeStyle=`hsl(${H} 60% ${on?55:dim?16:28}%)`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=on?'#ffffff':`hsl(${H} 85% ${dim?34:64}%)`;break}
+    case 'aurora':{x.fillStyle='#05070a';x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const cx0=w/2,cy0=Y+Hh*(g.iy/100),rg=x.createRadialGradient(cx0,cy0,2,cx0,cy0,Math.max(W,Hh)*.62);
+      rg.addColorStop(0,`hsla(${H},90%,${on?65:55}%,${on?.95:dim?.22:.6})`);rg.addColorStop(.55,`hsla(${(H+40)%360},85%,45%,${on?.35:dim?.06:.18})`);rg.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=rg;x.fillRect(X,Y,W,Hh);x.restore();
+      x.lineWidth=1;x.strokeStyle=`hsla(${H},70%,60%,${on?.7:.25})`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=on?'#ffffff':dim?`hsl(${H} 30% 45%)`:'#f4f7fb';glow=dim?0:on?10:5;break}
+    case 'hud':{x.fillStyle=on?`hsla(${H},80%,40%,.3)`:'rgba(3,6,9,.88)';x.fill();const L=Math.min(W,Hh)*.2,c2=`hsl(${H} 95% ${on?70:dim?30:56}%)`;x.save();x.strokeStyle=c2;x.lineWidth=on?3:2.2;x.shadowColor=c2;x.shadowBlur=dim?0:6;x.lineCap='square';x.beginPath();
+      const a=X+5,b=Y+5,c=X+W-5,d=Y+Hh-5;x.moveTo(a,b+L);x.lineTo(a,b);x.lineTo(a+L,b);x.moveTo(c-L,b);x.lineTo(c,b);x.lineTo(c,b+L);x.moveTo(c,d-L);x.lineTo(c,d);x.lineTo(c-L,d);x.moveTo(a+L,d);x.lineTo(a,d);x.lineTo(a,d-L);x.stroke();
+      x.globalAlpha=.35;x.lineWidth=1;x.beginPath();x.moveTo(a+L+6,b);x.lineTo(c-L-6,b);x.stroke();x.restore();ic=on?'#ffffff':c2;glow=dim?0:on?8:4;break}
+    case 'frost':{x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();x.filter='blur(7px)';x.drawImage(bgc,-10,-10,w+20,h+20);x.filter='none';
+      x.fillStyle=on?`hsla(${H},85%,55%,.42)`:`rgba(255,255,255,${dim?.05:.13})`;x.fillRect(X,Y,W,Hh);const gl=x.createLinearGradient(0,Y,0,Y+Hh);gl.addColorStop(0,'rgba(255,255,255,.18)');gl.addColorStop(.5,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh);x.restore();
+      x.lineWidth=1.5;x.strokeStyle=on?`hsla(${H},90%,75%,.8)`:'rgba(255,255,255,.38)';rrect(x,X+1.5,Y+1.5,W-3,Hh-3,r);x.stroke();ic=dim?'rgba(255,255,255,.45)':'#ffffff';break}
+    case 'soft':{const base=on?`hsl(${H} 45% 20%)`:`hsl(${H} 14% ${dim?8:13}%)`;x.save();x.shadowColor='rgba(0,0,0,.7)';x.shadowBlur=8;x.shadowOffsetX=on?1:3;x.shadowOffsetY=on?1:3;x.fillStyle=base;rrect(x,X+3,Y+3,W-6,Hh-6,r);x.fill();x.restore();
+      x.save();rrect(x,X+3,Y+3,W-6,Hh-6,r);x.clip();const sg=x.createLinearGradient(X,Y,X+W,Y+Hh);if(on){sg.addColorStop(0,'rgba(0,0,0,.45)');sg.addColorStop(1,'rgba(255,255,255,.06)')}else{sg.addColorStop(0,'rgba(255,255,255,.09)');sg.addColorStop(1,'rgba(0,0,0,.3)')}x.fillStyle=sg;x.fillRect(X,Y,W,Hh);x.restore();
+      if(on){x.lineWidth=2;x.strokeStyle=`hsla(${H},90%,60%,.7)`;rrect(x,X+3.5,Y+3.5,W-7,Hh-7,Math.max(0,r-1));x.stroke()}
+      ic=on?'#ffffff':`hsl(${H} 80% ${dim?30:58}%)`;glow=on&&!dim?10:0;break}
+    case 'vivid':{const gr=x.createLinearGradient(X,Y,X+W,Y+Hh);gr.addColorStop(0,`hsl(${H} ${dim?25:85}% ${on?62:dim?22:50}%)`);gr.addColorStop(1,`hsl(${(H+45)%360} ${dim?25:85}% ${on?48:dim?14:34}%)`);x.fillStyle=gr;x.fill();
+      x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const gl=x.createLinearGradient(0,Y,0,Y+Hh*.5);gl.addColorStop(0,'rgba(255,255,255,.25)');gl.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh*.5);x.restore();
+      if(on){x.lineWidth=3;x.strokeStyle='rgba(255,255,255,.75)';rrect(x,X+2.5,Y+2.5,W-5,Hh-5,Math.max(0,r-1.5));x.stroke()}ic=dim?'rgba(255,255,255,.5)':'#ffffff';break}
     default:x.fillStyle=on?lin(`hsl(${H} 90% 62%)`,`hsl(${H} 85% 46%)`):lin('#16191e','#060708',`hsl(${H} 85% ${dim?20:44}%)`);x.fill();x.lineWidth=2;x.strokeStyle=on?`hsl(${H} 70% 40%)`:`hsl(${H} 55% ${dim?18:32}%)`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=on?`hsl(${H} 70% 20%)`:`hsl(${H} 85% ${dim?32:60}%)`}
   const src=genIconSrc(F,g),p=g.per[F.path]||{},cx=w/2,cy=Y+Hh*(g.iy/100);
-  if(src==='orig'){const mk=extractIcon(F);if(mk)drawMask(x,mk,cx,cy,g.is/56,ic,glow)}
-  else if(src==='png'&&p.png){drawMask(x,p.png,cx,cy,g.is/96*1.15,ic,glow)}
-  else drawIconKey(x,src,cx,cy,g.is,ic,glow);
+  if(src==='orig'){const mk=extractIcon(F);if(mk)drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,mk,X,Y,sz/56,col,gl);return true},cx,cy,g.is,ic,glow)}
+  else if(src==='png'&&p.png){drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,p.png,X,Y,sz/96*1.15,col,gl);return true},cx,cy,g.is,ic,glow)}
+  else drawIcon(x,keyPainter(src),cx,cy,g.is,ic,glow);
 }
 function genHue(F,g){const p=g.per[F.path]||{};if(p.hue!=null)return p.hue;return g.color==='orig'?origHue(F):g.hue}
 function genTile(F,g){const fr=frames(F),fw=F.w/fr,h=F.h,c=document.createElement('canvas');c.width=F.w;c.height=h;const x=c.getContext('2d');const H=genHue(F,g),bgc=cornerBase(F);
@@ -97,7 +124,7 @@ function miniTile(F,g,state){const fr=frames(F),fw=F.w/fr,c=document.createEleme
   const lb=LABELS[F.name.toLowerCase()];if(lb&&fw===210&&F.h===137){x.font='600 21px Tahoma,Inter,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillStyle=state%2===1?'#000':'#fff';x.fillText(lb,105,105.5,176)}return c}
 function putMini(cv,src){const x=cv.getContext('2d');cv.width=src.width;cv.height=src.height;x.drawImage(src,0,0)}
 function genSum(g){return {style:(GSTYLES.find(s=>s[0]===g.style)||GSTYLES[0])[1],shape:(GSHAPES.find(s=>s[0]===g.shape)||GSHAPES[1])[1]+(g.shape==='round'?` ${g.r} px`:'')+` · margen ${g.inset} px · esquinas ${g.corners==='key'?'transparentes':'del fondo'}`,
-  color:g.color==='orig'?'El de cada botón':'Uno para todos: '+hueName(g.hue).toLowerCase(),icons:`Trazo ${(()=>{const s=icStyle();return s.fill?'relleno':(ISTY.find(x=>+x[0]===s.w)||[0,'normal'])[1].toLowerCase()})()} · tamaño ${g.is} px · altura ${g.iy} %`}}
+  color:g.color==='orig'?'El de cada botón':'Uno para todos: '+hueName(g.hue).toLowerCase(),icons:`${icStyleSum()} · tamaño ${g.is} px · altura ${g.iy} %`}}
 function scrGen(v){
   if(!S.gen)S.gen=defGen();const g=S.gen,fs=genTargets();if(!fs.length){v.innerHTML='<p class="empty">No hay botones de Inicio en el backup.</p>';return}
   setTitle('Rediseñar botones',`Inicio · ${fs.length} botones`);
@@ -113,8 +140,7 @@ function scrGen(v){
   const colorBody=`<div class="seg" id="g-cm"><button data-v="orig" aria-pressed="${g.color==='orig'}">El de cada botón</button><button data-v="one" aria-pressed="${g.color==='one'}">Uno para todos</button></div>
     ${g.color==='one'?swatches(g.hue,{label:'Color de los botones'}):'<p class="note">Cada botón conserva su color original. Puedes cambiar el de uno solo tocándolo en la pantalla.</p>'}`;
   const iconBody=`<p class="note">Para cambiar el icono de un botón, tócalo en la pantalla.</p>
-    <div class="field"><span class="lbl">Trazo de todos los iconos</span><div class="seg" id="g-iw">${ISTY.map(([v,l])=>{const s=icStyle(),on=v==='fill'?s.fill:!s.fill&&+v===s.w;return `<button data-v="${v}" aria-pressed="${on}">${l}</button>`}).join('')}</div>
-    <p class="note">Se aplica a la vez a todos los iconos de la biblioteca, también a los que pongas en otras imágenes. Así quedan coherentes.</p></div>
+    <div id="g-ist">${icStyleHTML()}</div><p class="note">El estilo se aplica a la vez a todos los iconos: los de la biblioteca, los tuyos y el original. Así quedan coherentes.</p>
     <label class="rg" for="g-is"><span>Tamaño <output>${g.is} px</output></span><input type="range" id="g-is" min="24" max="96" value="${g.is}"></label>
     <label class="rg" for="g-iy"><span>Altura <output>${g.iy} %</output></span><input type="range" id="g-iy" min="20" max="70" value="${g.iy}"></label>
     <p class="note">El MediaNav escribe el nombre debajo, por eso los iconos van por encima del centro.</p>`;
@@ -127,7 +153,7 @@ function scrGen(v){
       ${item('color',ROOTS[1][2],'Color',sm.color,colorBody)}
       ${item('icons','M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9 10h.01M15 10h.01M8.5 14.5a4 4 0 0 0 7 0','Iconos',sm.icons,iconBody)}
     </div>
-    <div class="list">${fs.map(F=>{const p=g.per[F.path]||{},ii=genIconSrc(F,g);return `<button class="li" data-gb="${esc(F.path)}"><span class="th"><canvas data-gt="${esc(F.path)}"></canvas></span><span class="tx"><b>${esc(pretty(F))}</b><small>Icono ${ii==='orig'?'original':ii==='png'?'propio':ICONL[ii.slice(4)].toLowerCase()} · ${p.hue!=null?'color '+hueName(p.hue).toLowerCase():'color como el resto'}</small></span>${CHEV}</button>`}).join('')}</div>
+    <div class="list">${fs.map(F=>{const p=g.per[F.path]||{},ii=genIconSrc(F,g);return `<button class="li" data-gb="${esc(F.path)}"><span class="th"><canvas data-gt="${esc(F.path)}"></canvas></span><span class="tx"><b>${esc(pretty(F))}</b><small>Icono ${ii==='orig'?'original':ii==='png'?'propio':esc(String(ii.startsWith('lib:')?ICONL[ii.slice(4)]||'propio':keyLabel(ii)).toLowerCase())} · ${p.hue!=null?'color '+hueName(p.hue).toLowerCase():'color como el resto'}</small></span>${CHEV}</button>`}).join('')}</div>
     <p class="note">Solo cambia los botones de la pantalla de Inicio. Hasta que pulses Aplicar, nada se guarda.</p></div></div>
     <div class="gbar"><button class="btn o" id="g-reset">Empezar de cero</button><button class="btn" id="g-ap">Aplicar a ${fs.length} botones</button></div>`;
   const c=$('#pv'),po=()=>({scr:'home',gen:true,state:S.gstate||0});regen();mountPreview(c,po);
@@ -139,7 +165,7 @@ function scrGen(v){
   const seg=(id,key)=>{const el=$(id);if(el)el.onclick=e=>{const b=e.target.closest('button[data-v]');if(!b)return;g[key]=b.dataset.v;render(true)}};seg('#g-co','corners');seg('#g-cm','color');
   $('#g-st').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;S.gstate=+b.dataset.s;$$('#g-st button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawPreview(c,po())};
   const rng=(id,key,suf)=>{const i=$(id);if(!i)return;paintRange(i);const out=i.closest('.rg').querySelector('output');i.oninput=()=>{g[key]=+i.value;out.textContent=i.value+suf;paintRange(i);upd()}};
-  const iw=$('#g-iw');if(iw)iw.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;setIconStyle(b.dataset.v);render(true)};
+  const ist=$('#g-ist');if(ist)icStyleBind(ist,()=>{const sm=$('[data-sum="icons"]');if(sm)sm.textContent=genSum(S.gen).icons;S.live&&S.live()});
   rng('#g-r','r',' px');rng('#g-in','inset',' px');rng('#g-is','is',' px');rng('#g-iy','iy',' %');
   const cs=$('#g-acc .swg');if(cs){cs.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;g.hue=+b.dataset.h;cs.querySelectorAll('.swc').forEach(x=>x.setAttribute('aria-pressed',x===b));upd()};const cp=cs.querySelector('[data-pick]');if(cp)cp.onchange=e=>{g.hue=Math.round(hexHsl(e.target.value)[0]);upd()}}
   let down=-1;c.onpointerdown=e=>{const h=slotAt(c,e);down=h.i;if(h.i>=0){S.press=h.i;drawPreview(c,po())}};

@@ -8,14 +8,16 @@ function icLoad(){if(IC.st===2)return Promise.resolve(true);if(IC.p)return IC.p;
   IC.p=fetch('iconos.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(j=>{IC.data=j;IC.by=new Map(j.i.map(x=>[x[0],x]));IC.es=new Map(j.radio);IC.st=2;
     if(S.gen&&S.route&&S.route.n==='gen')regen();S.ver++;schedule();if(S.icRedraw)S.icRedraw();return true})
   .catch(()=>{IC.st=3;IC.p=null;return false});return IC.p}
-const ISTY=[['1.5','Fino'],['2','Normal'],['2.5','Grueso'],['fill','Relleno']];
+const ISTY=[['1.5','Fino'],['2','Normal'],['2.5','Grueso'],['3','Extra'],['fill','Relleno']];
 function icStyle(){const g=S.gen||{};return {w:g.iw||2,fill:!!g.ifill}}
 const IP2=new Map();
 function drawTab(x,name,cx,cy,size,col,glow){
   if(IC.st!==2){icLoad();return false}const it=IC.by.get(name);if(!it)return false;const st=icStyle(),fd=st.fill&&IC.data.f[name];
   x.save();x.translate(cx-size/2,cy-size/2);x.scale(size/24,size/24);x.strokeStyle=col;x.fillStyle=col;x.lineWidth=st.w;x.lineCap='round';x.lineJoin='round';
   if(glow){x.shadowColor=col;x.shadowBlur=glow*24/size}
-  for(const d of (fd||it[3]).split('|')){let p=IP2.get(d);if(!p){p=new Path2D(d);IP2.set(d,p)}if(fd)x.fill(p);else x.stroke(p)}
+  const ps=(fd||it[3]).split('|').map(d=>{let p=IP2.get(d);if(!p){p=new Path2D(d);IP2.set(d,p)}return p});
+  if(!fd&&icFx().fx==='duo'){x.save();x.globalAlpha*=.3;x.shadowBlur=0;for(const p of ps)x.fill(p);x.restore()}
+  for(const p of ps){if(fd)x.fill(p);else x.stroke(p)}
   x.restore();return true}
 function drawIconKey(x,k,cx,cy,size,col,glow){if(k.startsWith('my:'))return drawMy(x,k.slice(3),cx,cy,size,col,glow);if(k.startsWith('t:'))return drawTab(x,k.slice(2),cx,cy,size,col,glow);if(k.startsWith('lib:')){drawLib(x,k.slice(4),cx,cy,size,col,glow);return true}return false}
 const icLabel=n=>(IC.es&&IC.es.get(n))||n.replace(/-/g,' ');
@@ -69,7 +71,7 @@ function iconPicker(o){
   openBS(`<div class="ipk"><div class="ipk-h"><button class="ib" data-x aria-label="Volver">${ic('M15 6l-6 6 6 6')}</button><h2>${esc(o.title||'Elegir icono')}</h2></div>
     <input type="search" id="ip-q" class="ipq" placeholder="Buscar: radio, música, coche, hoja…" value="${esc(st.q)}" autocomplete="off" enterkeyhint="search">
     <div class="chips scroll" id="ip-c"><button class="chip" data-c="radio" aria-pressed="${st.cat==='radio'}">Para la radio</button><button class="chip" data-c="my" aria-pressed="${st.cat==='my'}">Mis iconos${MY.list.length?' · '+MY.list.length:''}</button><button class="chip" data-c="" aria-pressed="${st.cat===''}">Todos</button>${cats.map((c,i)=>`<button class="chip" data-c="${i}" aria-pressed="${st.cat===String(i)}">${esc(c)}</button>`).join('')}</div>
-    <div class="field"><span class="lbl">Trazo de todos los iconos</span><div class="seg" id="ip-w">${ISTY.map(([v,l])=>{const s=icStyle(),on=v==='fill'?s.fill:!s.fill&&+v===s.w;return `<button data-v="${v}" aria-pressed="${on}">${l}</button>`}).join('')}</div></div>
+    <details class="isd" id="ip-st"${st.open?' open':''}><summary><span>Estilo de todos los iconos</span><b id="ip-ss">${esc(icStyleSum())}</b></summary><div class="isb">${icStyleHTML()}</div></details>
     <p class="note" id="ip-nt"><span id="ip-n"></span> · ${st.cat==='my'?'Se guardan en este navegador y sirven para cualquier backup. Lo mejor: SVG de trazo (sigue el trazo común) o PNG de un color.':'Tabler Icons. «Relleno» usa la versión rellena cuando existe.'}</p>
     <div class="icg" id="ip-g"></div><button class="btn o wide" id="ip-more" hidden>Ver más</button></div>`);
   S.icRedraw=()=>{if($('#ip-g'))iconPicker(o)};
@@ -77,7 +79,7 @@ function iconPicker(o){
   let t;$('#ip-q').oninput=e=>{st.q=e.target.value;st.n=96;if(st.q&&st.cat==='radio')st.cat='';clearTimeout(t);t=setTimeout(()=>{$$('#ip-c .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.c===st.cat));draw()},180)};
   $('#ip-c').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;const was=st.cat;st.cat=b.dataset.c;st.n=96;if((was==='my')!==(st.cat==='my'))return iconPicker(o);$$('#ip-c .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));draw()};
   $('#ip-more').onclick=()=>{st.n+=96;draw()};
-  $('#ip-w').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;setIconStyle(b.dataset.v);$$('#ip-w button').forEach(x=>x.setAttribute('aria-pressed',x===b));draw()};
+  const ipst=$('#ip-st');ipst.ontoggle=()=>{st.open=ipst.open;if(ipst.open)icStyleDraw(ipst)};icStyleBind(ipst,()=>{$('#ip-ss').textContent=icStyleSum();draw()});
   $('#ip-g').onclick=async e=>{
     if(e.target.closest('[data-add]')){const inp=$('#in-ico');inp.onchange=async ev=>{const fs=[...ev.target.files];ev.target.value='';let last=null;for(const f of fs){const m=await myAdd(f);if(m)last=m}
         if(last){toast(fs.length>1?'Iconos añadidos':'Icono añadido');if(fs.length===1){S.icRedraw=null;o.onPick('my:'+last.id);return}}iconPicker(o)};inp.click();return}
@@ -87,7 +89,7 @@ function iconPicker(o){
       MY.list=MY.list.filter(x=>x!==m);myIndex();await mySave();draw();toast('Icono borrado');return}
     const b=e.target.closest('[data-k]');if(!b)return;S.icRedraw=null;o.onPick(b.dataset.k)};
   if(IC.st!==2)icLoad();draw()}
-function setIconStyle(v){before();if(!S.gen)S.gen=defGen();if(v==='fill'){S.gen.ifill=true}else{S.gen.ifill=false;S.gen.iw=+v}
+function setIconStyle(v){const patch=typeof v==='object'?v:v==='fill'?{ifill:true}:{ifill:false,iw:+v};before();if(!S.gen)S.gen=defGen();Object.assign(S.gen,patch);
   if(S.genCv)regen();for(const p of Object.keys(S.icx||{})){const F=S.lc.get(p.toLowerCase());if(F)icApply(F,S.icx[p],true)}S.ver++;schedule();saveState()}
 
 /* Poner un icono de la biblioteca en cualquier imagen: se quita el icono viejo rehaciendo el fondo fila a fila
@@ -124,9 +126,9 @@ function icApply(F,spec,quiet){
   const size=spec.size||Math.max(14,Math.min(Math.min(fw,h)*.9,Math.max(bw,bh)*24/18));
   for(let s=0;s<fr;s++){const a=A[s],cx=s*fw+(a.x0+a.x1)/2,cy=(a.y0+a.y1)/2+(spec.dy||0);
     const col=spec.col==null||spec.col==='orig'?`rgb(${a.col.join(',')})`:spec.col==='white'?'#fff':typeof spec.col==='number'?`hsl(${spec.col} 80% ${s%2?40:62}%)`:spec.col;
-    x.save();x.beginPath();x.rect(s*fw,0,fw,h);x.clip();drawIconKey(x,spec.k,cx,cy,size,col,0);x.restore()}
+    x.save();x.beginPath();x.rect(s*fw,0,fw,h);x.clip();drawIcon(x,keyPainter(spec.k),cx,cy,size,col,0);x.restore()}
   const d=x.getImageData(0,0,F.w,h).data,useKey=F.keyCount>0,key=new Uint8Array(F.w*h);
-  for(let i=0;i<F.w*h;i++){const al=d[i*4+3];if(al<128){if(useKey)key[i]=1;else{d[i*4]=d[i*4+1]=d[i*4+2]=0}}else if(al<255){d[i*4]=d[i*4]*al/255;d[i*4+1]=d[i*4+1]*al/255;d[i*4+2]=d[i*4+2]*al/255}}
+  for(let i=0;i<F.w*h;i++){const al=d[i*4+3];if(al<128){if(useKey)key[i]=1;else{d[i*4]=d[i*4+1]=d[i*4+2]=0}}else if(al<255&&!useKey){d[i*4]=d[i*4]*al/255;d[i*4+1]=d[i*4+1]*al/255;d[i*4+2]=d[i*4+2]*al/255}}
   const q=quantize(d,F.w,h,{key,dither:false});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx};F.cv=null;
   if(!S.icx)S.icx={};S.icx[F.path]={...spec};if(S.ex[F.path]===undefined)S.ex[F.path]=true;if(!quiet){bump()}}
 function icCard(F){const sp=(S.icx||{})[F.path];
@@ -157,7 +159,9 @@ function drawMy(x,id,cx,cy,size,col,glow){const m=MY.by.get(id);if(!m)return fal
   const [vx,vy,vw,vh]=m.vb,s=size/Math.max(vw,vh),st=icStyle();
   x.save();x.translate(cx-vw*s/2,cy-vh*s/2);x.scale(s,s);x.translate(-vx,-vy);x.strokeStyle=col;x.fillStyle=col;x.lineCap='round';x.lineJoin='round';x.lineWidth=(m.sw||2)*st.w/2;
   if(glow){x.shadowColor=col;x.shadowBlur=glow/s}
-  for(const [d,k] of m.p){let p=IP2.get(d);if(!p){p=new Path2D(d);IP2.set(d,p)}if(k==='f')x.fill(p);else x.stroke(p)}
+  const ps=m.p.map(([d,k])=>{let p=IP2.get(d);if(!p){p=new Path2D(d);IP2.set(d,p)}return [p,k]});
+  if(icFx().fx==='duo'&&ps.some(q=>q[1]==='s')){x.save();x.globalAlpha*=.3;x.shadowBlur=0;for(const [p,k] of ps)if(k==='s')x.fill(p);x.restore()}
+  for(const [p,k] of ps){if(k==='f')x.fill(p);else x.stroke(p)}
   x.restore();return true}
 function svgVector(txt){const doc=new DOMParser().parseFromString(txt,'image/svg+xml'),svg=doc.documentElement;if(!svg||svg.nodeName.toLowerCase()!=='svg')return null;
   if(svg.querySelector('[transform],use,text,image,mask,clipPath,pattern,linearGradient,radialGradient,filter,style'))return null;

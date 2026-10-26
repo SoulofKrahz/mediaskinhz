@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-26-6';
+const VER='2026-10-26-7';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,7 +11,13 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['«Mis iconos» en el selector: sube tus iconos (PNG, JPG o SVG) una vez y úsalos en cualquier botón o imagen, también con otro backup',
+  [VER,['9 estilos de botón nuevos (14 en total): Mosaico, Mínimo, Aluminio, Carbono, Aurora, Futurista, Esmerilado, Suave y Degradado vivo, cada uno con sus 4 estados',
+    'Estilo de los iconos completo, común a todos (biblioteca, los tuyos y el original): trazo (ahora también Extra), acabado y fondo',
+    'Acabados: liso, dos tonos, degradado, relieve, sombra, contorno, brillo y metal',
+    'Fondo del icono: círculo, cuadrado redondeado o aro; dentro, el icono se invierte solo para que contraste en cada estado',
+    'Corregido: «Rediseñar los botones» se quedaba en blanco si un botón tenía un icono de la biblioteca o tuyo',
+    'En imágenes con transparencia, los bordes suaves de los iconos ya no se oscurecen']],
+  ['2026-10-26-6',['«Mis iconos» en el selector: sube tus iconos (PNG, JPG o SVG) una vez y úsalos en cualquier botón o imagen, también con otro backup',
     'Los SVG de trazo siguen el trazo común; los PNG se convierten en silueta de un color (negro sobre blanco o al revés), recortada y centrada al tamaño de los de la biblioteca',
     'En «Rediseñar los botones», «Mi icono» abre directamente tus iconos']],
   ['2026-10-26-5',['Biblioteca de iconos coherente (Tabler Icons): unos 3.800 iconos con el mismo estilo, buscador en español y una selección «Para la radio»',

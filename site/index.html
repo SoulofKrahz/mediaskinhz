@@ -238,6 +238,10 @@ input[type=range].hue{--trk:linear-gradient(90deg,hsl(0 80% 50%),hsl(60 80% 50%)
 .ipq{width:100%;min-height:46px;padding:10px 14px;border:1px solid var(--bd2);border-radius:13px;background:var(--bg);color:var(--tx);font:inherit;font-size:16px}
 .ipq:focus{outline:2px solid var(--em2);outline-offset:1px}
 #ip-g{grid-template-columns:repeat(auto-fill,minmax(76px,1fr))}#ip-g .icb canvas{width:44px;height:44px}
+.isg{grid-template-columns:repeat(4,minmax(0,1fr))}.isg .ocd canvas{width:100%;height:auto;aspect-ratio:4/3}.isg .ocd span{font-size:12.5px}
+.seg5 button{padding:6px 2px;font-size:13px}
+.isd{border:1px solid var(--bd);border-radius:14px;background:var(--card)}.isd>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;cursor:pointer;font-weight:600;font-size:14.5px}
+.isd>summary::-webkit-details-marker{display:none}.isd>summary b{font-weight:600;color:var(--em);font-size:13px;text-align:right}.isd[open]>summary{border-bottom:1px solid var(--bd)}.isb{padding:10px 12px 12px;display:flex;flex-direction:column;gap:10px}
 .icb.all span,.icb.add span{color:var(--em);font-weight:600}
 .icw{position:relative;display:flex}.icw .icb{flex:1}.icx{position:absolute;top:2px;right:2px;width:26px;height:26px;border-radius:50%;background:var(--card);border:1px solid var(--bd2);color:var(--mu);font-size:16px;line-height:1;display:grid;place-items:center}
 .icrow{display:flex;align-items:center;gap:14px}.icrow canvas{width:56px;height:56px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);flex:none}
@@ -1362,7 +1366,7 @@ function pngMask(bmp){const s=96,c=document.createElement('canvas');c.width=c.he
   for(let i=0;i<s*s;i++){d.data[i*4]=d.data[i*4+1]=d.data[i*4+2]=255}x.putImageData(d,0,0);return {cv:c,bx:0,by:0,bw:s,bh:s}}
 
 /* ============ generador ============ */
-const GSTYLES=[['glow','Brillo inferior'],['flat','Plano'],['outline','Contorno'],['glass','Cristal'],['neon','Neón']];
+const GSTYLES=[['glow','Brillo inferior'],['flat','Plano'],['outline','Contorno'],['glass','Cristal'],['neon','Neón'],['tile','Mosaico'],['minimal','Mínimo'],['metal','Aluminio'],['carbon','Carbono'],['aurora','Aurora'],['hud','Futurista'],['frost','Esmerilado'],['soft','Suave'],['vivid','Degradado vivo']];
 const defGen=()=>({style:'glow',shape:'round',r:14,inset:4,corners:'bg',color:'orig',hue:156,is:56,iy:42,per:{}});
 function origHue(F){if(F.oh!=null)return F.oh;const cnt=new Uint32Array(256);for(let i=0;i<F.idx.length;i++)cnt[F.idx[i]]++;let sx=0,sy=0;
   for(let i=0;i<F.n;i++){if(!cnt[i])continue;const r=F.pal[i*3],g=F.pal[i*3+1],b=F.pal[i*3+2];if(isKey(r,g,b))continue;const C=(Math.max(r,g,b)-Math.min(r,g,b))/255;if(C<.2)continue;const [h]=rgb2hsl(r,g,b),w=cnt[i]*C*C;sx+=Math.cos(h*Math.PI/180)*w;sy+=Math.sin(h*Math.PI/180)*w}
@@ -1384,11 +1388,38 @@ function drawState(x,F,w,h,s,H,g,bgc){
       x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const gl=x.createLinearGradient(0,Y,0,Y+Hh*.5);gl.addColorStop(0,'rgba(255,255,255,.22)');gl.addColorStop(1,'rgba(255,255,255,.02)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh*.5);x.restore();
       x.lineWidth=1.5;x.strokeStyle='rgba(255,255,255,.3)';rrect(x,X+1.5,Y+1.5,W-3,Hh-3,r);x.stroke();ic=on?'#ffffff':dim?'#7d838d':'#eef2f7';break;
     case 'neon':x.fillStyle=on?`hsl(${H} 90% 10%)`:'#020304';x.fill();x.save();x.shadowColor=`hsl(${H} 100% 55%)`;x.shadowBlur=on?18:10;x.lineWidth=2.5;x.strokeStyle=`hsl(${H} 100% ${dim?30:on?70:60}%)`;rrect(x,X+4,Y+4,W-8,Hh-8,Math.max(0,r-3));x.stroke();x.restore();ic=`hsl(${H} 100% ${dim?40:72}%)`;glow=dim?0:on?16:10;break;
+    case 'tile':x.fillStyle=on?`hsl(${H} 85% 34%)`:`hsl(${H} 72% ${dim?20:44}%)`;x.fill();if(on){x.lineWidth=3;x.strokeStyle='rgba(255,255,255,.55)';rrect(x,X+2.5,Y+2.5,W-5,Hh-5,Math.max(0,r-1.5));x.stroke()}ic=dim?`hsl(${H} 25% 62%)`:'#ffffff';break;
+    case 'minimal':x.fillStyle=on?`hsla(${H},85%,50%,.26)`:'rgba(0,0,0,0)';x.fill();x.fillStyle=`hsl(${H} 85% ${on?62:dim?26:50}%)`;x.fillRect(X+W*.2,Y+Hh-(on?5:3),W*.6,on?4:2);ic=on?'#ffffff':`hsl(${H} 80% ${dim?32:64}%)`;break;
+    case 'metal':{x.fillStyle=on?lin('#8d949c','#5c636b','#747b83'):lin(dim?'#5d6268':'#d9dde2',dim?'#3c4045':'#9aa1a9',dim?'#4a4f55':'#c2c8ce');x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();
+      let sd=w*7+h;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;for(let i=0;i<Hh*1.6;i++){x.fillStyle=`rgba(${rnd()<.5?'255,255,255':'0,0,0'},${.03+rnd()*.06})`;x.fillRect(X,Y+rnd()*Hh,W,1)}x.restore();
+      x.fillStyle=`hsl(${H} 85% ${on?58:dim?30:46}%)`;x.fillRect(X+r*.6,Y+Hh-4,W-r*1.2,3);x.lineWidth=1.5;x.strokeStyle='rgba(255,255,255,.45)';rrect(x,X+1.5,Y+1.5,W-3,Hh-3,r);x.stroke();
+      ic=on?`hsl(${H} 70% 85%)`:dim?'#2a2e33':'#1c2026';break}
+    case 'carbon':{x.fillStyle=on?`hsl(${H} 40% 10%)`:'#0d0f12';x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const q=4;
+      for(let yy=Y;yy<Y+Hh;yy+=q)for(let xx=X;xx<X+W;xx+=q){const a=((xx-X)/q+(yy-Y)/q)%2===0;x.fillStyle=a?'rgba(255,255,255,.06)':'rgba(0,0,0,.25)';x.fillRect(xx,yy,q,q/2);x.fillStyle=a?'rgba(0,0,0,.25)':'rgba(255,255,255,.05)';x.fillRect(xx,yy+q/2,q,q/2)}
+      const gl=x.createLinearGradient(0,Y,0,Y+Hh*.45);gl.addColorStop(0,'rgba(255,255,255,.12)');gl.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh*.45);
+      const bl=x.createLinearGradient(0,Y+Hh*.6,0,Y+Hh);bl.addColorStop(0,`hsla(${H},90%,50%,0)`);bl.addColorStop(1,`hsla(${H},90%,${on?60:50}%,${on?.75:dim?.15:.45})`);x.fillStyle=bl;x.fillRect(X,Y+Hh*.6,W,Hh*.4);x.restore();
+      x.lineWidth=1.5;x.strokeStyle=`hsl(${H} 60% ${on?55:dim?16:28}%)`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=on?'#ffffff':`hsl(${H} 85% ${dim?34:64}%)`;break}
+    case 'aurora':{x.fillStyle='#05070a';x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const cx0=w/2,cy0=Y+Hh*(g.iy/100),rg=x.createRadialGradient(cx0,cy0,2,cx0,cy0,Math.max(W,Hh)*.62);
+      rg.addColorStop(0,`hsla(${H},90%,${on?65:55}%,${on?.95:dim?.22:.6})`);rg.addColorStop(.55,`hsla(${(H+40)%360},85%,45%,${on?.35:dim?.06:.18})`);rg.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=rg;x.fillRect(X,Y,W,Hh);x.restore();
+      x.lineWidth=1;x.strokeStyle=`hsla(${H},70%,60%,${on?.7:.25})`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=on?'#ffffff':dim?`hsl(${H} 30% 45%)`:'#f4f7fb';glow=dim?0:on?10:5;break}
+    case 'hud':{x.fillStyle=on?`hsla(${H},80%,40%,.3)`:'rgba(3,6,9,.88)';x.fill();const L=Math.min(W,Hh)*.2,c2=`hsl(${H} 95% ${on?70:dim?30:56}%)`;x.save();x.strokeStyle=c2;x.lineWidth=on?3:2.2;x.shadowColor=c2;x.shadowBlur=dim?0:6;x.lineCap='square';x.beginPath();
+      const a=X+5,b=Y+5,c=X+W-5,d=Y+Hh-5;x.moveTo(a,b+L);x.lineTo(a,b);x.lineTo(a+L,b);x.moveTo(c-L,b);x.lineTo(c,b);x.lineTo(c,b+L);x.moveTo(c,d-L);x.lineTo(c,d);x.lineTo(c-L,d);x.moveTo(a+L,d);x.lineTo(a,d);x.lineTo(a,d-L);x.stroke();
+      x.globalAlpha=.35;x.lineWidth=1;x.beginPath();x.moveTo(a+L+6,b);x.lineTo(c-L-6,b);x.stroke();x.restore();ic=on?'#ffffff':c2;glow=dim?0:on?8:4;break}
+    case 'frost':{x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();x.filter='blur(7px)';x.drawImage(bgc,-10,-10,w+20,h+20);x.filter='none';
+      x.fillStyle=on?`hsla(${H},85%,55%,.42)`:`rgba(255,255,255,${dim?.05:.13})`;x.fillRect(X,Y,W,Hh);const gl=x.createLinearGradient(0,Y,0,Y+Hh);gl.addColorStop(0,'rgba(255,255,255,.18)');gl.addColorStop(.5,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh);x.restore();
+      x.lineWidth=1.5;x.strokeStyle=on?`hsla(${H},90%,75%,.8)`:'rgba(255,255,255,.38)';rrect(x,X+1.5,Y+1.5,W-3,Hh-3,r);x.stroke();ic=dim?'rgba(255,255,255,.45)':'#ffffff';break}
+    case 'soft':{const base=on?`hsl(${H} 45% 20%)`:`hsl(${H} 14% ${dim?8:13}%)`;x.save();x.shadowColor='rgba(0,0,0,.7)';x.shadowBlur=8;x.shadowOffsetX=on?1:3;x.shadowOffsetY=on?1:3;x.fillStyle=base;rrect(x,X+3,Y+3,W-6,Hh-6,r);x.fill();x.restore();
+      x.save();rrect(x,X+3,Y+3,W-6,Hh-6,r);x.clip();const sg=x.createLinearGradient(X,Y,X+W,Y+Hh);if(on){sg.addColorStop(0,'rgba(0,0,0,.45)');sg.addColorStop(1,'rgba(255,255,255,.06)')}else{sg.addColorStop(0,'rgba(255,255,255,.09)');sg.addColorStop(1,'rgba(0,0,0,.3)')}x.fillStyle=sg;x.fillRect(X,Y,W,Hh);x.restore();
+      if(on){x.lineWidth=2;x.strokeStyle=`hsla(${H},90%,60%,.7)`;rrect(x,X+3.5,Y+3.5,W-7,Hh-7,Math.max(0,r-1));x.stroke()}
+      ic=on?'#ffffff':`hsl(${H} 80% ${dim?30:58}%)`;glow=on&&!dim?10:0;break}
+    case 'vivid':{const gr=x.createLinearGradient(X,Y,X+W,Y+Hh);gr.addColorStop(0,`hsl(${H} ${dim?25:85}% ${on?62:dim?22:50}%)`);gr.addColorStop(1,`hsl(${(H+45)%360} ${dim?25:85}% ${on?48:dim?14:34}%)`);x.fillStyle=gr;x.fill();
+      x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const gl=x.createLinearGradient(0,Y,0,Y+Hh*.5);gl.addColorStop(0,'rgba(255,255,255,.25)');gl.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh*.5);x.restore();
+      if(on){x.lineWidth=3;x.strokeStyle='rgba(255,255,255,.75)';rrect(x,X+2.5,Y+2.5,W-5,Hh-5,Math.max(0,r-1.5));x.stroke()}ic=dim?'rgba(255,255,255,.5)':'#ffffff';break}
     default:x.fillStyle=on?lin(`hsl(${H} 90% 62%)`,`hsl(${H} 85% 46%)`):lin('#16191e','#060708',`hsl(${H} 85% ${dim?20:44}%)`);x.fill();x.lineWidth=2;x.strokeStyle=on?`hsl(${H} 70% 40%)`:`hsl(${H} 55% ${dim?18:32}%)`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=on?`hsl(${H} 70% 20%)`:`hsl(${H} 85% ${dim?32:60}%)`}
   const src=genIconSrc(F,g),p=g.per[F.path]||{},cx=w/2,cy=Y+Hh*(g.iy/100);
-  if(src==='orig'){const mk=extractIcon(F);if(mk)drawMask(x,mk,cx,cy,g.is/56,ic,glow)}
-  else if(src==='png'&&p.png){drawMask(x,p.png,cx,cy,g.is/96*1.15,ic,glow)}
-  else drawIconKey(x,src,cx,cy,g.is,ic,glow);
+  if(src==='orig'){const mk=extractIcon(F);if(mk)drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,mk,X,Y,sz/56,col,gl);return true},cx,cy,g.is,ic,glow)}
+  else if(src==='png'&&p.png){drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,p.png,X,Y,sz/96*1.15,col,gl);return true},cx,cy,g.is,ic,glow)}
+  else drawIcon(x,keyPainter(src),cx,cy,g.is,ic,glow);
 }
 function genHue(F,g){const p=g.per[F.path]||{};if(p.hue!=null)return p.hue;return g.color==='orig'?origHue(F):g.hue}
 function genTile(F,g){const fr=frames(F),fw=F.w/fr,h=F.h,c=document.createElement('canvas');c.width=F.w;c.height=h;const x=c.getContext('2d');const H=genHue(F,g),bgc=cornerBase(F);
@@ -1410,7 +1441,7 @@ function miniTile(F,g,state){const fr=frames(F),fw=F.w/fr,c=document.createEleme
   const lb=LABELS[F.name.toLowerCase()];if(lb&&fw===210&&F.h===137){x.font='600 21px Tahoma,Inter,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillStyle=state%2===1?'#000':'#fff';x.fillText(lb,105,105.5,176)}return c}
 function putMini(cv,src){const x=cv.getContext('2d');cv.width=src.width;cv.height=src.height;x.drawImage(src,0,0)}
 function genSum(g){return {style:(GSTYLES.find(s=>s[0]===g.style)||GSTYLES[0])[1],shape:(GSHAPES.find(s=>s[0]===g.shape)||GSHAPES[1])[1]+(g.shape==='round'?` ${g.r} px`:'')+` · margen ${g.inset} px · esquinas ${g.corners==='key'?'transparentes':'del fondo'}`,
-  color:g.color==='orig'?'El de cada botón':'Uno para todos: '+hueName(g.hue).toLowerCase(),icons:`Trazo ${(()=>{const s=icStyle();return s.fill?'relleno':(ISTY.find(x=>+x[0]===s.w)||[0,'normal'])[1].toLowerCase()})()} · tamaño ${g.is} px · altura ${g.iy} %`}}
+  color:g.color==='orig'?'El de cada botón':'Uno para todos: '+hueName(g.hue).toLowerCase(),icons:`${icStyleSum()} · tamaño ${g.is} px · altura ${g.iy} %`}}
 function scrGen(v){
   if(!S.gen)S.gen=defGen();const g=S.gen,fs=genTargets();if(!fs.length){v.innerHTML='<p class="empty">No hay botones de Inicio en el backup.</p>';return}
   setTitle('Rediseñar botones',`Inicio · ${fs.length} botones`);
@@ -1426,8 +1457,7 @@ function scrGen(v){
   const colorBody=`<div class="seg" id="g-cm"><button data-v="orig" aria-pressed="${g.color==='orig'}">El de cada botón</button><button data-v="one" aria-pressed="${g.color==='one'}">Uno para todos</button></div>
     ${g.color==='one'?swatches(g.hue,{label:'Color de los botones'}):'<p class="note">Cada botón conserva su color original. Puedes cambiar el de uno solo tocándolo en la pantalla.</p>'}`;
   const iconBody=`<p class="note">Para cambiar el icono de un botón, tócalo en la pantalla.</p>
-    <div class="field"><span class="lbl">Trazo de todos los iconos</span><div class="seg" id="g-iw">${ISTY.map(([v,l])=>{const s=icStyle(),on=v==='fill'?s.fill:!s.fill&&+v===s.w;return `<button data-v="${v}" aria-pressed="${on}">${l}</button>`}).join('')}</div>
-    <p class="note">Se aplica a la vez a todos los iconos de la biblioteca, también a los que pongas en otras imágenes. Así quedan coherentes.</p></div>
+    <div id="g-ist">${icStyleHTML()}</div><p class="note">El estilo se aplica a la vez a todos los iconos: los de la biblioteca, los tuyos y el original. Así quedan coherentes.</p>
     <label class="rg" for="g-is"><span>Tamaño <output>${g.is} px</output></span><input type="range" id="g-is" min="24" max="96" value="${g.is}"></label>
     <label class="rg" for="g-iy"><span>Altura <output>${g.iy} %</output></span><input type="range" id="g-iy" min="20" max="70" value="${g.iy}"></label>
     <p class="note">El MediaNav escribe el nombre debajo, por eso los iconos van por encima del centro.</p>`;
@@ -1440,7 +1470,7 @@ function scrGen(v){
       ${item('color',ROOTS[1][2],'Color',sm.color,colorBody)}
       ${item('icons','M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9 10h.01M15 10h.01M8.5 14.5a4 4 0 0 0 7 0','Iconos',sm.icons,iconBody)}
     </div>
-    <div class="list">${fs.map(F=>{const p=g.per[F.path]||{},ii=genIconSrc(F,g);return `<button class="li" data-gb="${esc(F.path)}"><span class="th"><canvas data-gt="${esc(F.path)}"></canvas></span><span class="tx"><b>${esc(pretty(F))}</b><small>Icono ${ii==='orig'?'original':ii==='png'?'propio':ICONL[ii.slice(4)].toLowerCase()} · ${p.hue!=null?'color '+hueName(p.hue).toLowerCase():'color como el resto'}</small></span>${CHEV}</button>`}).join('')}</div>
+    <div class="list">${fs.map(F=>{const p=g.per[F.path]||{},ii=genIconSrc(F,g);return `<button class="li" data-gb="${esc(F.path)}"><span class="th"><canvas data-gt="${esc(F.path)}"></canvas></span><span class="tx"><b>${esc(pretty(F))}</b><small>Icono ${ii==='orig'?'original':ii==='png'?'propio':esc(String(ii.startsWith('lib:')?ICONL[ii.slice(4)]||'propio':keyLabel(ii)).toLowerCase())} · ${p.hue!=null?'color '+hueName(p.hue).toLowerCase():'color como el resto'}</small></span>${CHEV}</button>`}).join('')}</div>
     <p class="note">Solo cambia los botones de la pantalla de Inicio. Hasta que pulses Aplicar, nada se guarda.</p></div></div>
     <div class="gbar"><button class="btn o" id="g-reset">Empezar de cero</button><button class="btn" id="g-ap">Aplicar a ${fs.length} botones</button></div>`;
   const c=$('#pv'),po=()=>({scr:'home',gen:true,state:S.gstate||0});regen();mountPreview(c,po);
@@ -1452,7 +1482,7 @@ function scrGen(v){
   const seg=(id,key)=>{const el=$(id);if(el)el.onclick=e=>{const b=e.target.closest('button[data-v]');if(!b)return;g[key]=b.dataset.v;render(true)}};seg('#g-co','corners');seg('#g-cm','color');
   $('#g-st').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;S.gstate=+b.dataset.s;$$('#g-st button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawPreview(c,po())};
   const rng=(id,key,suf)=>{const i=$(id);if(!i)return;paintRange(i);const out=i.closest('.rg').querySelector('output');i.oninput=()=>{g[key]=+i.value;out.textContent=i.value+suf;paintRange(i);upd()}};
-  const iw=$('#g-iw');if(iw)iw.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;setIconStyle(b.dataset.v);render(true)};
+  const ist=$('#g-ist');if(ist)icStyleBind(ist,()=>{const sm=$('[data-sum="icons"]');if(sm)sm.textContent=genSum(S.gen).icons;S.live&&S.live()});
   rng('#g-r','r',' px');rng('#g-in','inset',' px');rng('#g-is','is',' px');rng('#g-iy','iy',' %');
   const cs=$('#g-acc .swg');if(cs){cs.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;g.hue=+b.dataset.h;cs.querySelectorAll('.swc').forEach(x=>x.setAttribute('aria-pressed',x===b));upd()};const cp=cs.querySelector('[data-pick]');if(cp)cp.onchange=e=>{g.hue=Math.round(hexHsl(e.target.value)[0]);upd()}}
   let down=-1;c.onpointerdown=e=>{const h=slotAt(c,e);down=h.i;if(h.i>=0){S.press=h.i;drawPreview(c,po())}};
@@ -1780,14 +1810,16 @@ function icLoad(){if(IC.st===2)return Promise.resolve(true);if(IC.p)return IC.p;
   IC.p=fetch('iconos.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(j=>{IC.data=j;IC.by=new Map(j.i.map(x=>[x[0],x]));IC.es=new Map(j.radio);IC.st=2;
     if(S.gen&&S.route&&S.route.n==='gen')regen();S.ver++;schedule();if(S.icRedraw)S.icRedraw();return true})
   .catch(()=>{IC.st=3;IC.p=null;return false});return IC.p}
-const ISTY=[['1.5','Fino'],['2','Normal'],['2.5','Grueso'],['fill','Relleno']];
+const ISTY=[['1.5','Fino'],['2','Normal'],['2.5','Grueso'],['3','Extra'],['fill','Relleno']];
 function icStyle(){const g=S.gen||{};return {w:g.iw||2,fill:!!g.ifill}}
 const IP2=new Map();
 function drawTab(x,name,cx,cy,size,col,glow){
   if(IC.st!==2){icLoad();return false}const it=IC.by.get(name);if(!it)return false;const st=icStyle(),fd=st.fill&&IC.data.f[name];
   x.save();x.translate(cx-size/2,cy-size/2);x.scale(size/24,size/24);x.strokeStyle=col;x.fillStyle=col;x.lineWidth=st.w;x.lineCap='round';x.lineJoin='round';
   if(glow){x.shadowColor=col;x.shadowBlur=glow*24/size}
-  for(const d of (fd||it[3]).split('|')){let p=IP2.get(d);if(!p){p=new Path2D(d);IP2.set(d,p)}if(fd)x.fill(p);else x.stroke(p)}
+  const ps=(fd||it[3]).split('|').map(d=>{let p=IP2.get(d);if(!p){p=new Path2D(d);IP2.set(d,p)}return p});
+  if(!fd&&icFx().fx==='duo'){x.save();x.globalAlpha*=.3;x.shadowBlur=0;for(const p of ps)x.fill(p);x.restore()}
+  for(const p of ps){if(fd)x.fill(p);else x.stroke(p)}
   x.restore();return true}
 function drawIconKey(x,k,cx,cy,size,col,glow){if(k.startsWith('my:'))return drawMy(x,k.slice(3),cx,cy,size,col,glow);if(k.startsWith('t:'))return drawTab(x,k.slice(2),cx,cy,size,col,glow);if(k.startsWith('lib:')){drawLib(x,k.slice(4),cx,cy,size,col,glow);return true}return false}
 const icLabel=n=>(IC.es&&IC.es.get(n))||n.replace(/-/g,' ');
@@ -1841,7 +1873,7 @@ function iconPicker(o){
   openBS(`<div class="ipk"><div class="ipk-h"><button class="ib" data-x aria-label="Volver">${ic('M15 6l-6 6 6 6')}</button><h2>${esc(o.title||'Elegir icono')}</h2></div>
     <input type="search" id="ip-q" class="ipq" placeholder="Buscar: radio, música, coche, hoja…" value="${esc(st.q)}" autocomplete="off" enterkeyhint="search">
     <div class="chips scroll" id="ip-c"><button class="chip" data-c="radio" aria-pressed="${st.cat==='radio'}">Para la radio</button><button class="chip" data-c="my" aria-pressed="${st.cat==='my'}">Mis iconos${MY.list.length?' · '+MY.list.length:''}</button><button class="chip" data-c="" aria-pressed="${st.cat===''}">Todos</button>${cats.map((c,i)=>`<button class="chip" data-c="${i}" aria-pressed="${st.cat===String(i)}">${esc(c)}</button>`).join('')}</div>
-    <div class="field"><span class="lbl">Trazo de todos los iconos</span><div class="seg" id="ip-w">${ISTY.map(([v,l])=>{const s=icStyle(),on=v==='fill'?s.fill:!s.fill&&+v===s.w;return `<button data-v="${v}" aria-pressed="${on}">${l}</button>`}).join('')}</div></div>
+    <details class="isd" id="ip-st"${st.open?' open':''}><summary><span>Estilo de todos los iconos</span><b id="ip-ss">${esc(icStyleSum())}</b></summary><div class="isb">${icStyleHTML()}</div></details>
     <p class="note" id="ip-nt"><span id="ip-n"></span> · ${st.cat==='my'?'Se guardan en este navegador y sirven para cualquier backup. Lo mejor: SVG de trazo (sigue el trazo común) o PNG de un color.':'Tabler Icons. «Relleno» usa la versión rellena cuando existe.'}</p>
     <div class="icg" id="ip-g"></div><button class="btn o wide" id="ip-more" hidden>Ver más</button></div>`);
   S.icRedraw=()=>{if($('#ip-g'))iconPicker(o)};
@@ -1849,7 +1881,7 @@ function iconPicker(o){
   let t;$('#ip-q').oninput=e=>{st.q=e.target.value;st.n=96;if(st.q&&st.cat==='radio')st.cat='';clearTimeout(t);t=setTimeout(()=>{$$('#ip-c .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.c===st.cat));draw()},180)};
   $('#ip-c').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;const was=st.cat;st.cat=b.dataset.c;st.n=96;if((was==='my')!==(st.cat==='my'))return iconPicker(o);$$('#ip-c .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));draw()};
   $('#ip-more').onclick=()=>{st.n+=96;draw()};
-  $('#ip-w').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;setIconStyle(b.dataset.v);$$('#ip-w button').forEach(x=>x.setAttribute('aria-pressed',x===b));draw()};
+  const ipst=$('#ip-st');ipst.ontoggle=()=>{st.open=ipst.open;if(ipst.open)icStyleDraw(ipst)};icStyleBind(ipst,()=>{$('#ip-ss').textContent=icStyleSum();draw()});
   $('#ip-g').onclick=async e=>{
     if(e.target.closest('[data-add]')){const inp=$('#in-ico');inp.onchange=async ev=>{const fs=[...ev.target.files];ev.target.value='';let last=null;for(const f of fs){const m=await myAdd(f);if(m)last=m}
         if(last){toast(fs.length>1?'Iconos añadidos':'Icono añadido');if(fs.length===1){S.icRedraw=null;o.onPick('my:'+last.id);return}}iconPicker(o)};inp.click();return}
@@ -1859,7 +1891,7 @@ function iconPicker(o){
       MY.list=MY.list.filter(x=>x!==m);myIndex();await mySave();draw();toast('Icono borrado');return}
     const b=e.target.closest('[data-k]');if(!b)return;S.icRedraw=null;o.onPick(b.dataset.k)};
   if(IC.st!==2)icLoad();draw()}
-function setIconStyle(v){before();if(!S.gen)S.gen=defGen();if(v==='fill'){S.gen.ifill=true}else{S.gen.ifill=false;S.gen.iw=+v}
+function setIconStyle(v){const patch=typeof v==='object'?v:v==='fill'?{ifill:true}:{ifill:false,iw:+v};before();if(!S.gen)S.gen=defGen();Object.assign(S.gen,patch);
   if(S.genCv)regen();for(const p of Object.keys(S.icx||{})){const F=S.lc.get(p.toLowerCase());if(F)icApply(F,S.icx[p],true)}S.ver++;schedule();saveState()}
 
 /* Poner un icono de la biblioteca en cualquier imagen: se quita el icono viejo rehaciendo el fondo fila a fila
@@ -1896,9 +1928,9 @@ function icApply(F,spec,quiet){
   const size=spec.size||Math.max(14,Math.min(Math.min(fw,h)*.9,Math.max(bw,bh)*24/18));
   for(let s=0;s<fr;s++){const a=A[s],cx=s*fw+(a.x0+a.x1)/2,cy=(a.y0+a.y1)/2+(spec.dy||0);
     const col=spec.col==null||spec.col==='orig'?`rgb(${a.col.join(',')})`:spec.col==='white'?'#fff':typeof spec.col==='number'?`hsl(${spec.col} 80% ${s%2?40:62}%)`:spec.col;
-    x.save();x.beginPath();x.rect(s*fw,0,fw,h);x.clip();drawIconKey(x,spec.k,cx,cy,size,col,0);x.restore()}
+    x.save();x.beginPath();x.rect(s*fw,0,fw,h);x.clip();drawIcon(x,keyPainter(spec.k),cx,cy,size,col,0);x.restore()}
   const d=x.getImageData(0,0,F.w,h).data,useKey=F.keyCount>0,key=new Uint8Array(F.w*h);
-  for(let i=0;i<F.w*h;i++){const al=d[i*4+3];if(al<128){if(useKey)key[i]=1;else{d[i*4]=d[i*4+1]=d[i*4+2]=0}}else if(al<255){d[i*4]=d[i*4]*al/255;d[i*4+1]=d[i*4+1]*al/255;d[i*4+2]=d[i*4+2]*al/255}}
+  for(let i=0;i<F.w*h;i++){const al=d[i*4+3];if(al<128){if(useKey)key[i]=1;else{d[i*4]=d[i*4+1]=d[i*4+2]=0}}else if(al<255&&!useKey){d[i*4]=d[i*4]*al/255;d[i*4+1]=d[i*4+1]*al/255;d[i*4+2]=d[i*4+2]*al/255}}
   const q=quantize(d,F.w,h,{key,dither:false});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx};F.cv=null;
   if(!S.icx)S.icx={};S.icx[F.path]={...spec};if(S.ex[F.path]===undefined)S.ex[F.path]=true;if(!quiet){bump()}}
 function icCard(F){const sp=(S.icx||{})[F.path];
@@ -1929,7 +1961,9 @@ function drawMy(x,id,cx,cy,size,col,glow){const m=MY.by.get(id);if(!m)return fal
   const [vx,vy,vw,vh]=m.vb,s=size/Math.max(vw,vh),st=icStyle();
   x.save();x.translate(cx-vw*s/2,cy-vh*s/2);x.scale(s,s);x.translate(-vx,-vy);x.strokeStyle=col;x.fillStyle=col;x.lineCap='round';x.lineJoin='round';x.lineWidth=(m.sw||2)*st.w/2;
   if(glow){x.shadowColor=col;x.shadowBlur=glow/s}
-  for(const [d,k] of m.p){let p=IP2.get(d);if(!p){p=new Path2D(d);IP2.set(d,p)}if(k==='f')x.fill(p);else x.stroke(p)}
+  const ps=m.p.map(([d,k])=>{let p=IP2.get(d);if(!p){p=new Path2D(d);IP2.set(d,p)}return [p,k]});
+  if(icFx().fx==='duo'&&ps.some(q=>q[1]==='s')){x.save();x.globalAlpha*=.3;x.shadowBlur=0;for(const [p,k] of ps)if(k==='s')x.fill(p);x.restore()}
+  for(const [p,k] of ps){if(k==='f')x.fill(p);else x.stroke(p)}
   x.restore();return true}
 function svgVector(txt){const doc=new DOMParser().parseFromString(txt,'image/svg+xml'),svg=doc.documentElement;if(!svg||svg.nodeName.toLowerCase()!=='svg')return null;
   if(svg.querySelector('[transform],use,text,image,mask,clipPath,pattern,linearGradient,radialGradient,filter,style'))return null;
@@ -1971,11 +2005,62 @@ async function myAdd(file){const name=file.name.replace(/\.[^.]+$/,'').slice(0,4
   if(!m){toast('No he podido sacar un icono de esa imagen');return null}
   MY.list.unshift(m);myIndex();await mySave();return m}
 
+/* ============ estilo de los iconos: trazo + acabado + fondo ============
+   Es común a todos los iconos (biblioteca, los tuyos y el original extraído): así quedan coherentes.
+   drawIcon(x, paint, …) dibuja con el estilo; paint(ctx, cx, cy, tamaño, color) pinta el icono «en crudo». */
+const IFX=[['none','Liso'],['duo','Dos tonos'],['grad','Degradado'],['emboss','Relieve'],['shadow','Sombra'],['outline','Contorno'],['glow','Brillo'],['chrome','Metal']];
+const IBOX=[['none','Ninguno'],['circle','Círculo'],['square','Cuadrado'],['ring','Aro']];
+function icFx(){const g=S.gen||{};return {fx:g.ifx||'none',box:g.ibox||'none'}}
+const keyPainter=k=>(c,X,Y,sz,col,gl)=>drawIconKey(c,k,X,Y,sz,col,gl);
+let CPX=null;function colRGB(col){if(!CPX)CPX=document.createElement('canvas').getContext('2d');CPX.fillStyle='#000';CPX.fillStyle=col;const v=CPX.fillStyle;
+  if(v[0]==='#')return [parseInt(v.slice(1,3),16),parseInt(v.slice(3,5),16),parseInt(v.slice(5,7),16)];const m=v.match(/[\d.]+/g)||[0,0,0];return m.slice(0,3).map(Number)}
+const mix=(c,t,a)=>`rgb(${c.map((v,i)=>Math.round(v+(t[i]-v)*a)).join(',')})`;
+const lumOf=c=>(c[0]*.3+c[1]*.59+c[2]*.11)/255;
+function tinted(m,fill){const t=document.createElement('canvas');t.width=m.width;t.height=m.height;const tx=t.getContext('2d');tx.fillStyle=fill;tx.fillRect(0,0,t.width,t.height);tx.globalCompositeOperation='destination-in';tx.drawImage(m,0,0);return t}
+function drawIcon(x,paint,cx,cy,size,col,glow){const {fx,box}=icFx();
+  if(fx==='none'&&box==='none'||fx==='duo'&&box==='none')return paint(x,cx,cy,size,col,glow);
+  const c=colRGB(col),light=lumOf(c)>.55,ink=light?'rgb(14,17,22)':'#fff',o=Math.max(1,size/36);
+  const pad=Math.ceil(size*.3+o*4),N=Math.ceil(size+pad*2),h=N/2,isz=box==='none'?size:box==='ring'?size*.58:size*.62;
+  // máscara (blanco) del icono y, si hay, del fondo
+  const m=document.createElement('canvas');m.width=m.height=N;const ok=paint(m.getContext('2d'),h,h,isz,'#fff',0);if(ok===false)return false;
+  let shape=null;if(box!=='none'){shape=document.createElement('canvas');shape.width=shape.height=N;const sx=shape.getContext('2d');sx.fillStyle='#fff';sx.strokeStyle='#fff';
+    if(box==='circle'){sx.beginPath();sx.arc(h,h,size/2,0,7);sx.fill()}else if(box==='square'){rrect(sx,h-size/2,h-size/2,size,size,size*.24);sx.fill()}else{sx.lineWidth=Math.max(1.5,size*.075);sx.beginPath();sx.arc(h,h,size/2-sx.lineWidth/2,0,7);sx.stroke()}}
+  // lo que recibe el acabado: el fondo si lo hay (círculo/cuadrado) y si no el icono
+  const base=shape&&box!=='ring'?shape:m,top=shape&&box!=='ring'?m:null;let both=null;
+  if(box==='ring'){both=document.createElement('canvas');both.width=both.height=N;const bx=both.getContext('2d');bx.drawImage(shape,0,0);bx.drawImage(m,0,0)}
+  const B=both||base,X0=cx-h,Y0=cy-h,lg=(stops)=>{const t=document.createElement('canvas').getContext('2d').createLinearGradient(0,h-size/2,0,h+size/2);for(const [p,cc] of stops)t.addColorStop(p,cc);return t};
+  let fill=col;
+  if(fx==='grad')fill=lg([[0,mix(c,[255,255,255],.35)],[1,mix(c,[0,0,0],.35)]]);
+  if(fx==='chrome')fill=lg([[0,mix(c,[255,255,255],.6)],[.46,mix(c,[0,0,0],.35)],[.54,mix(c,[255,255,255],.15)],[1,mix(c,[0,0,0],.5)]]);
+  x.save();
+  if(fx==='shadow')x.drawImage(tinted(B,'rgba(0,0,0,.65)'),X0+o*.6,Y0+o*1.6);
+  if(fx==='emboss'){x.drawImage(tinted(B,'rgba(0,0,0,.6)'),X0+o,Y0+o);x.drawImage(tinted(B,'rgba(255,255,255,.5)'),X0-o*.7,Y0-o*.7)}
+  if(fx==='outline'){const oc=tinted(B,light?'rgba(0,0,0,.85)':'rgba(255,255,255,.9)'),r=o*1.3;for(let a=0;a<8;a++)x.drawImage(oc,X0+Math.cos(a*Math.PI/4)*r,Y0+Math.sin(a*Math.PI/4)*r)}
+  if(fx==='glow'||glow){x.shadowColor=col;x.shadowBlur=fx==='glow'?Math.max(glow||0,size*.22):glow}
+  x.drawImage(tinted(B,fill),X0,Y0);x.shadowBlur=0;
+  if(top){// icono invertido dentro del círculo o el cuadrado (en «Dos tonos», con relleno suave)
+    if(fx==='duo'){x.drawImage(tinted(m,ink),X0,Y0)}else x.drawImage(tinted(m,ink),X0,Y0)}
+  x.restore();return true}
+/* Bloque de ajustes (generador y selector): trazo, acabado y fondo, con muestras dibujadas */
+function icStyleHTML(){const s=icStyle(),f=icFx();
+  return `<div class="field"><span class="lbl">Trazo</span><div class="seg seg5" data-is="w">${ISTY.map(([v,l])=>{const on=v==='fill'?s.fill:!s.fill&&+v===s.w;return `<button data-v="${v}" aria-pressed="${on}">${l}</button>`}).join('')}</div></div>
+    <div class="field"><span class="lbl">Acabado</span><div class="ocg isg" data-is="fx">${IFX.map(([v,l])=>`<button class="ocd" data-v="${v}" aria-pressed="${f.fx===v}"><canvas width="96" height="72" data-fxp="${v}"></canvas><span>${l}</span></button>`).join('')}</div></div>
+    <div class="field"><span class="lbl">Fondo del icono</span><div class="ocg isg" data-is="box">${IBOX.map(([v,l])=>`<button class="ocd" data-v="${v}" aria-pressed="${f.box===v}"><canvas width="96" height="72" data-bxp="${v}"></canvas><span>${l}</span></button>`).join('')}</div></div>`}
+function icStyleDraw(root){const g=S.gen||(S.gen=defGen()),keep={ifx:g.ifx,ibox:g.ibox},k=IC.st===2?'t:music':'lib:music',dark=getComputedStyle(document.documentElement).getPropertyValue('--card').trim();
+  const tile=(cv,patch)=>{const x=cv.getContext('2d');x.clearRect(0,0,96,72);x.fillStyle='#0b0e13';rrect(x,2,2,92,68,12);x.fill();Object.assign(g,patch);drawIcon(x,keyPainter(k),48,36,40,'#fff',0);Object.assign(g,keep)};
+  root.querySelectorAll('[data-fxp]').forEach(cv=>tile(cv,{ifx:cv.dataset.fxp}));root.querySelectorAll('[data-bxp]').forEach(cv=>tile(cv,{ibox:cv.dataset.bxp}))}
+function icStyleBind(root,after){icStyleDraw(root);
+  root.querySelectorAll('[data-is]').forEach(gp=>gp.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;const t=gp.dataset.is,v=b.dataset.v;
+    setIconStyle(t==='w'?(v==='fill'?{ifill:true}:{ifill:false,iw:+v}):t==='fx'?{ifx:v}:{ibox:v});
+    gp.querySelectorAll('[data-v]').forEach(x=>x.setAttribute('aria-pressed',x===b));icStyleDraw(root);after&&after()})}
+function icStyleSum(){const s=icStyle(),f=icFx(),w=s.fill?'relleno':(ISTY.find(x=>+x[0]===s.w)||[0,'normal'])[1].toLowerCase();
+  return [w,f.fx!=='none'?IFX.find(x=>x[0]===f.fx)[1].toLowerCase():'',f.box!=='none'?'en '+IBOX.find(x=>x[0]===f.box)[1].toLowerCase():''].filter(Boolean).join(' · ')}
+
 /* ============ app web: instalación, versión, novedades y créditos (como Noticiahz y Caravanahz) ============
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-26-6';
+const VER='2026-10-26-7';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -1983,7 +2068,13 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['«Mis iconos» en el selector: sube tus iconos (PNG, JPG o SVG) una vez y úsalos en cualquier botón o imagen, también con otro backup',
+  [VER,['9 estilos de botón nuevos (14 en total): Mosaico, Mínimo, Aluminio, Carbono, Aurora, Futurista, Esmerilado, Suave y Degradado vivo, cada uno con sus 4 estados',
+    'Estilo de los iconos completo, común a todos (biblioteca, los tuyos y el original): trazo (ahora también Extra), acabado y fondo',
+    'Acabados: liso, dos tonos, degradado, relieve, sombra, contorno, brillo y metal',
+    'Fondo del icono: círculo, cuadrado redondeado o aro; dentro, el icono se invierte solo para que contraste en cada estado',
+    'Corregido: «Rediseñar los botones» se quedaba en blanco si un botón tenía un icono de la biblioteca o tuyo',
+    'En imágenes con transparencia, los bordes suaves de los iconos ya no se oscurecen']],
+  ['2026-10-26-6',['«Mis iconos» en el selector: sube tus iconos (PNG, JPG o SVG) una vez y úsalos en cualquier botón o imagen, también con otro backup',
     'Los SVG de trazo siguen el trazo común; los PNG se convierten en silueta de un color (negro sobre blanco o al revés), recortada y centrada al tamaño de los de la biblioteca',
     'En «Rediseñar los botones», «Mi icono» abre directamente tus iconos']],
   ['2026-10-26-5',['Biblioteca de iconos coherente (Tabler Icons): unos 3.800 iconos con el mismo estilo, buscador en español y una selección «Para la radio»',
