@@ -112,6 +112,7 @@ async function run(browser, label, viewport, mobile) {
   // Generador con iconos de la biblioteca y propios: la pantalla abre y aplica sin errores
   await p.evaluate(() => { S.gen = defGen(); const fs = genTargets(); fs.forEach((F, i) => S.gen.per[F.path] = { icon: i % 2 ? 't:' + icSuggest(F)[0] : (MY.list[0] ? 'my:' + MY.list[0].id : 't:star') }); S.gen.ifx = 'emboss'; S.gen.ibox = 'circle'; go({ n: 'gen' }); }); await p.waitForTimeout(900);
   ok(await p.locator('#g-tabs').count() === 1 && await p.locator('[data-gb]').count() >= 6, 'el generador abre con iconos de la biblioteca y propios');
+  ok(await p.evaluate(() => { scrollTo(0, 2000); const a = document.querySelector('#pv').getBoundingClientRect(), t = document.querySelector('#g-tabs').getBoundingClientRect(); scrollTo(0, 0); return t.top >= a.bottom - 1; }), 'al desplazarse, las pestañas no tapan la vista previa');
   await tap('#g-tabs [data-t="icons"]'); await p.waitForTimeout(300);
   ok(await p.locator('[data-pn="icons"]:not([hidden]) [data-is="fx"] .ocd').count() === 8 && await p.locator('[data-pn="icons"]:not([hidden]) [data-is="w"] button').count() === 5, 'la pestaña Iconos enseña a la vista el trazo, el acabado y el fondo');
   await tap('#g-tabs [data-t="btn"]'); await p.waitForTimeout(200);
