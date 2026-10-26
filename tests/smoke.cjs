@@ -93,6 +93,21 @@ async function run(browser, label, viewport, mobile) {
   ok(await p.evaluate(() => { const F = S.curF; return !!F.rep && S.icx[F.path] && S.icx[F.path].k === 't:music' && outBytes(F).length === 1078 + (((F.w + 3) & ~3) * F.h); }), 'pone el icono y el BMP sale con el tamaño correcto');
   await p.evaluate(() => undo()); await p.waitForTimeout(400);
   ok(await p.evaluate(() => !S.curF.rep), 'deshacer quita el icono');
+  // Mis iconos: un PNG negro sobre blanco y un SVG de trazo
+  const mine = await p.evaluate(async () => {
+    const c = document.createElement('canvas'); c.width = 300; c.height = 200; const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 300, 200); x.fillStyle = '#000'; x.beginPath(); x.arc(150, 100, 60, 0, 7); x.fill();
+    const png = await new Promise(r => c.toBlob(r)); const a = await myAdd(new File([png], 'circulo.png', { type: 'image/png' }));
+    const b = await myAdd(new File(['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2"><circle cx="12" cy="12" r="8"/><line x1="12" y1="8" x2="12" y2="16"/></svg>'], 'trazo.svg', { type: 'image/svg+xml' }));
+    await new Promise(r => setTimeout(r, 400));
+    const m = MY.by.get(a.id), cv = document.createElement('canvas'); cv.width = cv.height = 64; drawIconKey(cv.getContext('2d'), 'my:' + a.id, 32, 32, 48, '#fff', 0);
+    const d = cv.getContext('2d').getImageData(0, 0, 64, 64).data; let on = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 128) on++;
+    return { png: a.kind, svg: b.kind, parts: b.p.length, fill: on / (64 * 64) };
+  });
+  ok(mine.png === 'png' && mine.fill > .1 && mine.fill < .5, 'un PNG negro sobre blanco se convierte en silueta (no en un cuadrado): ' + Math.round(mine.fill * 100) + ' % relleno');
+  ok(mine.svg === 'vec' && mine.parts === 2, 'un SVG de trazo se guarda como vector y sigue el trazo común');
+  await p.reload(); await p.waitForTimeout(1200);
+  ok(await p.evaluate(() => MY.list.length) === 2, 'mis iconos se conservan al recargar');
+  await p.evaluate(() => { S.ops.global = { ...defOps(), h: 120 }; bump(); }); await p.waitForTimeout(500); // el ejemplo no guarda cambios al recargar
   // Familia «Negros y fondo»
   ok(await p.evaluate(() => { const F = S.files.find(f => /HOME_BG/i.test(f.path)); return famsOfFiles([F]).some(f => f.k === 13); }), 'el fondo de Inicio ofrece la familia «Negros y fondo»');
   // Exportar (ejemplo) → descarga un ZIP

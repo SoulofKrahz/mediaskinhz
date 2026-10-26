@@ -17,8 +17,9 @@ function drawTab(x,name,cx,cy,size,col,glow){
   if(glow){x.shadowColor=col;x.shadowBlur=glow*24/size}
   for(const d of (fd||it[3]).split('|')){let p=IP2.get(d);if(!p){p=new Path2D(d);IP2.set(d,p)}if(fd)x.fill(p);else x.stroke(p)}
   x.restore();return true}
-function drawIconKey(x,k,cx,cy,size,col,glow){if(k.startsWith('t:'))return drawTab(x,k.slice(2),cx,cy,size,col,glow);if(k.startsWith('lib:')){drawLib(x,k.slice(4),cx,cy,size,col,glow);return true}return false}
+function drawIconKey(x,k,cx,cy,size,col,glow){if(k.startsWith('my:'))return drawMy(x,k.slice(3),cx,cy,size,col,glow);if(k.startsWith('t:'))return drawTab(x,k.slice(2),cx,cy,size,col,glow);if(k.startsWith('lib:')){drawLib(x,k.slice(4),cx,cy,size,col,glow);return true}return false}
 const icLabel=n=>(IC.es&&IC.es.get(n))||n.replace(/-/g,' ');
+const keyLabel=k=>k.startsWith('my:')?((MY.by.get(k.slice(3))||{}).name||'Mi icono'):k.startsWith('t:')?icLabel(k.slice(2)):k;
 // Iconos propuestos según el botón (por el nombre del archivo)
 const ICSUG=[['navi',['navigation','map-2','map-pin','route','compass','gps']],['radio',['radio','antenna','broadcast','music','disc']],['media',['music','player-play','disc','headphones','playlist','usb']],
   ['phone',['phone','phone-call','address-book','message','bluetooth','device-mobile']],['eco',['leaf','plant-2','gauge','chart-line','trophy']],['setting',['settings','adjustments-horizontal','tool']],
@@ -56,6 +57,10 @@ function iconPicker(o){
   const st=S.ipk||(S.ipk={q:'',cat:'radio',n:96});
   const draw=()=>{const g=$('#ip-g');if(!g)return;
     if(IC.st!==2){g.innerHTML=`<p class="note">${IC.st===3?'No he podido descargar la biblioteca de iconos. Necesita conexión la primera vez.':'Cargando la biblioteca de iconos…'}</p>`;if(IC.st===3){const r=document.createElement('button');r.className='btn o sm';r.textContent='Reintentar';r.onclick=()=>{IC.st=0;icLoad();draw()};g.appendChild(r)}return}
+    if(st.cat==='my'){const q=fold(st.q),L=MY.list.filter(m=>!q||fold(m.name).includes(q));
+      g.innerHTML=`<button class="icb add" data-add><canvas width="72" height="72"></canvas><span>Añadir mi icono</span></button>`+L.map(m=>`<div class="icw"><button class="icb" data-k="my:${m.id}" aria-pressed="${o.cur==='my:'+m.id}" title="${esc(m.name)}"><canvas width="72" height="72"></canvas><span>${esc(m.name)}</span></button><button class="icx" data-del="${m.id}" aria-label="Borrar ${esc(m.name)}">×</button></div>`).join('');
+      const col=getComputedStyle(document.body).color;g.querySelectorAll('canvas').forEach(cv=>{const x=cv.getContext('2d'),k=cv.parentNode.dataset.k;if(k)drawIconKey(x,k,36,36,46,col,0);else{x.strokeStyle=col;x.lineWidth=3.5;x.lineCap='round';x.beginPath();x.moveTo(36,22);x.lineTo(36,50);x.moveTo(22,36);x.lineTo(50,36);x.stroke()}});
+      $('#ip-more').hidden=true;$('#ip-n').textContent=MY.list.length===1?'1 icono tuyo':MY.list.length+' iconos tuyos';return}
     const L=icSearch(st.q,st.cat),sh=L.slice(0,st.n);
     g.innerHTML=sh.length?sh.map(n=>`<button class="icb" data-k="t:${n}" aria-pressed="${o.cur==='t:'+n}" title="${esc(icLabel(n))}"><canvas width="72" height="72"></canvas><span>${esc(icLabel(n))}</span></button>`).join(''):'<p class="note">No hay iconos con esa palabra. Prueba con otra (también en inglés).</p>';
     const col=getComputedStyle(document.body).color;g.querySelectorAll('canvas').forEach(cv=>{const x=cv.getContext('2d');drawTab(x,cv.parentNode.dataset.k.slice(2),36,36,46,col,0)});
@@ -63,17 +68,24 @@ function iconPicker(o){
   const cats=IC.st===2?IC.data.cats:[];
   openBS(`<div class="ipk"><div class="ipk-h"><button class="ib" data-x aria-label="Volver">${ic('M15 6l-6 6 6 6')}</button><h2>${esc(o.title||'Elegir icono')}</h2></div>
     <input type="search" id="ip-q" class="ipq" placeholder="Buscar: radio, música, coche, hoja…" value="${esc(st.q)}" autocomplete="off" enterkeyhint="search">
-    <div class="chips scroll" id="ip-c"><button class="chip" data-c="radio" aria-pressed="${st.cat==='radio'}">Para la radio</button><button class="chip" data-c="" aria-pressed="${st.cat===''}">Todos</button>${cats.map((c,i)=>`<button class="chip" data-c="${i}" aria-pressed="${st.cat===String(i)}">${esc(c)}</button>`).join('')}</div>
+    <div class="chips scroll" id="ip-c"><button class="chip" data-c="radio" aria-pressed="${st.cat==='radio'}">Para la radio</button><button class="chip" data-c="my" aria-pressed="${st.cat==='my'}">Mis iconos${MY.list.length?' · '+MY.list.length:''}</button><button class="chip" data-c="" aria-pressed="${st.cat===''}">Todos</button>${cats.map((c,i)=>`<button class="chip" data-c="${i}" aria-pressed="${st.cat===String(i)}">${esc(c)}</button>`).join('')}</div>
     <div class="field"><span class="lbl">Trazo de todos los iconos</span><div class="seg" id="ip-w">${ISTY.map(([v,l])=>{const s=icStyle(),on=v==='fill'?s.fill:!s.fill&&+v===s.w;return `<button data-v="${v}" aria-pressed="${on}">${l}</button>`}).join('')}</div></div>
-    <p class="note"><span id="ip-n"></span> · Tabler Icons. «Relleno» usa la versión rellena cuando existe.</p>
+    <p class="note" id="ip-nt"><span id="ip-n"></span> · ${st.cat==='my'?'Se guardan en este navegador y sirven para cualquier backup. Lo mejor: SVG de trazo (sigue el trazo común) o PNG de un color.':'Tabler Icons. «Relleno» usa la versión rellena cuando existe.'}</p>
     <div class="icg" id="ip-g"></div><button class="btn o wide" id="ip-more" hidden>Ver más</button></div>`);
   S.icRedraw=()=>{if($('#ip-g'))iconPicker(o)};
   $('#bs [data-x]').onclick=()=>{S.icRedraw=null;o.back?o.back():closeBS()};
   let t;$('#ip-q').oninput=e=>{st.q=e.target.value;st.n=96;if(st.q&&st.cat==='radio')st.cat='';clearTimeout(t);t=setTimeout(()=>{$$('#ip-c .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.c===st.cat));draw()},180)};
-  $('#ip-c').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;st.cat=b.dataset.c;st.n=96;$$('#ip-c .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));draw()};
+  $('#ip-c').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;const was=st.cat;st.cat=b.dataset.c;st.n=96;if((was==='my')!==(st.cat==='my'))return iconPicker(o);$$('#ip-c .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));draw()};
   $('#ip-more').onclick=()=>{st.n+=96;draw()};
   $('#ip-w').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;setIconStyle(b.dataset.v);$$('#ip-w button').forEach(x=>x.setAttribute('aria-pressed',x===b));draw()};
-  $('#ip-g').onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;S.icRedraw=null;o.onPick(b.dataset.k)};
+  $('#ip-g').onclick=async e=>{
+    if(e.target.closest('[data-add]')){const inp=$('#in-ico');inp.onchange=async ev=>{const fs=[...ev.target.files];ev.target.value='';let last=null;for(const f of fs){const m=await myAdd(f);if(m)last=m}
+        if(last){toast(fs.length>1?'Iconos añadidos':'Icono añadido');if(fs.length===1){S.icRedraw=null;o.onPick('my:'+last.id);return}}iconPicker(o)};inp.click();return}
+    const dl=e.target.closest('[data-del]');if(dl){const m=MY.by.get(dl.dataset.del);if(!m)return;
+      const used=Object.values((S.gen&&S.gen.per)||{}).some(p=>p.icon==='my:'+m.id)||Object.values(S.icx||{}).some(p=>p.k==='my:'+m.id);
+      if(used){toast('Lo estás usando en tu diseño: cámbialo antes por otro icono');return}
+      MY.list=MY.list.filter(x=>x!==m);myIndex();await mySave();draw();toast('Icono borrado');return}
+    const b=e.target.closest('[data-k]');if(!b)return;S.icRedraw=null;o.onPick(b.dataset.k)};
   if(IC.st!==2)icLoad();draw()}
 function setIconStyle(v){before();if(!S.gen)S.gen=defGen();if(v==='fill'){S.gen.ifill=true}else{S.gen.ifill=false;S.gen.iw=+v}
   if(S.genCv)regen();for(const p of Object.keys(S.icx||{})){const F=S.lc.get(p.toLowerCase());if(F)icApply(F,S.icx[p],true)}S.ver++;schedule();saveState()}
@@ -130,3 +142,59 @@ function icBind(F){const sp=()=>(S.icx||{})[F.path];const cv=$('#ic-cur');
   if(g){g.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;before();const h=b.dataset.h;icApply(F,{...sp(),col:h==='none'?'orig':h==='white'?'white':+h});render(true)};
     const pk=g.querySelector('[data-pick]');if(pk)pk.onchange=e=>{before();icApply(F,{...sp(),col:e.target.value});render(true)}}
   const sz=$('#ic-sz');if(sz){let t;sz.oninput=e=>{sz.previousElementSibling.querySelector('output').textContent=e.target.value;clearTimeout(t);t=setTimeout(()=>{before();icApply(F,{...sp(),size:+e.target.value});schedule()},120)}}}
+
+/* ---- Mis iconos: subidos por ti, guardados en este navegador (IndexedDB 'myicons'), valen para cualquier backup ----
+   SVG de solo formas (path, circle, rect, line, polyline, polygon, ellipse) → vector: el trazo sigue el ajuste común.
+   PNG / JPG / SVG complejos → silueta de un color: se detecta si el dibujo es oscuro sobre claro o al revés, se recorta y se centra
+   al mismo tamaño visual que los de la biblioteca. */
+const MY={list:[],by:new Map()};
+async function myLoad(){try{MY.list=(await idb.get('myicons'))||[]}catch(_){MY.list=[]}myIndex()}
+function myIndex(){MY.by=new Map(MY.list.map(m=>[m.id,m]));for(const m of MY.list)if(m.png&&!m.mk)myMask(m)}
+function myMask(m){const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=128;c.getContext('2d').drawImage(im,0,0,128,128);m.mk={cv:c,bx:0,by:0,bw:128,bh:128};if(S.genCv&&S.gen)regen();S.ver++;schedule();if(S.icRedraw)S.icRedraw()};im.src=m.png}
+async function mySave(){try{await idb.set('myicons',MY.list.map(({mk,...r})=>r));return true}catch(_){toast('No he podido guardar tus iconos en este navegador');return false}}
+function drawMy(x,id,cx,cy,size,col,glow){const m=MY.by.get(id);if(!m)return false;
+  if(m.png){if(!m.mk)return false;drawMask(x,m.mk,cx,cy,size/128,col,glow);return true}
+  const [vx,vy,vw,vh]=m.vb,s=size/Math.max(vw,vh),st=icStyle();
+  x.save();x.translate(cx-vw*s/2,cy-vh*s/2);x.scale(s,s);x.translate(-vx,-vy);x.strokeStyle=col;x.fillStyle=col;x.lineCap='round';x.lineJoin='round';x.lineWidth=(m.sw||2)*st.w/2;
+  if(glow){x.shadowColor=col;x.shadowBlur=glow/s}
+  for(const [d,k] of m.p){let p=IP2.get(d);if(!p){p=new Path2D(d);IP2.set(d,p)}if(k==='f')x.fill(p);else x.stroke(p)}
+  x.restore();return true}
+function svgVector(txt){const doc=new DOMParser().parseFromString(txt,'image/svg+xml'),svg=doc.documentElement;if(!svg||svg.nodeName.toLowerCase()!=='svg')return null;
+  if(svg.querySelector('[transform],use,text,image,mask,clipPath,pattern,linearGradient,radialGradient,filter,style'))return null;
+  let vb=(svg.getAttribute('viewBox')||'').trim().split(/[\s,]+/).map(Number);if(vb.length!==4||vb.some(isNaN)){const w=parseFloat(svg.getAttribute('width')),h=parseFloat(svg.getAttribute('height'));if(!(w>0&&h>0))return null;vb=[0,0,w,h]}
+  const inh=(el,a)=>{for(let e=el;e&&e.getAttribute;e=e.parentNode){const v=e.getAttribute(a);if(v!=null)return v.trim()}return null};
+  const num=(el,a)=>parseFloat(el.getAttribute(a)||0),P=[];let sw=null;
+  for(const el of svg.querySelectorAll('path,circle,ellipse,rect,line,polyline,polygon')){const t=el.nodeName.toLowerCase();let d='';
+    if(t==='path')d=el.getAttribute('d')||'';
+    else if(t==='circle'){const cx=num(el,'cx'),cy=num(el,'cy'),r=num(el,'r');d=`M${cx-r} ${cy}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0z`}
+    else if(t==='ellipse'){const cx=num(el,'cx'),cy=num(el,'cy'),rx=num(el,'rx'),ry=num(el,'ry');d=`M${cx-rx} ${cy}a${rx} ${ry} 0 1 0 ${2*rx} 0a${rx} ${ry} 0 1 0 ${-2*rx} 0z`}
+    else if(t==='rect'){const X=num(el,'x'),Y=num(el,'y'),W=num(el,'width'),H=num(el,'height');d=`M${X} ${Y}h${W}v${H}h${-W}z`}
+    else if(t==='line')d=`M${num(el,'x1')} ${num(el,'y1')}L${num(el,'x2')} ${num(el,'y2')}`;
+    else{const pts=(el.getAttribute('points')||'').trim().split(/[\s,]+/).map(Number);if(pts.length<4)continue;d='M'+pts.slice(0,2).join(' ')+'L'+pts.slice(2).join(' ')+(t==='polygon'?'z':'')}
+    if(!d||d.replace(/\s/g,'')==='M0 0h24v24H0z'.replace(/\s/g,''))continue;
+    const stroke=inh(el,'stroke'),fill=inh(el,'fill'),stk=stroke&&stroke!=='none',fil=fill==null?!stk:fill!=='none';
+    if(stk&&sw==null){const w=parseFloat(inh(el,'stroke-width'));if(w>0)sw=w}
+    if(stk)P.push([d,'s']);if(fil)P.push([d,'f'])}
+  if(!P.length)return null;return {vb,p:P,sw:sw||Math.max(vb[2],vb[3])/12}}
+// Silueta de un color a partir de cualquier imagen
+function rasterMask(img){const S0=256,c=document.createElement('canvas');c.width=c.height=S0;const x=c.getContext('2d',{willReadFrequently:true}),iw=img.width||img.naturalWidth,ih=img.height||img.naturalHeight,sc=Math.min(S0/iw,S0/ih);
+  const dx=Math.round((S0-iw*sc)/2),dy=Math.round((S0-ih*sc)/2),dw=Math.max(1,Math.round(iw*sc)),dh=Math.max(1,Math.round(ih*sc));
+  x.drawImage(img,dx,dy,dw,dh);const d=x.getImageData(0,0,S0,S0).data,a=new Float32Array(S0*S0);
+  // ¿tiene transparencia propia? Solo se mira dentro de la imagen (las franjas que sobran al encajarla no cuentan)
+  let op=0;for(let y=dy;y<dy+dh;y++)for(let X=dx;X<dx+dw;X++)if(d[(y*S0+X)*4+3]>200)op++;const L=i=>d[i*4]*.3+d[i*4+1]*.59+d[i*4+2]*.11;
+  if(op<dw*dh*.85){for(let i=0;i<S0*S0;i++)a[i]=d[i*4+3]/255}
+  else{// imagen opaca: el fondo es el color de su borde; el icono, lo que se aleja de él (sirve para negro sobre blanco y al revés)
+    const b=[];for(let X=dx;X<dx+dw;X++){b.push(L(dy*S0+X),L((dy+dh-1)*S0+X))}for(let y=dy;y<dy+dh;y++){b.push(L(y*S0+dx),L(y*S0+dx+dw-1))}b.sort((p,q)=>p-q);const bg=b[b.length>>1];
+    for(let y=dy;y<dy+dh;y++)for(let X=dx;X<dx+dw;X++){const i=y*S0+X;a[i]=cl((Math.abs(L(i)-bg)-24)/80)}}
+  let x0=S0,y0=S0,x1=-1,y1=-1;for(let y=0;y<S0;y++)for(let X=0;X<S0;X++)if(a[y*S0+X]>.25){if(X<x0)x0=X;if(X>x1)x1=X;if(y<y0)y0=y;if(y>y1)y1=y}
+  if(x1<0)return null;const m=document.createElement('canvas');m.width=S0;m.height=S0;const mx=m.getContext('2d'),mi=mx.createImageData(S0,S0);
+  for(let i=0;i<S0*S0;i++){mi.data[i*4]=mi.data[i*4+1]=mi.data[i*4+2]=255;mi.data[i*4+3]=Math.round(a[i]*255)}mx.putImageData(mi,0,0);
+  const o=document.createElement('canvas');o.width=o.height=128;const ox=o.getContext('2d'),bw=x1-x0+1,bh=y1-y0+1,k=96/Math.max(bw,bh);ox.imageSmoothingQuality='high';
+  ox.drawImage(m,x0,y0,bw,bh,64-bw*k/2,64-bh*k/2,bw*k,bh*k);return o.toDataURL('image/png')}
+async function myAdd(file){const name=file.name.replace(/\.[^.]+$/,'').slice(0,40)||'Mi icono',id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);let m=null;
+  const isSvg=/svg/i.test(file.type)||/\.svg$/i.test(file.name);
+  if(isSvg){const txt=await file.text();const v=svgVector(txt);if(v)m={id,name,...v,kind:'vec'};
+    else{const url=URL.createObjectURL(new Blob([txt],{type:'image/svg+xml'}));try{const im=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url});const png=rasterMask(im);if(png)m={id,name,png,kind:'png'}}catch(_){}URL.revokeObjectURL(url)}}
+  else{try{const bmp=await createImageBitmap(file);const png=rasterMask(bmp);if(png)m={id,name,png,kind:'png'}}catch(_){}}
+  if(!m){toast('No he podido sacar un icono de esa imagen');return null}
+  MY.list.unshift(m);myIndex();await mySave();return m}

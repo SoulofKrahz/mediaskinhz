@@ -238,7 +238,8 @@ input[type=range].hue{--trk:linear-gradient(90deg,hsl(0 80% 50%),hsl(60 80% 50%)
 .ipq{width:100%;min-height:46px;padding:10px 14px;border:1px solid var(--bd2);border-radius:13px;background:var(--bg);color:var(--tx);font:inherit;font-size:16px}
 .ipq:focus{outline:2px solid var(--em2);outline-offset:1px}
 #ip-g{grid-template-columns:repeat(auto-fill,minmax(76px,1fr))}#ip-g .icb canvas{width:44px;height:44px}
-.icb.all span{color:var(--em);font-weight:600}
+.icb.all span,.icb.add span{color:var(--em);font-weight:600}
+.icw{position:relative;display:flex}.icw .icb{flex:1}.icx{position:absolute;top:2px;right:2px;width:26px;height:26px;border-radius:50%;background:var(--card);border:1px solid var(--bd2);color:var(--mu);font-size:16px;line-height:1;display:grid;place-items:center}
 .icrow{display:flex;align-items:center;gap:14px}.icrow canvas{width:56px;height:56px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);flex:none}
 .acs{display:flex;flex-wrap:wrap;gap:10px}.acs .swc{width:42px;min-width:42px}
 .acr{display:flex;align-items:center;gap:12px;padding-top:4px}.acr>span{flex:1;min-width:0;display:flex;flex-direction:column}.acr small{font-size:12.5px;color:var(--mu);line-height:1.4}
@@ -424,6 +425,7 @@ body[data-route="edit"] .toast,body[data-route="layout"] .toast{bottom:calc(18px
 <div class="dropall" id="dropall" hidden>Suelta tu backup aquí</div>
 <input type="file" id="in-dir" webkitdirectory multiple hidden>
 <input type="file" id="in-zip" accept=".zip,application/zip" hidden>
+<input type="file" id="in-ico" accept="image/png,image/jpeg,image/webp,image/svg+xml,.svg" multiple hidden>
 <input type="file" id="in-img" accept="image/*" hidden>
 
 <script>
@@ -1274,7 +1276,7 @@ function bind(){
     if(items.some(en=>en.isDirectory)){const out=[];for(const en of items)await walkEntry(en,out);fromFileList(out)}else fromFileList(dt.files)});
   let rz=0;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(S.route.n==='edit'&&S.eview==='img')drawEdit(S.curF)},150)});
 }
-async function boot(){themePref();bind();recall();loadSet();webInit();let ok=false;
+async function boot(){themePref();bind();recall();loadSet();webInit();await myLoad().catch(()=>{});let ok=false;
   try{const fl=await idb.get('files');if(fl&&fl.list&&fl.list.length&&await ingest(fl.list,{restore:true,png:fl.png})){applyState(await idb.get('state'));ok=true}}catch(_){}
   if(!ok)await demo();render()}
 const LGU_HDR='TEdVMAcAAAAABAAAOlIBBAAAAAABAAAANThR/QAAAAAAAAAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAAAD+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+AAD+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v4AAP7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/gAA/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFwJFEAAAAAAAAAAA==',LGU_X0='AipxJbuKvRzlvC394UMVoZfBPE5/oKURFFvzemBMVoOoVmAOPHOgrmEM8zzynmRXqI6DVw6wGNoyZRlkEd88RLZVlrakzCTyATyhnoilklJOeeYrVdKanXJqq/IUwl8423eqeSMzGxddKEeXahtzMMvTDvpbFaYHZdaEOkxsgcCWYknsmKUqywFQB1sWpTOUWZcvP9rmDUwROxGSULQ2wtldN+gXBMjG69aXZb3TTiWi35Yzw5zuo27M0Rdt2mQli9nIDGkXw0OPAsZ0RxIXDcjrpFU3b0TKamTdKCL9yFWD5+i1jIg9+1M98AnLNLJ6YKBOaYx61gDl/lxqoaXxxRI+lowuZSm1khgL6hlyGyFuBhx1zL5GBzU9i8VUOkRo97Xi+TUiz7ScwxyjL+edt/FHKEY5oAWnoWU9ZtMJ+DjszHSpuRRPQTQYv4BGlN13WbSl6EFpWS1p3VU9c0KYsBklhQ4I9ZerjxCjlMVaTx8JQtayjcNe57y0T3yy/YbRG4Vk2iFl7URbS4y2y4K8c9kIFTr3wQSqQJw2nsu0dCGEVnSKOOXp37WLUn8qNkS4lkHL2Q5WCk6NZyzeqMLpKNymqtm2XXrZMTjdzeWHVzsBTXuwlNoLLrEQ5jzpa0NxnCkSybkW3Y7V2zHDOOY7yEoxuSN/C2+oLTIu++HRMY+ysccfET4qYB4mXscQroqznZWs1vuI9SL1kOEmmYA2FgE8f2TB6Mc0eGmLgw+Ys9OURJG4ZtYyg/OO8IdM5KkeXWR+5QMNdHTJm/VliET2A7+vuXXSXgs2BbXhL2jQucOR7SA0w4O/D2dZa6AINWkgpGgIA4bruiz4sk3xEnjjqFw90CYiDA90nGFQKcnSd426qXSW/C/P15bUYeag9nzwb14VUvNHG5solRw7wGjcMuvNjKtkvK2vFhTd66DHLMRw/YGYQL3w/D5919KRpa14G9TwAx+Ni7EliBmgUM3s0HptQRjG13AXBcMlNBUdzE8a4VOcQ31z3GNt/WijTpBHGqKStnTlz+qYNzZk2Ud0KTM+/kMcTUOzZqSG68HwudpSuMee7xmW/oZM0i4h/jR9oFVPfigirz43skUXB0VgxRhsxTsSiCLbUhdWnuAFbcWSNzOgmYI+idNBYJqCPFDDV6CIP+QuIxDyVC8JQfnUgS0YMDvX28ojLJ0QafiqqBVs250eq2ceLVRj4YOh53SyiU5eJft/AyElNyM930pffytFp5JZeOvIVEWEZ5I4qmCy1ul6VSDoGRkkeZDjOLlLVqxdmJcIOXxGI0PTWTwoFanRkxrmV9Wm0xyHpWP11MQrg4jxQZ4HZfFF26nvpXRf34OuJ2ahc2uWfdh/8+ggPA==',LGU_X2='AAAAAHcHMJbuDmEsmQlRugdtxBlwavSP6WOlNZ5klaMO24gyedy4pODV6R6X0tmICbZMK36xfL3nuC0HkL8dkR23EGRqsCDy87lxSIS+Qd4a2tR9bd3k6/TUtVGD04XHE2yYVmRrqMD9Yvl6imXJ7BQBXE9jBmzZ+g89Y40IDfU7biDITGkQXtVgQeSiZ3FyPAPk0UsE1EfSDYX9pQq1azW1qPpCsphs27vJ1qy8+UAy2GzjRd9cddzWDc+r0T1ZJtkwrFHeADrI11GAv9BhFiG09LVWs8Qjz7qVmbi9pQ8oArieXwWICMYM2bKxC+kkL298h1hoTBHBYR2rtmYtPXbcQZAB23EGmNIgvO/VECpxsYWJBra1H5+/5KXouNQzeAfJog8A+TSWCaiO4Q6YGH9qDbsIbT0tkWRsl+ZjXAFra1H0HGxhYoVlMNjyYgBObAaV7RsBpXuCCPTB9Q/EV2Ww2cYSt+lQi7646vy5iHxi3R3fFdotSYzTfPP71ExlTbJhWDq1Uc6jvAB01Lsw4krfpUE92JXXpNHEbdPW9PtDaelqNG7Z/K1niEbaYLjQRAQtczMDHeWqCkxf3Q18yVAFcTwnAkGqvgsQEMkMIIZXaLUlIG+Fs7lm1AnOYeSfXt75DinZyZiw0Jgix9eotFmzPRcutA2Bt71cO8C6bK3tuIMgmr+ztgO24gx0sdKa6tVHOZ3Sd68E2yYVc9wWg+NjCxKUZDuEDW1qPnpqWqjkDs8Lkwn/nQoArid9B56x8A+TRIcIo9IeAfJoaQbC/vdiV12AZWfLGWw2cW5rBuf+1Bt2idMr4BDaelpn3UrM+bnfb46+7/kXt75DYLCO1dbWo+ih0ZN+ONjCxE/f8lLRu2fxprxXZz+1Bt1IsjZL2A0r2q8KG0w2A0r2QQR6YN9g78OoZ99VMW6O70ZpvnnLYbOMvGaDGiVv0qBSaOI2zAx3lbsLRwMiAha5VQUmL8W6O76yvQsoK7RaklyzagTC1/+ntdDPMSzZnotb3q4dm2TCsOxj8iZ1aqOcAm2TCpwJBqnrDjY/cgdnhQUAVxOVv0qC4rh6FHuxK64Mths4ktKOm+XVvg183O+3C9vfIYbT0tTx1OJCaN2z+B/ag26BvhbN9rkmW2+wd+EYt0d3iAha5v8PanBmBjvKEQELXI9lnv/4Yq5pYWv/0xZsz0WgCuJ41w3S7k4Eg1Q5A7PCp2cmYdBgFvdJaUdNPm53267RakrZ1lrcQN8LZjfYO/CpvK5T3ruexUeyz38wtf/pvb3yHMq6wopTs5MwJLSjprrQNgXN1waTVN5XKSPZZ7+zZnouxGFKuF1oGwIqbyuUtAu+N8MMjqFaBd8bLQLvjQ==';
@@ -1463,9 +1465,9 @@ function scrGen(v){
 }
 function genSheet(F,upd){
   const g=S.gen,fs=genTargets(),idx=fs.indexOf(F);S.gsel=F.path;const p=()=>g.per[F.path]||(g.per[F.path]={});
-  const cur=genIconSrc(F,g),ps=g.per[F.path]||{},sug=icSuggest(F).map(n=>'t:'+n),icons=['orig','png',...(cur.startsWith('t:')||cur.startsWith('lib:'))&&!sug.includes(cur)?[cur]:[],...sug,'all'];
+  const cur=genIconSrc(F,g),ps=g.per[F.path]||{},sug=icSuggest(F).map(n=>'t:'+n),icons=['orig','png',...(cur.startsWith('t:')||cur.startsWith('lib:')||cur.startsWith('my:'))&&!sug.includes(cur)?[cur]:[],...sug,'all'];
   S.icRedraw=IC.st===2?null:()=>{if($('#gs-ic'))genSheet(F,upd)};if(IC.st!==2)icLoad();
-  const icT=k=>k==='orig'?'Original':k==='png'?(ps.png?'Mi imagen':'Subir PNG'):k==='all'?'Ver todos':k.startsWith('t:')?icLabel(k.slice(2)):ICONL[k.slice(4)]||k;
+  const icT=k=>k==='orig'?'Original':k==='png'?(ps.png?'Mi imagen':'Mi icono'):k==='all'?'Ver todos':k.startsWith('lib:')?ICONL[k.slice(4)]||k:keyLabel(k);
   openBS(`<div class="gsh"><div class="screen"><canvas id="gs-pv" width="800" height="480" aria-label="Vista previa de Inicio con ${esc(pretty(F))} marcado"></canvas></div>
       <div class="e-bar"><div><h2>${esc(pretty(F))}</h2></div><span class="sp"></span><div class="seg" id="gs-st" role="group" aria-label="Estado"><button data-s="0" aria-pressed="${!S.gstate}">Reposo</button><button data-s="1" aria-pressed="${S.gstate===1}">Pulsado</button></div></div></div>
     <p class="lbl">Icono</p>
@@ -1485,7 +1487,7 @@ function genSheet(F,upd){
     else drawIconKey(x,k,44,44,52,col,0)});
   pv();
   $('#gs-ic').onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;const k=b.dataset.k;
-    if(k==='png'){$('#in-img').onchange=async ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)return;try{p().png=pngMask(await createImageBitmap(f));p().icon='png';upd();genSheet(F,upd)}catch(_){toast('No puedo abrir esa imagen')}};$('#in-img').click();return}
+    if(k==='png'&&!ps.png){S.ipk=S.ipk||{q:'',cat:'my',n:96};S.ipk.cat='my';S.ipk.q='';iconPicker({title:'Icono para '+pretty(F),cur,back:()=>genSheet(F,upd),onPick:nk=>{p().icon=nk;upd();genSheet(F,upd)}});return}
     if(k==='all'){iconPicker({title:'Icono para '+pretty(F),cur,back:()=>genSheet(F,upd),onPick:nk=>{p().icon=nk;upd();genSheet(F,upd)}});return}
     if(k==='orig'&&!extractIcon(F)){toast('No he podido separar el icono original de este botón');return}
     p().icon=k;$$('#gs-ic .icb').forEach(x=>x.setAttribute('aria-pressed',x===b));upd();pv()};
@@ -1787,8 +1789,9 @@ function drawTab(x,name,cx,cy,size,col,glow){
   if(glow){x.shadowColor=col;x.shadowBlur=glow*24/size}
   for(const d of (fd||it[3]).split('|')){let p=IP2.get(d);if(!p){p=new Path2D(d);IP2.set(d,p)}if(fd)x.fill(p);else x.stroke(p)}
   x.restore();return true}
-function drawIconKey(x,k,cx,cy,size,col,glow){if(k.startsWith('t:'))return drawTab(x,k.slice(2),cx,cy,size,col,glow);if(k.startsWith('lib:')){drawLib(x,k.slice(4),cx,cy,size,col,glow);return true}return false}
+function drawIconKey(x,k,cx,cy,size,col,glow){if(k.startsWith('my:'))return drawMy(x,k.slice(3),cx,cy,size,col,glow);if(k.startsWith('t:'))return drawTab(x,k.slice(2),cx,cy,size,col,glow);if(k.startsWith('lib:')){drawLib(x,k.slice(4),cx,cy,size,col,glow);return true}return false}
 const icLabel=n=>(IC.es&&IC.es.get(n))||n.replace(/-/g,' ');
+const keyLabel=k=>k.startsWith('my:')?((MY.by.get(k.slice(3))||{}).name||'Mi icono'):k.startsWith('t:')?icLabel(k.slice(2)):k;
 // Iconos propuestos según el botón (por el nombre del archivo)
 const ICSUG=[['navi',['navigation','map-2','map-pin','route','compass','gps']],['radio',['radio','antenna','broadcast','music','disc']],['media',['music','player-play','disc','headphones','playlist','usb']],
   ['phone',['phone','phone-call','address-book','message','bluetooth','device-mobile']],['eco',['leaf','plant-2','gauge','chart-line','trophy']],['setting',['settings','adjustments-horizontal','tool']],
@@ -1826,6 +1829,10 @@ function iconPicker(o){
   const st=S.ipk||(S.ipk={q:'',cat:'radio',n:96});
   const draw=()=>{const g=$('#ip-g');if(!g)return;
     if(IC.st!==2){g.innerHTML=`<p class="note">${IC.st===3?'No he podido descargar la biblioteca de iconos. Necesita conexión la primera vez.':'Cargando la biblioteca de iconos…'}</p>`;if(IC.st===3){const r=document.createElement('button');r.className='btn o sm';r.textContent='Reintentar';r.onclick=()=>{IC.st=0;icLoad();draw()};g.appendChild(r)}return}
+    if(st.cat==='my'){const q=fold(st.q),L=MY.list.filter(m=>!q||fold(m.name).includes(q));
+      g.innerHTML=`<button class="icb add" data-add><canvas width="72" height="72"></canvas><span>Añadir mi icono</span></button>`+L.map(m=>`<div class="icw"><button class="icb" data-k="my:${m.id}" aria-pressed="${o.cur==='my:'+m.id}" title="${esc(m.name)}"><canvas width="72" height="72"></canvas><span>${esc(m.name)}</span></button><button class="icx" data-del="${m.id}" aria-label="Borrar ${esc(m.name)}">×</button></div>`).join('');
+      const col=getComputedStyle(document.body).color;g.querySelectorAll('canvas').forEach(cv=>{const x=cv.getContext('2d'),k=cv.parentNode.dataset.k;if(k)drawIconKey(x,k,36,36,46,col,0);else{x.strokeStyle=col;x.lineWidth=3.5;x.lineCap='round';x.beginPath();x.moveTo(36,22);x.lineTo(36,50);x.moveTo(22,36);x.lineTo(50,36);x.stroke()}});
+      $('#ip-more').hidden=true;$('#ip-n').textContent=MY.list.length===1?'1 icono tuyo':MY.list.length+' iconos tuyos';return}
     const L=icSearch(st.q,st.cat),sh=L.slice(0,st.n);
     g.innerHTML=sh.length?sh.map(n=>`<button class="icb" data-k="t:${n}" aria-pressed="${o.cur==='t:'+n}" title="${esc(icLabel(n))}"><canvas width="72" height="72"></canvas><span>${esc(icLabel(n))}</span></button>`).join(''):'<p class="note">No hay iconos con esa palabra. Prueba con otra (también en inglés).</p>';
     const col=getComputedStyle(document.body).color;g.querySelectorAll('canvas').forEach(cv=>{const x=cv.getContext('2d');drawTab(x,cv.parentNode.dataset.k.slice(2),36,36,46,col,0)});
@@ -1833,17 +1840,24 @@ function iconPicker(o){
   const cats=IC.st===2?IC.data.cats:[];
   openBS(`<div class="ipk"><div class="ipk-h"><button class="ib" data-x aria-label="Volver">${ic('M15 6l-6 6 6 6')}</button><h2>${esc(o.title||'Elegir icono')}</h2></div>
     <input type="search" id="ip-q" class="ipq" placeholder="Buscar: radio, música, coche, hoja…" value="${esc(st.q)}" autocomplete="off" enterkeyhint="search">
-    <div class="chips scroll" id="ip-c"><button class="chip" data-c="radio" aria-pressed="${st.cat==='radio'}">Para la radio</button><button class="chip" data-c="" aria-pressed="${st.cat===''}">Todos</button>${cats.map((c,i)=>`<button class="chip" data-c="${i}" aria-pressed="${st.cat===String(i)}">${esc(c)}</button>`).join('')}</div>
+    <div class="chips scroll" id="ip-c"><button class="chip" data-c="radio" aria-pressed="${st.cat==='radio'}">Para la radio</button><button class="chip" data-c="my" aria-pressed="${st.cat==='my'}">Mis iconos${MY.list.length?' · '+MY.list.length:''}</button><button class="chip" data-c="" aria-pressed="${st.cat===''}">Todos</button>${cats.map((c,i)=>`<button class="chip" data-c="${i}" aria-pressed="${st.cat===String(i)}">${esc(c)}</button>`).join('')}</div>
     <div class="field"><span class="lbl">Trazo de todos los iconos</span><div class="seg" id="ip-w">${ISTY.map(([v,l])=>{const s=icStyle(),on=v==='fill'?s.fill:!s.fill&&+v===s.w;return `<button data-v="${v}" aria-pressed="${on}">${l}</button>`}).join('')}</div></div>
-    <p class="note"><span id="ip-n"></span> · Tabler Icons. «Relleno» usa la versión rellena cuando existe.</p>
+    <p class="note" id="ip-nt"><span id="ip-n"></span> · ${st.cat==='my'?'Se guardan en este navegador y sirven para cualquier backup. Lo mejor: SVG de trazo (sigue el trazo común) o PNG de un color.':'Tabler Icons. «Relleno» usa la versión rellena cuando existe.'}</p>
     <div class="icg" id="ip-g"></div><button class="btn o wide" id="ip-more" hidden>Ver más</button></div>`);
   S.icRedraw=()=>{if($('#ip-g'))iconPicker(o)};
   $('#bs [data-x]').onclick=()=>{S.icRedraw=null;o.back?o.back():closeBS()};
   let t;$('#ip-q').oninput=e=>{st.q=e.target.value;st.n=96;if(st.q&&st.cat==='radio')st.cat='';clearTimeout(t);t=setTimeout(()=>{$$('#ip-c .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.c===st.cat));draw()},180)};
-  $('#ip-c').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;st.cat=b.dataset.c;st.n=96;$$('#ip-c .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));draw()};
+  $('#ip-c').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;const was=st.cat;st.cat=b.dataset.c;st.n=96;if((was==='my')!==(st.cat==='my'))return iconPicker(o);$$('#ip-c .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));draw()};
   $('#ip-more').onclick=()=>{st.n+=96;draw()};
   $('#ip-w').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;setIconStyle(b.dataset.v);$$('#ip-w button').forEach(x=>x.setAttribute('aria-pressed',x===b));draw()};
-  $('#ip-g').onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;S.icRedraw=null;o.onPick(b.dataset.k)};
+  $('#ip-g').onclick=async e=>{
+    if(e.target.closest('[data-add]')){const inp=$('#in-ico');inp.onchange=async ev=>{const fs=[...ev.target.files];ev.target.value='';let last=null;for(const f of fs){const m=await myAdd(f);if(m)last=m}
+        if(last){toast(fs.length>1?'Iconos añadidos':'Icono añadido');if(fs.length===1){S.icRedraw=null;o.onPick('my:'+last.id);return}}iconPicker(o)};inp.click();return}
+    const dl=e.target.closest('[data-del]');if(dl){const m=MY.by.get(dl.dataset.del);if(!m)return;
+      const used=Object.values((S.gen&&S.gen.per)||{}).some(p=>p.icon==='my:'+m.id)||Object.values(S.icx||{}).some(p=>p.k==='my:'+m.id);
+      if(used){toast('Lo estás usando en tu diseño: cámbialo antes por otro icono');return}
+      MY.list=MY.list.filter(x=>x!==m);myIndex();await mySave();draw();toast('Icono borrado');return}
+    const b=e.target.closest('[data-k]');if(!b)return;S.icRedraw=null;o.onPick(b.dataset.k)};
   if(IC.st!==2)icLoad();draw()}
 function setIconStyle(v){before();if(!S.gen)S.gen=defGen();if(v==='fill'){S.gen.ifill=true}else{S.gen.ifill=false;S.gen.iw=+v}
   if(S.genCv)regen();for(const p of Object.keys(S.icx||{})){const F=S.lc.get(p.toLowerCase());if(F)icApply(F,S.icx[p],true)}S.ver++;schedule();saveState()}
@@ -1901,11 +1915,67 @@ function icBind(F){const sp=()=>(S.icx||{})[F.path];const cv=$('#ic-cur');
     const pk=g.querySelector('[data-pick]');if(pk)pk.onchange=e=>{before();icApply(F,{...sp(),col:e.target.value});render(true)}}
   const sz=$('#ic-sz');if(sz){let t;sz.oninput=e=>{sz.previousElementSibling.querySelector('output').textContent=e.target.value;clearTimeout(t);t=setTimeout(()=>{before();icApply(F,{...sp(),size:+e.target.value});schedule()},120)}}}
 
+/* ---- Mis iconos: subidos por ti, guardados en este navegador (IndexedDB 'myicons'), valen para cualquier backup ----
+   SVG de solo formas (path, circle, rect, line, polyline, polygon, ellipse) → vector: el trazo sigue el ajuste común.
+   PNG / JPG / SVG complejos → silueta de un color: se detecta si el dibujo es oscuro sobre claro o al revés, se recorta y se centra
+   al mismo tamaño visual que los de la biblioteca. */
+const MY={list:[],by:new Map()};
+async function myLoad(){try{MY.list=(await idb.get('myicons'))||[]}catch(_){MY.list=[]}myIndex()}
+function myIndex(){MY.by=new Map(MY.list.map(m=>[m.id,m]));for(const m of MY.list)if(m.png&&!m.mk)myMask(m)}
+function myMask(m){const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=128;c.getContext('2d').drawImage(im,0,0,128,128);m.mk={cv:c,bx:0,by:0,bw:128,bh:128};if(S.genCv&&S.gen)regen();S.ver++;schedule();if(S.icRedraw)S.icRedraw()};im.src=m.png}
+async function mySave(){try{await idb.set('myicons',MY.list.map(({mk,...r})=>r));return true}catch(_){toast('No he podido guardar tus iconos en este navegador');return false}}
+function drawMy(x,id,cx,cy,size,col,glow){const m=MY.by.get(id);if(!m)return false;
+  if(m.png){if(!m.mk)return false;drawMask(x,m.mk,cx,cy,size/128,col,glow);return true}
+  const [vx,vy,vw,vh]=m.vb,s=size/Math.max(vw,vh),st=icStyle();
+  x.save();x.translate(cx-vw*s/2,cy-vh*s/2);x.scale(s,s);x.translate(-vx,-vy);x.strokeStyle=col;x.fillStyle=col;x.lineCap='round';x.lineJoin='round';x.lineWidth=(m.sw||2)*st.w/2;
+  if(glow){x.shadowColor=col;x.shadowBlur=glow/s}
+  for(const [d,k] of m.p){let p=IP2.get(d);if(!p){p=new Path2D(d);IP2.set(d,p)}if(k==='f')x.fill(p);else x.stroke(p)}
+  x.restore();return true}
+function svgVector(txt){const doc=new DOMParser().parseFromString(txt,'image/svg+xml'),svg=doc.documentElement;if(!svg||svg.nodeName.toLowerCase()!=='svg')return null;
+  if(svg.querySelector('[transform],use,text,image,mask,clipPath,pattern,linearGradient,radialGradient,filter,style'))return null;
+  let vb=(svg.getAttribute('viewBox')||'').trim().split(/[\s,]+/).map(Number);if(vb.length!==4||vb.some(isNaN)){const w=parseFloat(svg.getAttribute('width')),h=parseFloat(svg.getAttribute('height'));if(!(w>0&&h>0))return null;vb=[0,0,w,h]}
+  const inh=(el,a)=>{for(let e=el;e&&e.getAttribute;e=e.parentNode){const v=e.getAttribute(a);if(v!=null)return v.trim()}return null};
+  const num=(el,a)=>parseFloat(el.getAttribute(a)||0),P=[];let sw=null;
+  for(const el of svg.querySelectorAll('path,circle,ellipse,rect,line,polyline,polygon')){const t=el.nodeName.toLowerCase();let d='';
+    if(t==='path')d=el.getAttribute('d')||'';
+    else if(t==='circle'){const cx=num(el,'cx'),cy=num(el,'cy'),r=num(el,'r');d=`M${cx-r} ${cy}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0z`}
+    else if(t==='ellipse'){const cx=num(el,'cx'),cy=num(el,'cy'),rx=num(el,'rx'),ry=num(el,'ry');d=`M${cx-rx} ${cy}a${rx} ${ry} 0 1 0 ${2*rx} 0a${rx} ${ry} 0 1 0 ${-2*rx} 0z`}
+    else if(t==='rect'){const X=num(el,'x'),Y=num(el,'y'),W=num(el,'width'),H=num(el,'height');d=`M${X} ${Y}h${W}v${H}h${-W}z`}
+    else if(t==='line')d=`M${num(el,'x1')} ${num(el,'y1')}L${num(el,'x2')} ${num(el,'y2')}`;
+    else{const pts=(el.getAttribute('points')||'').trim().split(/[\s,]+/).map(Number);if(pts.length<4)continue;d='M'+pts.slice(0,2).join(' ')+'L'+pts.slice(2).join(' ')+(t==='polygon'?'z':'')}
+    if(!d||d.replace(/\s/g,'')==='M0 0h24v24H0z'.replace(/\s/g,''))continue;
+    const stroke=inh(el,'stroke'),fill=inh(el,'fill'),stk=stroke&&stroke!=='none',fil=fill==null?!stk:fill!=='none';
+    if(stk&&sw==null){const w=parseFloat(inh(el,'stroke-width'));if(w>0)sw=w}
+    if(stk)P.push([d,'s']);if(fil)P.push([d,'f'])}
+  if(!P.length)return null;return {vb,p:P,sw:sw||Math.max(vb[2],vb[3])/12}}
+// Silueta de un color a partir de cualquier imagen
+function rasterMask(img){const S0=256,c=document.createElement('canvas');c.width=c.height=S0;const x=c.getContext('2d',{willReadFrequently:true}),iw=img.width||img.naturalWidth,ih=img.height||img.naturalHeight,sc=Math.min(S0/iw,S0/ih);
+  const dx=Math.round((S0-iw*sc)/2),dy=Math.round((S0-ih*sc)/2),dw=Math.max(1,Math.round(iw*sc)),dh=Math.max(1,Math.round(ih*sc));
+  x.drawImage(img,dx,dy,dw,dh);const d=x.getImageData(0,0,S0,S0).data,a=new Float32Array(S0*S0);
+  // ¿tiene transparencia propia? Solo se mira dentro de la imagen (las franjas que sobran al encajarla no cuentan)
+  let op=0;for(let y=dy;y<dy+dh;y++)for(let X=dx;X<dx+dw;X++)if(d[(y*S0+X)*4+3]>200)op++;const L=i=>d[i*4]*.3+d[i*4+1]*.59+d[i*4+2]*.11;
+  if(op<dw*dh*.85){for(let i=0;i<S0*S0;i++)a[i]=d[i*4+3]/255}
+  else{// imagen opaca: el fondo es el color de su borde; el icono, lo que se aleja de él (sirve para negro sobre blanco y al revés)
+    const b=[];for(let X=dx;X<dx+dw;X++){b.push(L(dy*S0+X),L((dy+dh-1)*S0+X))}for(let y=dy;y<dy+dh;y++){b.push(L(y*S0+dx),L(y*S0+dx+dw-1))}b.sort((p,q)=>p-q);const bg=b[b.length>>1];
+    for(let y=dy;y<dy+dh;y++)for(let X=dx;X<dx+dw;X++){const i=y*S0+X;a[i]=cl((Math.abs(L(i)-bg)-24)/80)}}
+  let x0=S0,y0=S0,x1=-1,y1=-1;for(let y=0;y<S0;y++)for(let X=0;X<S0;X++)if(a[y*S0+X]>.25){if(X<x0)x0=X;if(X>x1)x1=X;if(y<y0)y0=y;if(y>y1)y1=y}
+  if(x1<0)return null;const m=document.createElement('canvas');m.width=S0;m.height=S0;const mx=m.getContext('2d'),mi=mx.createImageData(S0,S0);
+  for(let i=0;i<S0*S0;i++){mi.data[i*4]=mi.data[i*4+1]=mi.data[i*4+2]=255;mi.data[i*4+3]=Math.round(a[i]*255)}mx.putImageData(mi,0,0);
+  const o=document.createElement('canvas');o.width=o.height=128;const ox=o.getContext('2d'),bw=x1-x0+1,bh=y1-y0+1,k=96/Math.max(bw,bh);ox.imageSmoothingQuality='high';
+  ox.drawImage(m,x0,y0,bw,bh,64-bw*k/2,64-bh*k/2,bw*k,bh*k);return o.toDataURL('image/png')}
+async function myAdd(file){const name=file.name.replace(/\.[^.]+$/,'').slice(0,40)||'Mi icono',id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);let m=null;
+  const isSvg=/svg/i.test(file.type)||/\.svg$/i.test(file.name);
+  if(isSvg){const txt=await file.text();const v=svgVector(txt);if(v)m={id,name,...v,kind:'vec'};
+    else{const url=URL.createObjectURL(new Blob([txt],{type:'image/svg+xml'}));try{const im=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url});const png=rasterMask(im);if(png)m={id,name,png,kind:'png'}}catch(_){}URL.revokeObjectURL(url)}}
+  else{try{const bmp=await createImageBitmap(file);const png=rasterMask(bmp);if(png)m={id,name,png,kind:'png'}}catch(_){}}
+  if(!m){toast('No he podido sacar un icono de esa imagen');return null}
+  MY.list.unshift(m);myIndex();await mySave();return m}
+
 /* ============ app web: instalación, versión, novedades y créditos (como Noticiahz y Caravanahz) ============
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-26-5';
+const VER='2026-10-26-6';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -1913,7 +1983,10 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Biblioteca de iconos coherente (Tabler Icons): unos 3.800 iconos con el mismo estilo, buscador en español y una selección «Para la radio»',
+  [VER,['«Mis iconos» en el selector: sube tus iconos (PNG, JPG o SVG) una vez y úsalos en cualquier botón o imagen, también con otro backup',
+    'Los SVG de trazo siguen el trazo común; los PNG se convierten en silueta de un color (negro sobre blanco o al revés), recortada y centrada al tamaño de los de la biblioteca',
+    'En «Rediseñar los botones», «Mi icono» abre directamente tus iconos']],
+  ['2026-10-26-5',['Biblioteca de iconos coherente (Tabler Icons): unos 3.800 iconos con el mismo estilo, buscador en español y una selección «Para la radio»',
     'Trazo común para todos los iconos (fino, normal, grueso o relleno): cambiarlo actualiza a la vez todos los botones e imágenes',
     'En «Rediseñar los botones», cada botón propone los iconos que encajan con él y «Ver todos» abre el buscador',
     'En cualquier imagen (Sustituir → Poner un icono de la biblioteca): quita el icono que tiene, rehace el fondo y pone el nuevo en su sitio con los colores de cada estado',

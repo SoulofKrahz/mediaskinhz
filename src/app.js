@@ -733,7 +733,7 @@ function bind(){
     if(items.some(en=>en.isDirectory)){const out=[];for(const en of items)await walkEntry(en,out);fromFileList(out)}else fromFileList(dt.files)});
   let rz=0;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(S.route.n==='edit'&&S.eview==='img')drawEdit(S.curF)},150)});
 }
-async function boot(){themePref();bind();recall();loadSet();webInit();let ok=false;
+async function boot(){themePref();bind();recall();loadSet();webInit();await myLoad().catch(()=>{});let ok=false;
   try{const fl=await idb.get('files');if(fl&&fl.list&&fl.list.length&&await ingest(fl.list,{restore:true,png:fl.png})){applyState(await idb.get('state'));ok=true}}catch(_){}
   if(!ok)await demo();render()}
 boot();

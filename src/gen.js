@@ -152,9 +152,9 @@ function scrGen(v){
 }
 function genSheet(F,upd){
   const g=S.gen,fs=genTargets(),idx=fs.indexOf(F);S.gsel=F.path;const p=()=>g.per[F.path]||(g.per[F.path]={});
-  const cur=genIconSrc(F,g),ps=g.per[F.path]||{},sug=icSuggest(F).map(n=>'t:'+n),icons=['orig','png',...(cur.startsWith('t:')||cur.startsWith('lib:'))&&!sug.includes(cur)?[cur]:[],...sug,'all'];
+  const cur=genIconSrc(F,g),ps=g.per[F.path]||{},sug=icSuggest(F).map(n=>'t:'+n),icons=['orig','png',...(cur.startsWith('t:')||cur.startsWith('lib:')||cur.startsWith('my:'))&&!sug.includes(cur)?[cur]:[],...sug,'all'];
   S.icRedraw=IC.st===2?null:()=>{if($('#gs-ic'))genSheet(F,upd)};if(IC.st!==2)icLoad();
-  const icT=k=>k==='orig'?'Original':k==='png'?(ps.png?'Mi imagen':'Subir PNG'):k==='all'?'Ver todos':k.startsWith('t:')?icLabel(k.slice(2)):ICONL[k.slice(4)]||k;
+  const icT=k=>k==='orig'?'Original':k==='png'?(ps.png?'Mi imagen':'Mi icono'):k==='all'?'Ver todos':k.startsWith('lib:')?ICONL[k.slice(4)]||k:keyLabel(k);
   openBS(`<div class="gsh"><div class="screen"><canvas id="gs-pv" width="800" height="480" aria-label="Vista previa de Inicio con ${esc(pretty(F))} marcado"></canvas></div>
       <div class="e-bar"><div><h2>${esc(pretty(F))}</h2></div><span class="sp"></span><div class="seg" id="gs-st" role="group" aria-label="Estado"><button data-s="0" aria-pressed="${!S.gstate}">Reposo</button><button data-s="1" aria-pressed="${S.gstate===1}">Pulsado</button></div></div></div>
     <p class="lbl">Icono</p>
@@ -174,7 +174,7 @@ function genSheet(F,upd){
     else drawIconKey(x,k,44,44,52,col,0)});
   pv();
   $('#gs-ic').onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;const k=b.dataset.k;
-    if(k==='png'){$('#in-img').onchange=async ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)return;try{p().png=pngMask(await createImageBitmap(f));p().icon='png';upd();genSheet(F,upd)}catch(_){toast('No puedo abrir esa imagen')}};$('#in-img').click();return}
+    if(k==='png'&&!ps.png){S.ipk=S.ipk||{q:'',cat:'my',n:96};S.ipk.cat='my';S.ipk.q='';iconPicker({title:'Icono para '+pretty(F),cur,back:()=>genSheet(F,upd),onPick:nk=>{p().icon=nk;upd();genSheet(F,upd)}});return}
     if(k==='all'){iconPicker({title:'Icono para '+pretty(F),cur,back:()=>genSheet(F,upd),onPick:nk=>{p().icon=nk;upd();genSheet(F,upd)}});return}
     if(k==='orig'&&!extractIcon(F)){toast('No he podido separar el icono original de este botón');return}
     p().icon=k;$$('#gs-ic .icb').forEach(x=>x.setAttribute('aria-pressed',x===b));upd();pv()};
