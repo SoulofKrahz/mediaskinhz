@@ -139,7 +139,8 @@ function scrGen(v){
     <p class="note">${g.corners==='key'?'Usa el amarillo de transparencia. Los botones originales no lo usan: compruébalo antes con el kit de prueba o podrían salir esquinas amarillas.':'Opción segura: se pintan con el fondo de Inicio que hay detrás de cada botón.'}</p></div>`;
   const colorBody=`<div class="seg" id="g-cm"><button data-v="orig" aria-pressed="${g.color==='orig'}">El de cada botón</button><button data-v="one" aria-pressed="${g.color==='one'}">Uno para todos</button></div>
     ${g.color==='one'?swatches(g.hue,{label:'Color de los botones'}):'<p class="note">Cada botón conserva su color original. Puedes cambiar el de uno solo tocándolo en la pantalla.</p>'}`;
-  const iconBody=`<p class="note">Para cambiar el icono de un botón, tócalo en la pantalla.</p>
+  const iconBody=`<p class="lbl">Cambiar el icono de</p><div class="chips" id="g-icq">${fs.map(F=>`<button class="chip" data-gb="${esc(F.path)}">${esc(pretty(F))}</button>`).join('')}</div>
+    <p class="lbl" style="margin-top:6px">Estilo de todos los iconos</p>
     <div id="g-ist">${icStyleHTML()}</div><p class="note">El estilo se aplica a la vez a todos los iconos: los de la biblioteca, los tuyos y el original. Así quedan coherentes.</p>
     <label class="rg" for="g-is"><span>Tamaño <output>${g.is} px</output></span><input type="range" id="g-is" min="24" max="96" value="${g.is}"></label>
     <label class="rg" for="g-iy"><span>Altura <output>${g.iy} %</output></span><input type="range" id="g-iy" min="20" max="70" value="${g.iy}"></label>
@@ -147,13 +148,14 @@ function scrGen(v){
   v.innerHTML=`<div class="two">
     <div class="stick sticky-pv"><div class="screen"><canvas id="pv" width="800" height="480" aria-label="Vista previa de los botones rediseñados. Toca un botón para cambiar su icono y su color."></canvas></div>
       <div class="e-bar"><div class="seg" id="g-st" role="group" aria-label="Estado"><button data-s="0" aria-pressed="${!S.gstate}">Reposo</button><button data-s="1" aria-pressed="${S.gstate===1}">Pulsado</button></div><span class="sp"></span><span class="hint" style="padding:0">Toca un botón para cambiarlo</span></div></div>
-    <div class="stack"><div class="acc" id="g-acc">
+    <div class="stack">
+    <div class="card gbl"><h3>Icono y color de cada botón</h3><div class="list">${fs.map(F=>{const p=g.per[F.path]||{},ii=genIconSrc(F,g);return `<button class="li" data-gb="${esc(F.path)}"><span class="th"><canvas data-gt="${esc(F.path)}"></canvas></span><span class="tx"><b>${esc(pretty(F))}</b><small>Icono ${ii==='orig'?'original':ii==='png'?'propio':esc(String(ii.startsWith('lib:')?ICONL[ii.slice(4)]||'propio':keyLabel(ii)).toLowerCase())} · ${p.hue!=null?'color '+hueName(p.hue).toLowerCase():'color como el resto'}</small></span><span class="pill p-col">Cambiar</span></button>`}).join('')}</div><p class="note">También puedes tocar el botón en la pantalla de arriba. Para subir tu propio icono: «Cambiar» → «Mis iconos».</p></div>
+    <div class="acc" id="g-acc">
       ${item('style','M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z','Estilo',sm.style,styleBody)}
       ${item('shape','M4 4h16v16H4z','Forma',sm.shape,shapeBody)}
       ${item('color',ROOTS[1][2],'Color',sm.color,colorBody)}
       ${item('icons','M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9 10h.01M15 10h.01M8.5 14.5a4 4 0 0 0 7 0','Iconos',sm.icons,iconBody)}
     </div>
-    <div class="list">${fs.map(F=>{const p=g.per[F.path]||{},ii=genIconSrc(F,g);return `<button class="li" data-gb="${esc(F.path)}"><span class="th"><canvas data-gt="${esc(F.path)}"></canvas></span><span class="tx"><b>${esc(pretty(F))}</b><small>Icono ${ii==='orig'?'original':ii==='png'?'propio':esc(String(ii.startsWith('lib:')?ICONL[ii.slice(4)]||'propio':keyLabel(ii)).toLowerCase())} · ${p.hue!=null?'color '+hueName(p.hue).toLowerCase():'color como el resto'}</small></span>${CHEV}</button>`}).join('')}</div>
     <p class="note">Solo cambia los botones de la pantalla de Inicio. Hasta que pulses Aplicar, nada se guarda.</p></div></div>
     <div class="gbar"><button class="btn o" id="g-reset">Empezar de cero</button><button class="btn" id="g-ap">Aplicar a ${fs.length} botones</button></div>`;
   const c=$('#pv'),po=()=>({scr:'home',gen:true,state:S.gstate||0});regen();mountPreview(c,po);
@@ -180,10 +182,10 @@ function genSheet(F,upd){
   const g=S.gen,fs=genTargets(),idx=fs.indexOf(F);S.gsel=F.path;const p=()=>g.per[F.path]||(g.per[F.path]={});
   const cur=genIconSrc(F,g),ps=g.per[F.path]||{},sug=icSuggest(F).map(n=>'t:'+n),icons=['orig','png',...(cur.startsWith('t:')||cur.startsWith('lib:')||cur.startsWith('my:'))&&!sug.includes(cur)?[cur]:[],...sug,'all'];
   S.icRedraw=IC.st===2?null:()=>{if($('#gs-ic'))genSheet(F,upd)};if(IC.st!==2)icLoad();
-  const icT=k=>k==='orig'?'Original':k==='png'?(ps.png?'Mi imagen':'Mi icono'):k==='all'?'Ver todos':k.startsWith('lib:')?ICONL[k.slice(4)]||k:keyLabel(k);
+  const icT=k=>k==='orig'?'Original':k==='png'?(ps.png?'Mi imagen':'Mis iconos'):k==='all'?'Ver todos':k.startsWith('lib:')?ICONL[k.slice(4)]||k:keyLabel(k);
   openBS(`<div class="gsh"><div class="screen"><canvas id="gs-pv" width="800" height="480" aria-label="Vista previa de Inicio con ${esc(pretty(F))} marcado"></canvas></div>
       <div class="e-bar"><div><h2>${esc(pretty(F))}</h2></div><span class="sp"></span><div class="seg" id="gs-st" role="group" aria-label="Estado"><button data-s="0" aria-pressed="${!S.gstate}">Reposo</button><button data-s="1" aria-pressed="${S.gstate===1}">Pulsado</button></div></div></div>
-    <p class="lbl">Icono</p>
+    <p class="lbl">Icono</p><p class="note" style="margin:-4px 0 2px">Toca uno. Para subir el tuyo (PNG o SVG): «Mis iconos». Para buscar entre 3.800: «Ver todos».</p>
     <div class="icg" id="gs-ic">${icons.map(k=>`<button class="icb${k==='all'?' all':''}" data-k="${k}" aria-pressed="${cur===k}" title="${esc(icT(k))}"><canvas width="88" height="88" data-ico="${k}"></canvas><span>${esc(icT(k))}</span></button>`).join('')}</div>
     <p class="lbl">Color de este botón</p>
     <div id="gs-col">${swatches(ps.hue!=null?ps.hue:'none',{none:'Como el resto',label:'Color de este botón'})}</div>
