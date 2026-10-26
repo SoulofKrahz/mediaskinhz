@@ -16,7 +16,7 @@ const SCRBG=new Map(SCREENS.map(s=>[s[0],s[2]])),SCRL=new Map(SCREENS.map(s=>[s[
 const SCRSEC={home:'HOME',media:'MEDIA',phone:'PHONE',radio:'FM RADIO',eco:'ECO',setting:'SETTING'};
 const SECSCR={'HOME':'home','COMMON':'home','FM RADIO':'radio','MEDIA':'media','PHONE':'phone','SETTING':'setting','ECO':'eco'};
 const HUES=[['Rojo',2],['Naranja',24],['Ámbar',44],['Lima',82],['Verde',130],['Esmeralda',156],['Turquesa',182],['Azul',210],['Índigo',236],['Violeta',266],['Magenta',298],['Rosa',330]];
-const FAMN=['Rojos','Naranjas','Amarillos','Limas','Verdes','Verdes azulados','Cianes','Azules claros','Azules','Violetas','Magentas','Rosas','Blancos y grises'];
+const FAMN=['Rojos','Naranjas','Amarillos','Limas','Verdes','Verdes azulados','Cianes','Azules claros','Azules','Violetas','Magentas','Rosas','Blancos y grises','Negros y fondo'];
 const PRETTY={home_navi_btn:'Navegación',home_radio_btn:'Radio',home_media_btn:'Multimedia',home_phone_btn:'Teléfono','home_driving eco_btn':'Driving eco',home_setting_btn:'Ajustes',home_map_btn:'Mapa',home_smartphone_btn:'Smartphone',home_vehicle_renault_btn:'Vehículo (Renault)',home_vehicle_dacia_btn:'Vehículo (Dacia)','home_phone_second line_btn':'Teléfono, 2.ª línea','home_smartphone_second line_btn':'Smartphone, 2.ª línea',home_dark_btn:'Apagar pantalla',home_dark_icon:'Icono de apagar pantalla','home_set time_btn':'Ajustar hora',home_bg:'Fondo de Inicio',media_bg:'Fondo de Multimedia',phone_bg:'Fondo de Teléfono',fmradio_bg:'Fondo de Radio',eco_bg:'Fondo de Driving eco',setting_bg:'Fondo de Ajustes',etc_bg:'Fondo de avisos',common_indi_line:'Barra superior'};
 const WORDS={ff:'avance',rew:'retroceso',control:'control',dot:'punto',sound:'sonido',source:'fuente',info:'información',tp:'tráfico',ta:'tráfico',rds:'RDS',fm:'FM',am:'AM',dab:'DAB',usb:'USB',ipod:'iPod',aux:'auxiliar',bt:'Bluetooth',mute:'silencio',contact:'contactos',contacts:'contactos',dial:'marcar',keypad:'teclado',history:'historial',sms:'SMS',arrow:'flecha',left:'izquierda',right:'derecha',check:'casilla',on:'activado',off:'desactivado',select:'seleccionado',focus:'enfocado',tab:'pestaña',title:'título',bottom:'inferior',top:'superior',btn:'botón',icon:'icono',bg:'fondo',img:'imagen',indi:'indicador',softkey:'tecla',back:'atrás',list:'lista',press:'pulsado',scroll:'desplazamiento',scroll2:'desplazamiento 2',up:'arriba',down:'abajo',volume:'volumen',clock:'reloj',number:'número',antenna:'antena',battery:'batería',temp:'temperatura',line:'línea',dark:'oscuro',empty:'vacía',caution:'aviso',key:'tecla',authentication:'código',inputbox:'casilla',font:'cifras',colon:'dos puntos',ring:'timbre',call:'llamada',navi:'navegación',home:'inicio',popup:'ventana',confirm:'confirmar',update:'actualización',gage:'progreso',other:'otro',mobile:'móvil',office:'oficina',parting:'separador',bar:'barra',set:'ajustar',time:'hora',active:'activo',inactive:'inactivo',pull:'tirador',semicolon:'dos puntos',playing:'reproduciendo',play:'reproducir',pause:'pausa',next:'siguiente',prev:'anterior',repeat:'repetir',shuffle:'aleatorio',search:'buscar',menu:'menú',page:'página',pagenumber:'número de página',star:'estrella',scoring:'puntuación',coaching:'consejos',blower:'ventilador',statusbar:'barra de estado',loading:'cargando',connecting:'conectando',ani:'animación',device:'dispositivo',preset:'presintonía',nowplay:'sonando',keyboard:'teclado',missed:'perdidas',num:'número',fulldown:'desplegable',ine:'línea',changekey:'cambio de código',second:'segunda',smartphone:'smartphone',vehicle:'vehículo',map:'mapa',setting:'ajustes',media:'multimedia',phone:'teléfono',radio:'radio',eco:'eco',driving:'conducción'};
 const S={files:[],lc:new Map(),root:'M1',demo:true,png:0,errs:[],ops:{global:null,sec:{},file:{}},ex:{},frames:{},ver:1,layout:null,src:new Map(),
@@ -57,14 +57,15 @@ const hasMap=o=>!!(o&&o.map&&Object.keys(o.map).length);
 const empty=o=>!o||(isId(o)&&!hasMap(o));
 function stats(F){const B=baseOf(F);if(F.stB===B)return F.st;
   const n=B.pal.length/3,cnt=new Uint32Array(256);for(let i=0;i<B.idx.length;i++)cnt[B.idx[i]]++;
-  const bk=new Int8Array(n),lmax=new Float32Array(13),fam=new Map();let tot=0;
+  const bk=new Int8Array(n),lmax=new Float32Array(14),fam=new Map();let tot=0;
   for(let i=0;i<n;i++){const r=B.pal[i*3],g=B.pal[i*3+1],b=B.pal[i*3+2];if(isKey(r,g,b)){bk[i]=-2;continue}
-    const [h,s,l]=rgb2hsl(r,g,b),C=(Math.max(r,g,b)-Math.min(r,g,b))/255,k=l<.07?-1:(s<.16||l>.95||C<.09)?12:Math.round(h/30)%12;bk[i]=k;tot+=cnt[i];
-    if(k>=0&&cnt[i]){if(l>lmax[k])lmax[k]=l;const f=fam.get(k)||{k,n:0,top:0,ti:i};f.n+=cnt[i];const w=k===12?cnt[i]*(.15+l*l):cnt[i]*C*C;if(w>f.top){f.top=w;f.ti=i}fam.set(k,f)}}
+    const [h,s,l]=rgb2hsl(r,g,b),C=(Math.max(r,g,b)-Math.min(r,g,b))/255,k=l<.07?13:(s<.16||l>.95||C<.09)?12:Math.round(h/30)%12;bk[i]=k;tot+=cnt[i];
+    if(k>=0&&cnt[i]){if(l>lmax[k])lmax[k]=l;const f=fam.get(k)||{k,n:0,top:0,ti:i};f.n+=cnt[i];const w=k===13?cnt[i]:k===12?cnt[i]*(.15+l*l):cnt[i]*C*C;if(w>f.top){f.top=w;f.ti=i}fam.set(k,f)}}
   F.st={bk,lmax,fam,tot};F.stB=B;return F.st}
 function mapColor(c,m,k,st){const [h,s,l]=rgb2hsl(c[0],c[1],c[2]);
   if(m.white)return hsl2rgb(h,0,k===12?l:cl(l*1.08));
   if(k===12){const lm=st.lmax[12]||1;return hsl2rgb(m.to,m.ts,cl(l*(m.tl/lm)))}
+  if(k===13){const lm=Math.max(st.lmax[13],.01),f=l/lm;return hsl2rgb(m.to,m.ts,cl(m.tl+f*Math.min(.07,1-m.tl)+f*m.tl*.35))}
   return hsl2rgb(m.to,cl(s*cl(m.ts/.72,.05,1.4)),l)}
 function getEP(F){
   if(F.epv===S.ver)return F.ep;
@@ -106,9 +107,9 @@ function setFileOps(F,v){if(empty(v))delete S.ops.file[F.path];else S.ops.file[F
 /* ============ deshacer ============ */
 const H=[];
 const genCopy=g=>g?{...g,per:Object.fromEntries(Object.entries(g.per||{}).map(([k,p])=>[k,{...p}]))}:null;
-function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep])}}
+function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),icx:structuredClone(S.icx||{}),reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep])}}
 function before(){H.push(snap());if(H.length>80)H.shift();updUndo()}
-function undo(){const s=H.pop();if(!s)return;Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
+function undo(){const s=H.pop();if(!s)return;Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen,icx:s.icx||{}});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
   S.ver++;render(true);toast('Cambio deshecho');saveState()}
 function updUndo(){$('#ab-undo').disabled=!H.length}
 function bump(){S.ver++;schedule()}
@@ -176,8 +177,8 @@ const idb={db:null,open(){if(this.db)return Promise.resolve(this.db);return new 
 let saveT=0;
 function saveState(now){if(S.demo)return Promise.resolve();clearTimeout(saveT);const run=()=>{const reps={};for(const F of S.files)if(F.rep)reps[F.path]={pal:F.rep.pal,idx:F.rep.idx,keyIdx:F.rep.keyIdx};
   let gen=null;if(S.gen){gen={...S.gen,per:{}};for(const [k,p] of Object.entries(S.gen.per||{}))gen.per[k]={icon:p.icon==='png'?undefined:p.icon,hue:p.hue}}
-  return idb.set('state',{v:2,ops:S.ops,ex:S.ex,frames:S.frames,layout:S.layout,reps,gen}).catch(()=>{})};if(now)return run();saveT=setTimeout(run,600)}
-function applyState(st){if(!st)return;S.ops=st.ops||S.ops;if(st.gen)S.gen=st.gen;S.ex=st.ex||{};S.frames=st.frames||{};if(st.layout&&!(st.layout.slots&&st.layout.slots[0]&&st.layout.slots[0].x===75&&st.layout.slots[0].y===134))S.layout=st.layout;
+  return idb.set('state',{v:2,ops:S.ops,ex:S.ex,frames:S.frames,layout:S.layout,reps,gen,icx:S.icx||{}}).catch(()=>{})};if(now)return run();saveT=setTimeout(run,600)}
+function applyState(st){if(!st)return;S.ops=st.ops||S.ops;S.icx=st.icx||{};if(st.gen)S.gen=st.gen;S.ex=st.ex||{};S.frames=st.frames||{};if(st.layout&&!(st.layout.slots&&st.layout.slots[0]&&st.layout.slots[0].x===75&&st.layout.slots[0].y===134))S.layout=st.layout;
   for(const [p,r] of Object.entries(st.reps||{})){const F=S.lc.get(p.toLowerCase());if(F&&r.idx&&r.idx.length===F.w*F.h){F.rep={pal:r.pal,idx:r.idx,keyIdx:r.keyIdx};if(r.exempt&&S.ex[F.path]===undefined)S.ex[F.path]=true}}S.ver++}
 function remember(){try{localStorage.setItem('skinhz-ui',JSON.stringify({cat:S.cat,grid:S.gridOn,gs:S.gridSize,snap:S.snap,scr:S.scr}))}catch(_){}}
 function recall(){let u={};try{u=JSON.parse(localStorage.getItem('skinhz-ui')||'{}')||{}}catch(_){}
@@ -364,12 +365,12 @@ function famUI(el,ctx,famsFn,get,set,soft){
   el.dataset.sig=fams.map(f=>f.k).join(',');
   el.innerHTML=`<div class="fams">${fams.map(f=>{const m=map[f.k],open=S.famOpen===ctx+':'+f.k,sel=m?(m.white?'white':HUES.some(h=>h[1]===m.to)?m.to:'custom'):null;
     return `<div class="fam${open?' open':''}" data-k="${f.k}"><button class="fam-h" aria-expanded="${open}"><span class="dual" style="--a:${rgbs(f.orig)};--b:${rgbs(f.now)}"></span><span class="fam-t"><b>${FAMN[f.k]}</b><small>${pct(f.share)}</small></span><span class="fam-s${m?' on':''}">${m?'→ '+targetName(m):'Sin cambiar'}</span>${CHEV}</button>
-    ${open?`<div class="fam-p"><p class="note">Cambiar los ${FAMN[f.k].toLowerCase()} por:</p>${swatches(sel,{white:true,label:'Nuevo color'})}${m?'<button class="btn o sm" data-keep>Dejar como estaba</button>':''}</div>`:''}</div>`}).join('')}</div>`;
+    ${open?`<div class="fam-p">${f.k===13?`<p class="note">El negro pasa a un tono oscuro del color que elijas y los casi negros se escalan con él, así se conserva el degradado.${ctx.startsWith('t:')?' <b>Ojo: aquí afecta a todos los fondos, recuadros y sombras de '+(ctx==='t:global'?'toda la radio':'esta sección')+'.</b>':''} Para un fondo claro o vivo, mejor sustituir la imagen.</p>`:''}<p class="note">Cambiar los ${FAMN[f.k].toLowerCase()} por:</p>${swatches(sel,{white:f.k!==13,label:'Nuevo color'})}${m?'<button class="btn o sm" data-keep>Dejar como estaba</button>':''}</div>`:''}</div>`}).join('')}</div>`;
   const cur=()=>({...defOps(),...(get()||{}),map:{...((get()||{}).map||{})}});
   el.querySelectorAll('.fam').forEach(fe=>{const k=+fe.dataset.k;
     fe.querySelector('.fam-h').onclick=()=>{S.famOpen=S.famOpen===ctx+':'+k?null:ctx+':'+k;famUI(el,ctx,famsFn,get,set)};
-    const sw=fe.querySelector('.swg');if(sw){sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;before();const n=cur();n.map[k]=b.dataset.h==='white'?{white:true}:{to:+b.dataset.h,ts:.72,tl:.5};set(n);bump();famUI(el,ctx,famsFn,get,set)};
-      fe.querySelector('[data-pick]').onchange=e=>{before();const [h,s,l]=hexHsl(e.target.value),n=cur();n.map[k]={to:Math.round(h),ts:s,tl:Math.max(.15,l)};set(n);bump();famUI(el,ctx,famsFn,get,set)}}
+    const sw=fe.querySelector('.swg');if(sw){sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;before();const n=cur();n.map[k]=b.dataset.h==='white'?{white:true}:k===13?{to:+b.dataset.h,ts:.6,tl:.1}:{to:+b.dataset.h,ts:.72,tl:.5};set(n);bump();famUI(el,ctx,famsFn,get,set)};
+      fe.querySelector('[data-pick]').onchange=e=>{before();const [h,s,l]=hexHsl(e.target.value),n=cur();n.map[k]={to:Math.round(h),ts:s,tl:k===13?Math.min(.85,l):Math.max(.15,l)};set(n);bump();famUI(el,ctx,famsFn,get,set)}}
     const kp=fe.querySelector('[data-keep]');if(kp)kp.onclick=()=>{before();const n=cur();delete n.map[k];set(n);bump();famUI(el,ctx,famsFn,get,set)}});
 }
 
@@ -475,14 +476,14 @@ function paneColor(p,F){
   famUI($('#e-fam'),'f:'+F.path,()=>famsOfFiles([F]),get,set);tintUI($('#e-tint'),'e',get,set,null);fineUI($('#e-fn'),'ef',get,set);
   $('#e-ex').onchange=e=>{before();if(e.target.checked)delete S.ex[F.path];else S.ex[F.path]=true;bump();again()};
   $$('[data-th]',p).forEach(b=>b.onclick=()=>{S.scope=b.dataset.th;go({n:'theme'})});
-  $('#e-rs').onclick=async()=>{if(F.rep&&!await confirmBS({title:'Restaurar el original',text:'Se quitará la imagen nueva y los colores propios de esta imagen. Podrás deshacerlo.',ok:'Restaurar',danger:true}))return;before();F.rep=null;delete S.ops.file[F.path];delete S.ex[F.path];delete S.frames[F.path];S.src.delete(F.path);S.eFor=null;bump();render(true);toast('Imagen restaurada',{label:'Deshacer',fn:undo})};
+  $('#e-rs').onclick=async()=>{if(F.rep&&!await confirmBS({title:'Restaurar el original',text:'Se quitará la imagen nueva y los colores propios de esta imagen. Podrás deshacerlo.',ok:'Restaurar',danger:true}))return;before();F.rep=null;delete S.ops.file[F.path];delete S.ex[F.path];delete S.frames[F.path];S.src.delete(F.path);if(S.icx)delete S.icx[F.path];S.eFor=null;bump();render(true);toast('Imagen restaurada',{label:'Deshacer',fn:undo})};
   let t=0;S.slow=()=>{clearTimeout(t);t=setTimeout(()=>{if(!p.isConnected||S.eTab!=='color')return;const aps=p.querySelectorAll('.ap small');const G2=S.ops.global,C2=S.ops.sec[F.sec],P2=S.ops.file[F.path],ex2=!!S.ex[F.path];
     if(aps[0])aps[0].textContent=ex2?'Ignorado en esta imagen':describe(G2)||'Ninguno';if(aps[1])aps[1].textContent=ex2?'Ignorado en esta imagen':describe(C2)||'Ninguno';if(aps[2])aps[2].textContent=describe(P2)||'Nada';
     const ds=p.querySelectorAll('.ap .dt');if(ds[2])ds[2].style.background=opsDot(P2)||'var(--bd2)';p.querySelectorAll('.ap')[2].classList.toggle('off',empty(P2))},50)};
 }
 function paneImg(p,F){
   const fr=frames(F),fw=F.w/fr,src=S.src.get(F.path)||{fit:'cover',target:'all',dither:true};S.src.set(F.path,src);
-  p.innerHTML=`<div class="card"><h3>Sustituir por otra imagen</h3>
+  p.innerHTML=`${kindOf(F)!=='bg'?icCard(F):''}<div class="card"><h3>Sustituir por otra imagen</h3>
     <button class="drop" id="i-pick"><span class="ic">${ic('M4 16l4.6-4.6a2 2 0 0 1 2.8 0L16 16M14 14l1.6-1.6a2 2 0 0 1 2.8 0L20 14M14 8h.01M6 20h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z')}</span><span><b>${src.bmp?'Elegir otra imagen':'Elegir una foto o un PNG'}</b><small>Se ajusta sola a ${fw} × ${F.h} px${fr>1?' por estado':''} y se guarda como BMP de 8 bits.</small></span></button>
     <div class="field"><span class="lbl">Cómo encajarla</span><div class="seg" id="i-fit">${[['cover','Rellenar'],['contain','Encajar'],['stretch','Estirar']].map(([v,l])=>`<button data-v="${v}" aria-pressed="${src.fit===v}">${l}</button>`).join('')}</div></div>
     ${fr>1?`<div class="field"><span class="lbl">Dónde ponerla</span><div class="chips" id="i-tg"><button class="chip" data-t="all" aria-pressed="${src.target==='all'}">Todos los estados</button>${[...Array(fr).keys()].map(i=>`<button class="chip" data-t="${i}" aria-pressed="${src.target===String(i)}">${i===0?'Reposo':i===1?'Pulsado':'Estado '+(i+1)}</button>`).join('')}</div></div>`:''}
@@ -490,11 +491,11 @@ function paneImg(p,F){
     <p class="note">${F.keyCount?'Las zonas transparentes de tu PNG pasan a ser transparentes en el MediaNav.':'Esta imagen no usa transparencia: las zonas transparentes de tu PNG quedarán en negro.'}</p></div>
     ${S.layout.slots.some(sl=>sl.p===F.path)?`<div class="list"><button class="li" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><span class="tx"><b>Rediseñar los botones de Inicio</b><small>Crea los 4 estados con otro estilo, forma o icono</small></span>${CHEV}</button></div>`:''}
     ${F.rep?`<div class="card"><h3>Ya tiene una imagen nueva</h3><p class="note">Puedes cambiarle los colores en la pestaña Color o volver a la original.</p><button class="btn dg wide" id="i-rs">Quitar la imagen nueva</button></div>`:''}`;
-  $('#in-img').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)useImage(F,f)};$('#i-pick').onclick=()=>$('#in-img').click();
+  $('#in-img').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)useImage(F,f)};$('#i-pick').onclick=()=>$('#in-img').click();if($('#ic-pick'))icBind(F);
   $('#i-fit').onclick=e=>{const b=e.target.closest('button');if(!b)return;src.fit=b.dataset.v;$$('#i-fit button').forEach(x=>x.setAttribute('aria-pressed',x===b));if(src.bmp){before();reapply(F)}};
   const tg=$('#i-tg');if(tg)tg.onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;src.target=b.dataset.t;tg.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===b));if(src.target!=='all'){S.eState=+src.target;render(true)}};
   $('#i-di').onchange=e=>{src.dither=e.target.checked;if(src.bmp){before();reapply(F)}};
-  const rs=$('#i-rs');if(rs)rs.onclick=async()=>{if(!await confirmBS({title:'Quitar la imagen nueva',text:'Volverá la imagen original. Podrás deshacerlo.',ok:'Quitar',danger:true}))return;before();F.rep=null;S.src.delete(F.path);delete S.ex[F.path];bump();render(true);toast('Imagen nueva quitada',{label:'Deshacer',fn:undo})};
+  const rs=$('#i-rs');if(rs)rs.onclick=async()=>{if(!await confirmBS({title:'Quitar la imagen nueva',text:'Volverá la imagen original. Podrás deshacerlo.',ok:'Quitar',danger:true}))return;before();F.rep=null;S.src.delete(F.path);if(S.icx)delete S.icx[F.path];delete S.ex[F.path];bump();render(true);toast('Imagen nueva quitada',{label:'Deshacer',fn:undo})};
 }
 function paneInfo(p,F){const fr=frames(F),fw=F.w/fr,opts=[1,2,3,4,5,6,8].filter(n=>F.w%n===0&&F.w/n>=4);
   p.innerHTML=`<div class="card"><dl class="facts">
@@ -510,7 +511,7 @@ function paneInfo(p,F){const fr=frames(F),fw=F.w/fr,opts=[1,2,3,4,5,6,8].filter(
   $('#n-fr').onclick=e=>{const b=e.target.closest('[data-n]');if(!b)return;before();const n=+b.dataset.n;if(n===F.fdef)delete S.frames[F.path];else S.frames[F.path]=n;S.eFor=null;F.cv=null;bump();render(true)};
 }
 async function useImage(F,file){let bmp;try{bmp=await createImageBitmap(file)}catch(_){toast('No puedo abrir esa imagen. Prueba con PNG o JPG.');return}
-  const src=S.src.get(F.path)||{fit:'cover',target:'all',dither:true};S.src.set(F.path,src);src.bmp=bmp;src.base=null;before();
+  const src=S.src.get(F.path)||{fit:'cover',target:'all',dither:true};S.src.set(F.path,src);src.bmp=bmp;src.base=null;before();if(S.icx)delete S.icx[F.path];
   if(!F.rep&&S.ex[F.path]===undefined)S.ex[F.path]=true;await reapply(F,true);S.eTab='img';render(true);toast('Imagen sustituida',{label:'Deshacer',fn:undo})}
 async function reapply(F,fresh){
   const src=S.src.get(F.path);if(!src||!src.bmp)return;const fr=frames(F),fw=F.w/fr;

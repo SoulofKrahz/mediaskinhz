@@ -82,6 +82,19 @@ async function run(browser, label, viewport, mobile) {
   await p.evaluate(() => undo()); await p.waitForTimeout(500);
   ok(await p.evaluate(() => updBadge()) > 0, 'deshacer los recupera');
 
+  // Biblioteca de iconos: en el editor de un botón, buscar en español y poner un icono
+  await p.evaluate(() => { const F = S.files.find(f => kindOf(f) === 'btn'); go({ n: 'edit', p: F.path }); S.eTab = 'img'; render(true); }); await p.waitForTimeout(500);
+  ok(await p.locator('#ic-pick').count() === 1, 'el editor ofrece «Poner un icono de la biblioteca»');
+  await tap('#ic-pick'); await p.waitForTimeout(1500);
+  ok(await p.locator('#ip-g .icb').count() > 20, 'la biblioteca de iconos se descarga y muestra la selección para la radio');
+  await p.fill('#ip-q', 'música'); await p.waitForTimeout(500);
+  ok((await p.locator('#ip-g .icb span').first().innerText()) === 'Música', 'el buscador entiende español («música» → Música)');
+  await tap('#ip-g .icb'); await p.waitForTimeout(800);
+  ok(await p.evaluate(() => { const F = S.curF; return !!F.rep && S.icx[F.path] && S.icx[F.path].k === 't:music' && outBytes(F).length === 1078 + (((F.w + 3) & ~3) * F.h); }), 'pone el icono y el BMP sale con el tamaño correcto');
+  await p.evaluate(() => undo()); await p.waitForTimeout(400);
+  ok(await p.evaluate(() => !S.curF.rep), 'deshacer quita el icono');
+  // Familia «Negros y fondo»
+  ok(await p.evaluate(() => { const F = S.files.find(f => /HOME_BG/i.test(f.path)); return famsOfFiles([F]).some(f => f.k === 13); }), 'el fondo de Inicio ofrece la familia «Negros y fondo»');
   // Exportar (ejemplo) → descarga un ZIP
   await p.evaluate(() => go({ n: 'export' })); await p.waitForTimeout(600);
   const btn = p.locator('#view button', { hasText: /Descargar|Exportar/ }).last();

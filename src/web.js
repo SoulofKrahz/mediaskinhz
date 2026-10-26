@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-26-4.1';
+const VER='2026-10-26-5';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,7 +11,13 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Corregido: el icono al instalar salía siempre verde; ahora toma el color elegido']],
+  [VER,['Biblioteca de iconos coherente (Tabler Icons): unos 3.800 iconos con el mismo estilo, buscador en español y una selección «Para la radio»',
+    'Trazo común para todos los iconos (fino, normal, grueso o relleno): cambiarlo actualiza a la vez todos los botones e imágenes',
+    'En «Rediseñar los botones», cada botón propone los iconos que encajan con él y «Ver todos» abre el buscador',
+    'En cualquier imagen (Sustituir → Poner un icono de la biblioteca): quita el icono que tiene, rehace el fondo y pone el nuevo en su sitio con los colores de cada estado',
+    'Nueva familia de color «Negros y fondo»: cambia el negro de los fondos a un tono oscuro de cualquier color conservando el degradado',
+    'La página declara su codificación (los acentos ya no dependen del servidor)']],
+  ['2026-10-26-4.1',['Corregido: el icono al instalar salía siempre verde; ahora toma el color elegido']],
   ['2026-10-26-4',['Color de la app, como en Noticiahz: 10 colores o cualquiera con el selector, en Ajustes e historial → Pantalla. El contraste se ajusta solo',
     'Al instalar la app, el icono toma el color que tengas en ese momento y ya no cambia (para cambiarlo, reinstálala)']],
   ['2026-10-26-3',['Exportación «Automático»: el ZIP trae un script de MortScript que, en la radio, guarda lo que hay, copia las imágenes, comprueba cada una y deja todo como estaba si algo falla. Ofrece reiniciar al terminar',
@@ -66,7 +72,7 @@ function openCredits(){openBS(`<h2>Créditos y licencia</h2><div class="chgl">
   <section><h4>Mediaskinhz</h4><p class="note">Diseñado y creado por <b>Krahz</b>. Herramienta personal para cambiar la apariencia de la radio MediaNav del Renault Clio 4.</p></section>
   <section><h4>Formato de actualización</h4><p class="note">El archivo upgrade.lgu se genera siguiendo <b>dir2lgu</b>, del proyecto <a href="https://github.com/yosicovich/MediaNavMods" target="_blank" rel="noopener">MediaNavMods</a> de yosicovich (licencia GPL-3.0).</p></section>
   <section><h4>Licencia</h4><p class="note">Por usar ese trabajo, Mediaskinhz se publica con licencia <b>GPL-3.0</b>: puedes usarla, estudiarla y modificarla, y quien distribuya una versión modificada debe compartir también su código con la misma licencia.</p></section>
-  <section><h4>Tipografías e iconos</h4><p class="note">Inter y Newsreader (SIL Open Font License), servidas por Google Fonts. Los iconos de los botones están dibujados para esta app.</p></section>
+  <section><h4>Tipografías e iconos</h4><p class="note">Inter y Newsreader (SIL Open Font License), servidas por Google Fonts. La biblioteca de iconos es <a href="https://tabler.io/icons" target="_blank" rel="noopener">Tabler Icons</a>, de Paweł Kuna (licencia MIT, ver iconos-LICENCIA.txt).</p></section>
   <section><h4>Aviso</h4><p class="note">No tiene relación con Renault ni con LG. MediaNav es una marca de Renault. Modificar la radio es bajo tu responsabilidad: guarda siempre una copia de la carpeta original.</p></section>
   <section><h4>Privacidad</h4><p class="note">Tu backup, tus diseños y el historial se quedan en este navegador. La app no envía imágenes ni datos a ningún servidor.</p></section>
   </div><button class="btn wide" data-x>Cerrar</button>`);$('#bs [data-x]').onclick=closeBS}

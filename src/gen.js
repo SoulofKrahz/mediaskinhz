@@ -75,7 +75,7 @@ function drawState(x,F,w,h,s,H,g,bgc){
   const src=genIconSrc(F,g),p=g.per[F.path]||{},cx=w/2,cy=Y+Hh*(g.iy/100);
   if(src==='orig'){const mk=extractIcon(F);if(mk)drawMask(x,mk,cx,cy,g.is/56,ic,glow)}
   else if(src==='png'&&p.png){drawMask(x,p.png,cx,cy,g.is/96*1.15,ic,glow)}
-  else if(src.startsWith('lib:'))drawLib(x,src.slice(4),cx,cy,g.is,ic,glow);
+  else drawIconKey(x,src,cx,cy,g.is,ic,glow);
 }
 function genHue(F,g){const p=g.per[F.path]||{};if(p.hue!=null)return p.hue;return g.color==='orig'?origHue(F):g.hue}
 function genTile(F,g){const fr=frames(F),fw=F.w/fr,h=F.h,c=document.createElement('canvas');c.width=F.w;c.height=h;const x=c.getContext('2d');const H=genHue(F,g),bgc=cornerBase(F);
@@ -97,7 +97,7 @@ function miniTile(F,g,state){const fr=frames(F),fw=F.w/fr,c=document.createEleme
   const lb=LABELS[F.name.toLowerCase()];if(lb&&fw===210&&F.h===137){x.font='600 21px Tahoma,Inter,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillStyle=state%2===1?'#000':'#fff';x.fillText(lb,105,105.5,176)}return c}
 function putMini(cv,src){const x=cv.getContext('2d');cv.width=src.width;cv.height=src.height;x.drawImage(src,0,0)}
 function genSum(g){return {style:(GSTYLES.find(s=>s[0]===g.style)||GSTYLES[0])[1],shape:(GSHAPES.find(s=>s[0]===g.shape)||GSHAPES[1])[1]+(g.shape==='round'?` ${g.r} px`:'')+` · margen ${g.inset} px · esquinas ${g.corners==='key'?'transparentes':'del fondo'}`,
-  color:g.color==='orig'?'El de cada botón':'Uno para todos: '+hueName(g.hue).toLowerCase(),icons:`Tamaño ${g.is} px · altura ${g.iy} %`}}
+  color:g.color==='orig'?'El de cada botón':'Uno para todos: '+hueName(g.hue).toLowerCase(),icons:`Trazo ${(()=>{const s=icStyle();return s.fill?'relleno':(ISTY.find(x=>+x[0]===s.w)||[0,'normal'])[1].toLowerCase()})()} · tamaño ${g.is} px · altura ${g.iy} %`}}
 function scrGen(v){
   if(!S.gen)S.gen=defGen();const g=S.gen,fs=genTargets();if(!fs.length){v.innerHTML='<p class="empty">No hay botones de Inicio en el backup.</p>';return}
   setTitle('Rediseñar botones',`Inicio · ${fs.length} botones`);
@@ -113,6 +113,8 @@ function scrGen(v){
   const colorBody=`<div class="seg" id="g-cm"><button data-v="orig" aria-pressed="${g.color==='orig'}">El de cada botón</button><button data-v="one" aria-pressed="${g.color==='one'}">Uno para todos</button></div>
     ${g.color==='one'?swatches(g.hue,{label:'Color de los botones'}):'<p class="note">Cada botón conserva su color original. Puedes cambiar el de uno solo tocándolo en la pantalla.</p>'}`;
   const iconBody=`<p class="note">Para cambiar el icono de un botón, tócalo en la pantalla.</p>
+    <div class="field"><span class="lbl">Trazo de todos los iconos</span><div class="seg" id="g-iw">${ISTY.map(([v,l])=>{const s=icStyle(),on=v==='fill'?s.fill:!s.fill&&+v===s.w;return `<button data-v="${v}" aria-pressed="${on}">${l}</button>`}).join('')}</div>
+    <p class="note">Se aplica a la vez a todos los iconos de la biblioteca, también a los que pongas en otras imágenes. Así quedan coherentes.</p></div>
     <label class="rg" for="g-is"><span>Tamaño <output>${g.is} px</output></span><input type="range" id="g-is" min="24" max="96" value="${g.is}"></label>
     <label class="rg" for="g-iy"><span>Altura <output>${g.iy} %</output></span><input type="range" id="g-iy" min="20" max="70" value="${g.iy}"></label>
     <p class="note">El MediaNav escribe el nombre debajo, por eso los iconos van por encima del centro.</p>`;
@@ -137,6 +139,7 @@ function scrGen(v){
   const seg=(id,key)=>{const el=$(id);if(el)el.onclick=e=>{const b=e.target.closest('button[data-v]');if(!b)return;g[key]=b.dataset.v;render(true)}};seg('#g-co','corners');seg('#g-cm','color');
   $('#g-st').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;S.gstate=+b.dataset.s;$$('#g-st button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawPreview(c,po())};
   const rng=(id,key,suf)=>{const i=$(id);if(!i)return;paintRange(i);const out=i.closest('.rg').querySelector('output');i.oninput=()=>{g[key]=+i.value;out.textContent=i.value+suf;paintRange(i);upd()}};
+  const iw=$('#g-iw');if(iw)iw.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;setIconStyle(b.dataset.v);render(true)};
   rng('#g-r','r',' px');rng('#g-in','inset',' px');rng('#g-is','is',' px');rng('#g-iy','iy',' %');
   const cs=$('#g-acc .swg');if(cs){cs.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;g.hue=+b.dataset.h;cs.querySelectorAll('.swc').forEach(x=>x.setAttribute('aria-pressed',x===b));upd()};const cp=cs.querySelector('[data-pick]');if(cp)cp.onchange=e=>{g.hue=Math.round(hexHsl(e.target.value)[0]);upd()}}
   let down=-1;c.onpointerdown=e=>{const h=slotAt(c,e);down=h.i;if(h.i>=0){S.press=h.i;drawPreview(c,po())}};
@@ -149,11 +152,13 @@ function scrGen(v){
 }
 function genSheet(F,upd){
   const g=S.gen,fs=genTargets(),idx=fs.indexOf(F);S.gsel=F.path;const p=()=>g.per[F.path]||(g.per[F.path]={});
-  const icons=['orig',...Object.keys(ICONS).map(k=>'lib:'+k),'png'],cur=genIconSrc(F,g),ps=g.per[F.path]||{};
+  const cur=genIconSrc(F,g),ps=g.per[F.path]||{},sug=icSuggest(F).map(n=>'t:'+n),icons=['orig','png',...(cur.startsWith('t:')||cur.startsWith('lib:'))&&!sug.includes(cur)?[cur]:[],...sug,'all'];
+  S.icRedraw=IC.st===2?null:()=>{if($('#gs-ic'))genSheet(F,upd)};if(IC.st!==2)icLoad();
+  const icT=k=>k==='orig'?'Original':k==='png'?(ps.png?'Mi imagen':'Subir PNG'):k==='all'?'Ver todos':k.startsWith('t:')?icLabel(k.slice(2)):ICONL[k.slice(4)]||k;
   openBS(`<div class="gsh"><div class="screen"><canvas id="gs-pv" width="800" height="480" aria-label="Vista previa de Inicio con ${esc(pretty(F))} marcado"></canvas></div>
       <div class="e-bar"><div><h2>${esc(pretty(F))}</h2></div><span class="sp"></span><div class="seg" id="gs-st" role="group" aria-label="Estado"><button data-s="0" aria-pressed="${!S.gstate}">Reposo</button><button data-s="1" aria-pressed="${S.gstate===1}">Pulsado</button></div></div></div>
     <p class="lbl">Icono</p>
-    <div class="icg" id="gs-ic">${icons.map(k=>`<button class="icb" data-k="${k}" aria-pressed="${cur===k}" title="${k==='orig'?'Icono original':k==='png'?'Mi imagen':ICONL[k.slice(4)]}"><canvas width="88" height="88" data-ico="${k}"></canvas><span>${k==='orig'?'Original':k==='png'?(ps.png?'Mi imagen':'Subir PNG'):ICONL[k.slice(4)]}</span></button>`).join('')}</div>
+    <div class="icg" id="gs-ic">${icons.map(k=>`<button class="icb${k==='all'?' all':''}" data-k="${k}" aria-pressed="${cur===k}" title="${esc(icT(k))}"><canvas width="88" height="88" data-ico="${k}"></canvas><span>${esc(icT(k))}</span></button>`).join('')}</div>
     <p class="lbl">Color de este botón</p>
     <div id="gs-col">${swatches(ps.hue!=null?ps.hue:'none',{none:'Como el resto',label:'Color de este botón'})}</div>
     <div class="gnav"><button class="btn o sm" data-mv="-1"${idx<=0?' disabled':''}>‹ Anterior</button><button class="btn sm" data-done>Hecho</button><button class="btn o sm" data-mv="1"${idx>=fs.length-1?' disabled':''}>Siguiente ›</button></div>`);
@@ -165,10 +170,12 @@ function genSheet(F,upd){
   $$('#gs-ic canvas').forEach(cv=>{const k=cv.dataset.ico,x=cv.getContext('2d');x.clearRect(0,0,88,88);
     if(k==='orig'){const mk=extractIcon(F);if(mk)drawMask(x,mk,44,44,Math.min(70/mk.bw,70/mk.bh),col,0);else{x.fillStyle=col;x.font='600 13px Inter,sans-serif';x.textAlign='center';x.fillText('No hay',44,48)}}
     else if(k==='png'){const q=g.per[F.path]||{};if(q.png)drawMask(x,q.png,44,44,.72,col,0);else{x.strokeStyle=col;x.lineWidth=4;x.lineCap='round';x.lineJoin='round';x.beginPath();x.moveTo(44,62);x.lineTo(44,26);x.moveTo(30,40);x.lineTo(44,26);x.lineTo(58,40);x.moveTo(26,66);x.lineTo(62,66);x.stroke()}}
-    else drawLib(x,k.slice(4),44,44,52,col,0)});
+    else if(k==='all'){x.fillStyle=col;for(let i=0;i<3;i++)for(let j=0;j<3;j++){x.globalAlpha=i===1&&j===1?1:.45;x.beginPath();x.arc(28+i*16,28+j*16,4.5,0,7);x.fill()}x.globalAlpha=1}
+    else drawIconKey(x,k,44,44,52,col,0)});
   pv();
   $('#gs-ic').onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;const k=b.dataset.k;
     if(k==='png'){$('#in-img').onchange=async ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)return;try{p().png=pngMask(await createImageBitmap(f));p().icon='png';upd();genSheet(F,upd)}catch(_){toast('No puedo abrir esa imagen')}};$('#in-img').click();return}
+    if(k==='all'){iconPicker({title:'Icono para '+pretty(F),cur,back:()=>genSheet(F,upd),onPick:nk=>{p().icon=nk;upd();genSheet(F,upd)}});return}
     if(k==='orig'&&!extractIcon(F)){toast('No he podido separar el icono original de este botón');return}
     p().icon=k;$$('#gs-ic .icb').forEach(x=>x.setAttribute('aria-pressed',x===b));upd();pv()};
   const sw=$('#gs-col .swg');sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;p().hue=b.dataset.h==='none'?null:+b.dataset.h;sw.querySelectorAll('.swc').forEach(x=>x.setAttribute('aria-pressed',x===b));upd();pv()};

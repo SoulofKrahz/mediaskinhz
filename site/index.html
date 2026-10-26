@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Mediaskinhz</title>
 <meta name="description" content="Cambia la apariencia de la radio MediaNav del Renault Clio 4: colores, botones e iconos, desde el móvil.">
 <meta name="author" content="Krahz">
@@ -233,6 +234,12 @@ input[type=range].hue{--trk:linear-gradient(90deg,hsl(0 80% 50%),hsl(60 80% 50%)
 .swc.none{background:linear-gradient(135deg,var(--card) 44%,var(--bad) 45%,var(--bad) 55%,var(--card) 56%);color:var(--tx)}
 .swc.white{background:#fff;color:#111}
 .swc.pick{background:conic-gradient(red,#ff0,lime,cyan,blue,#f0f,red);overflow:hidden;cursor:pointer}
+.ipk{display:flex;flex-direction:column;gap:10px}.ipk-h{display:flex;align-items:center;gap:4px;margin-left:-8px}.ipk-h h2{font-size:19px}
+.ipq{width:100%;min-height:46px;padding:10px 14px;border:1px solid var(--bd2);border-radius:13px;background:var(--bg);color:var(--tx);font:inherit;font-size:16px}
+.ipq:focus{outline:2px solid var(--em2);outline-offset:1px}
+#ip-g{grid-template-columns:repeat(auto-fill,minmax(76px,1fr))}#ip-g .icb canvas{width:44px;height:44px}
+.icb.all span{color:var(--em);font-weight:600}
+.icrow{display:flex;align-items:center;gap:14px}.icrow canvas{width:56px;height:56px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);flex:none}
 .acs{display:flex;flex-wrap:wrap;gap:10px}.acs .swc{width:42px;min-width:42px}
 .acr{display:flex;align-items:center;gap:12px;padding-top:4px}.acr>span{flex:1;min-width:0;display:flex;flex-direction:column}.acr small{font-size:12.5px;color:var(--mu);line-height:1.4}
 .cpick{width:48px;height:40px;border:1px solid var(--bd);border-radius:10px;background:none;padding:2px;flex:none;cursor:pointer}
@@ -550,7 +557,7 @@ const SCRBG=new Map(SCREENS.map(s=>[s[0],s[2]])),SCRL=new Map(SCREENS.map(s=>[s[
 const SCRSEC={home:'HOME',media:'MEDIA',phone:'PHONE',radio:'FM RADIO',eco:'ECO',setting:'SETTING'};
 const SECSCR={'HOME':'home','COMMON':'home','FM RADIO':'radio','MEDIA':'media','PHONE':'phone','SETTING':'setting','ECO':'eco'};
 const HUES=[['Rojo',2],['Naranja',24],['Ámbar',44],['Lima',82],['Verde',130],['Esmeralda',156],['Turquesa',182],['Azul',210],['Índigo',236],['Violeta',266],['Magenta',298],['Rosa',330]];
-const FAMN=['Rojos','Naranjas','Amarillos','Limas','Verdes','Verdes azulados','Cianes','Azules claros','Azules','Violetas','Magentas','Rosas','Blancos y grises'];
+const FAMN=['Rojos','Naranjas','Amarillos','Limas','Verdes','Verdes azulados','Cianes','Azules claros','Azules','Violetas','Magentas','Rosas','Blancos y grises','Negros y fondo'];
 const PRETTY={home_navi_btn:'Navegación',home_radio_btn:'Radio',home_media_btn:'Multimedia',home_phone_btn:'Teléfono','home_driving eco_btn':'Driving eco',home_setting_btn:'Ajustes',home_map_btn:'Mapa',home_smartphone_btn:'Smartphone',home_vehicle_renault_btn:'Vehículo (Renault)',home_vehicle_dacia_btn:'Vehículo (Dacia)','home_phone_second line_btn':'Teléfono, 2.ª línea','home_smartphone_second line_btn':'Smartphone, 2.ª línea',home_dark_btn:'Apagar pantalla',home_dark_icon:'Icono de apagar pantalla','home_set time_btn':'Ajustar hora',home_bg:'Fondo de Inicio',media_bg:'Fondo de Multimedia',phone_bg:'Fondo de Teléfono',fmradio_bg:'Fondo de Radio',eco_bg:'Fondo de Driving eco',setting_bg:'Fondo de Ajustes',etc_bg:'Fondo de avisos',common_indi_line:'Barra superior'};
 const WORDS={ff:'avance',rew:'retroceso',control:'control',dot:'punto',sound:'sonido',source:'fuente',info:'información',tp:'tráfico',ta:'tráfico',rds:'RDS',fm:'FM',am:'AM',dab:'DAB',usb:'USB',ipod:'iPod',aux:'auxiliar',bt:'Bluetooth',mute:'silencio',contact:'contactos',contacts:'contactos',dial:'marcar',keypad:'teclado',history:'historial',sms:'SMS',arrow:'flecha',left:'izquierda',right:'derecha',check:'casilla',on:'activado',off:'desactivado',select:'seleccionado',focus:'enfocado',tab:'pestaña',title:'título',bottom:'inferior',top:'superior',btn:'botón',icon:'icono',bg:'fondo',img:'imagen',indi:'indicador',softkey:'tecla',back:'atrás',list:'lista',press:'pulsado',scroll:'desplazamiento',scroll2:'desplazamiento 2',up:'arriba',down:'abajo',volume:'volumen',clock:'reloj',number:'número',antenna:'antena',battery:'batería',temp:'temperatura',line:'línea',dark:'oscuro',empty:'vacía',caution:'aviso',key:'tecla',authentication:'código',inputbox:'casilla',font:'cifras',colon:'dos puntos',ring:'timbre',call:'llamada',navi:'navegación',home:'inicio',popup:'ventana',confirm:'confirmar',update:'actualización',gage:'progreso',other:'otro',mobile:'móvil',office:'oficina',parting:'separador',bar:'barra',set:'ajustar',time:'hora',active:'activo',inactive:'inactivo',pull:'tirador',semicolon:'dos puntos',playing:'reproduciendo',play:'reproducir',pause:'pausa',next:'siguiente',prev:'anterior',repeat:'repetir',shuffle:'aleatorio',search:'buscar',menu:'menú',page:'página',pagenumber:'número de página',star:'estrella',scoring:'puntuación',coaching:'consejos',blower:'ventilador',statusbar:'barra de estado',loading:'cargando',connecting:'conectando',ani:'animación',device:'dispositivo',preset:'presintonía',nowplay:'sonando',keyboard:'teclado',missed:'perdidas',num:'número',fulldown:'desplegable',ine:'línea',changekey:'cambio de código',second:'segunda',smartphone:'smartphone',vehicle:'vehículo',map:'mapa',setting:'ajustes',media:'multimedia',phone:'teléfono',radio:'radio',eco:'eco',driving:'conducción'};
 const S={files:[],lc:new Map(),root:'M1',demo:true,png:0,errs:[],ops:{global:null,sec:{},file:{}},ex:{},frames:{},ver:1,layout:null,src:new Map(),
@@ -591,14 +598,15 @@ const hasMap=o=>!!(o&&o.map&&Object.keys(o.map).length);
 const empty=o=>!o||(isId(o)&&!hasMap(o));
 function stats(F){const B=baseOf(F);if(F.stB===B)return F.st;
   const n=B.pal.length/3,cnt=new Uint32Array(256);for(let i=0;i<B.idx.length;i++)cnt[B.idx[i]]++;
-  const bk=new Int8Array(n),lmax=new Float32Array(13),fam=new Map();let tot=0;
+  const bk=new Int8Array(n),lmax=new Float32Array(14),fam=new Map();let tot=0;
   for(let i=0;i<n;i++){const r=B.pal[i*3],g=B.pal[i*3+1],b=B.pal[i*3+2];if(isKey(r,g,b)){bk[i]=-2;continue}
-    const [h,s,l]=rgb2hsl(r,g,b),C=(Math.max(r,g,b)-Math.min(r,g,b))/255,k=l<.07?-1:(s<.16||l>.95||C<.09)?12:Math.round(h/30)%12;bk[i]=k;tot+=cnt[i];
-    if(k>=0&&cnt[i]){if(l>lmax[k])lmax[k]=l;const f=fam.get(k)||{k,n:0,top:0,ti:i};f.n+=cnt[i];const w=k===12?cnt[i]*(.15+l*l):cnt[i]*C*C;if(w>f.top){f.top=w;f.ti=i}fam.set(k,f)}}
+    const [h,s,l]=rgb2hsl(r,g,b),C=(Math.max(r,g,b)-Math.min(r,g,b))/255,k=l<.07?13:(s<.16||l>.95||C<.09)?12:Math.round(h/30)%12;bk[i]=k;tot+=cnt[i];
+    if(k>=0&&cnt[i]){if(l>lmax[k])lmax[k]=l;const f=fam.get(k)||{k,n:0,top:0,ti:i};f.n+=cnt[i];const w=k===13?cnt[i]:k===12?cnt[i]*(.15+l*l):cnt[i]*C*C;if(w>f.top){f.top=w;f.ti=i}fam.set(k,f)}}
   F.st={bk,lmax,fam,tot};F.stB=B;return F.st}
 function mapColor(c,m,k,st){const [h,s,l]=rgb2hsl(c[0],c[1],c[2]);
   if(m.white)return hsl2rgb(h,0,k===12?l:cl(l*1.08));
   if(k===12){const lm=st.lmax[12]||1;return hsl2rgb(m.to,m.ts,cl(l*(m.tl/lm)))}
+  if(k===13){const lm=Math.max(st.lmax[13],.01),f=l/lm;return hsl2rgb(m.to,m.ts,cl(m.tl+f*Math.min(.07,1-m.tl)+f*m.tl*.35))}
   return hsl2rgb(m.to,cl(s*cl(m.ts/.72,.05,1.4)),l)}
 function getEP(F){
   if(F.epv===S.ver)return F.ep;
@@ -640,9 +648,9 @@ function setFileOps(F,v){if(empty(v))delete S.ops.file[F.path];else S.ops.file[F
 /* ============ deshacer ============ */
 const H=[];
 const genCopy=g=>g?{...g,per:Object.fromEntries(Object.entries(g.per||{}).map(([k,p])=>[k,{...p}]))}:null;
-function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep])}}
+function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),icx:structuredClone(S.icx||{}),reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep])}}
 function before(){H.push(snap());if(H.length>80)H.shift();updUndo()}
-function undo(){const s=H.pop();if(!s)return;Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
+function undo(){const s=H.pop();if(!s)return;Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen,icx:s.icx||{}});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
   S.ver++;render(true);toast('Cambio deshecho');saveState()}
 function updUndo(){$('#ab-undo').disabled=!H.length}
 function bump(){S.ver++;schedule()}
@@ -710,8 +718,8 @@ const idb={db:null,open(){if(this.db)return Promise.resolve(this.db);return new 
 let saveT=0;
 function saveState(now){if(S.demo)return Promise.resolve();clearTimeout(saveT);const run=()=>{const reps={};for(const F of S.files)if(F.rep)reps[F.path]={pal:F.rep.pal,idx:F.rep.idx,keyIdx:F.rep.keyIdx};
   let gen=null;if(S.gen){gen={...S.gen,per:{}};for(const [k,p] of Object.entries(S.gen.per||{}))gen.per[k]={icon:p.icon==='png'?undefined:p.icon,hue:p.hue}}
-  return idb.set('state',{v:2,ops:S.ops,ex:S.ex,frames:S.frames,layout:S.layout,reps,gen}).catch(()=>{})};if(now)return run();saveT=setTimeout(run,600)}
-function applyState(st){if(!st)return;S.ops=st.ops||S.ops;if(st.gen)S.gen=st.gen;S.ex=st.ex||{};S.frames=st.frames||{};if(st.layout&&!(st.layout.slots&&st.layout.slots[0]&&st.layout.slots[0].x===75&&st.layout.slots[0].y===134))S.layout=st.layout;
+  return idb.set('state',{v:2,ops:S.ops,ex:S.ex,frames:S.frames,layout:S.layout,reps,gen,icx:S.icx||{}}).catch(()=>{})};if(now)return run();saveT=setTimeout(run,600)}
+function applyState(st){if(!st)return;S.ops=st.ops||S.ops;S.icx=st.icx||{};if(st.gen)S.gen=st.gen;S.ex=st.ex||{};S.frames=st.frames||{};if(st.layout&&!(st.layout.slots&&st.layout.slots[0]&&st.layout.slots[0].x===75&&st.layout.slots[0].y===134))S.layout=st.layout;
   for(const [p,r] of Object.entries(st.reps||{})){const F=S.lc.get(p.toLowerCase());if(F&&r.idx&&r.idx.length===F.w*F.h){F.rep={pal:r.pal,idx:r.idx,keyIdx:r.keyIdx};if(r.exempt&&S.ex[F.path]===undefined)S.ex[F.path]=true}}S.ver++}
 function remember(){try{localStorage.setItem('skinhz-ui',JSON.stringify({cat:S.cat,grid:S.gridOn,gs:S.gridSize,snap:S.snap,scr:S.scr}))}catch(_){}}
 function recall(){let u={};try{u=JSON.parse(localStorage.getItem('skinhz-ui')||'{}')||{}}catch(_){}
@@ -898,12 +906,12 @@ function famUI(el,ctx,famsFn,get,set,soft){
   el.dataset.sig=fams.map(f=>f.k).join(',');
   el.innerHTML=`<div class="fams">${fams.map(f=>{const m=map[f.k],open=S.famOpen===ctx+':'+f.k,sel=m?(m.white?'white':HUES.some(h=>h[1]===m.to)?m.to:'custom'):null;
     return `<div class="fam${open?' open':''}" data-k="${f.k}"><button class="fam-h" aria-expanded="${open}"><span class="dual" style="--a:${rgbs(f.orig)};--b:${rgbs(f.now)}"></span><span class="fam-t"><b>${FAMN[f.k]}</b><small>${pct(f.share)}</small></span><span class="fam-s${m?' on':''}">${m?'→ '+targetName(m):'Sin cambiar'}</span>${CHEV}</button>
-    ${open?`<div class="fam-p"><p class="note">Cambiar los ${FAMN[f.k].toLowerCase()} por:</p>${swatches(sel,{white:true,label:'Nuevo color'})}${m?'<button class="btn o sm" data-keep>Dejar como estaba</button>':''}</div>`:''}</div>`}).join('')}</div>`;
+    ${open?`<div class="fam-p">${f.k===13?`<p class="note">El negro pasa a un tono oscuro del color que elijas y los casi negros se escalan con él, así se conserva el degradado.${ctx.startsWith('t:')?' <b>Ojo: aquí afecta a todos los fondos, recuadros y sombras de '+(ctx==='t:global'?'toda la radio':'esta sección')+'.</b>':''} Para un fondo claro o vivo, mejor sustituir la imagen.</p>`:''}<p class="note">Cambiar los ${FAMN[f.k].toLowerCase()} por:</p>${swatches(sel,{white:f.k!==13,label:'Nuevo color'})}${m?'<button class="btn o sm" data-keep>Dejar como estaba</button>':''}</div>`:''}</div>`}).join('')}</div>`;
   const cur=()=>({...defOps(),...(get()||{}),map:{...((get()||{}).map||{})}});
   el.querySelectorAll('.fam').forEach(fe=>{const k=+fe.dataset.k;
     fe.querySelector('.fam-h').onclick=()=>{S.famOpen=S.famOpen===ctx+':'+k?null:ctx+':'+k;famUI(el,ctx,famsFn,get,set)};
-    const sw=fe.querySelector('.swg');if(sw){sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;before();const n=cur();n.map[k]=b.dataset.h==='white'?{white:true}:{to:+b.dataset.h,ts:.72,tl:.5};set(n);bump();famUI(el,ctx,famsFn,get,set)};
-      fe.querySelector('[data-pick]').onchange=e=>{before();const [h,s,l]=hexHsl(e.target.value),n=cur();n.map[k]={to:Math.round(h),ts:s,tl:Math.max(.15,l)};set(n);bump();famUI(el,ctx,famsFn,get,set)}}
+    const sw=fe.querySelector('.swg');if(sw){sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;before();const n=cur();n.map[k]=b.dataset.h==='white'?{white:true}:k===13?{to:+b.dataset.h,ts:.6,tl:.1}:{to:+b.dataset.h,ts:.72,tl:.5};set(n);bump();famUI(el,ctx,famsFn,get,set)};
+      fe.querySelector('[data-pick]').onchange=e=>{before();const [h,s,l]=hexHsl(e.target.value),n=cur();n.map[k]={to:Math.round(h),ts:s,tl:k===13?Math.min(.85,l):Math.max(.15,l)};set(n);bump();famUI(el,ctx,famsFn,get,set)}}
     const kp=fe.querySelector('[data-keep]');if(kp)kp.onclick=()=>{before();const n=cur();delete n.map[k];set(n);bump();famUI(el,ctx,famsFn,get,set)}});
 }
 
@@ -1009,14 +1017,14 @@ function paneColor(p,F){
   famUI($('#e-fam'),'f:'+F.path,()=>famsOfFiles([F]),get,set);tintUI($('#e-tint'),'e',get,set,null);fineUI($('#e-fn'),'ef',get,set);
   $('#e-ex').onchange=e=>{before();if(e.target.checked)delete S.ex[F.path];else S.ex[F.path]=true;bump();again()};
   $$('[data-th]',p).forEach(b=>b.onclick=()=>{S.scope=b.dataset.th;go({n:'theme'})});
-  $('#e-rs').onclick=async()=>{if(F.rep&&!await confirmBS({title:'Restaurar el original',text:'Se quitará la imagen nueva y los colores propios de esta imagen. Podrás deshacerlo.',ok:'Restaurar',danger:true}))return;before();F.rep=null;delete S.ops.file[F.path];delete S.ex[F.path];delete S.frames[F.path];S.src.delete(F.path);S.eFor=null;bump();render(true);toast('Imagen restaurada',{label:'Deshacer',fn:undo})};
+  $('#e-rs').onclick=async()=>{if(F.rep&&!await confirmBS({title:'Restaurar el original',text:'Se quitará la imagen nueva y los colores propios de esta imagen. Podrás deshacerlo.',ok:'Restaurar',danger:true}))return;before();F.rep=null;delete S.ops.file[F.path];delete S.ex[F.path];delete S.frames[F.path];S.src.delete(F.path);if(S.icx)delete S.icx[F.path];S.eFor=null;bump();render(true);toast('Imagen restaurada',{label:'Deshacer',fn:undo})};
   let t=0;S.slow=()=>{clearTimeout(t);t=setTimeout(()=>{if(!p.isConnected||S.eTab!=='color')return;const aps=p.querySelectorAll('.ap small');const G2=S.ops.global,C2=S.ops.sec[F.sec],P2=S.ops.file[F.path],ex2=!!S.ex[F.path];
     if(aps[0])aps[0].textContent=ex2?'Ignorado en esta imagen':describe(G2)||'Ninguno';if(aps[1])aps[1].textContent=ex2?'Ignorado en esta imagen':describe(C2)||'Ninguno';if(aps[2])aps[2].textContent=describe(P2)||'Nada';
     const ds=p.querySelectorAll('.ap .dt');if(ds[2])ds[2].style.background=opsDot(P2)||'var(--bd2)';p.querySelectorAll('.ap')[2].classList.toggle('off',empty(P2))},50)};
 }
 function paneImg(p,F){
   const fr=frames(F),fw=F.w/fr,src=S.src.get(F.path)||{fit:'cover',target:'all',dither:true};S.src.set(F.path,src);
-  p.innerHTML=`<div class="card"><h3>Sustituir por otra imagen</h3>
+  p.innerHTML=`${kindOf(F)!=='bg'?icCard(F):''}<div class="card"><h3>Sustituir por otra imagen</h3>
     <button class="drop" id="i-pick"><span class="ic">${ic('M4 16l4.6-4.6a2 2 0 0 1 2.8 0L16 16M14 14l1.6-1.6a2 2 0 0 1 2.8 0L20 14M14 8h.01M6 20h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z')}</span><span><b>${src.bmp?'Elegir otra imagen':'Elegir una foto o un PNG'}</b><small>Se ajusta sola a ${fw} × ${F.h} px${fr>1?' por estado':''} y se guarda como BMP de 8 bits.</small></span></button>
     <div class="field"><span class="lbl">Cómo encajarla</span><div class="seg" id="i-fit">${[['cover','Rellenar'],['contain','Encajar'],['stretch','Estirar']].map(([v,l])=>`<button data-v="${v}" aria-pressed="${src.fit===v}">${l}</button>`).join('')}</div></div>
     ${fr>1?`<div class="field"><span class="lbl">Dónde ponerla</span><div class="chips" id="i-tg"><button class="chip" data-t="all" aria-pressed="${src.target==='all'}">Todos los estados</button>${[...Array(fr).keys()].map(i=>`<button class="chip" data-t="${i}" aria-pressed="${src.target===String(i)}">${i===0?'Reposo':i===1?'Pulsado':'Estado '+(i+1)}</button>`).join('')}</div></div>`:''}
@@ -1024,11 +1032,11 @@ function paneImg(p,F){
     <p class="note">${F.keyCount?'Las zonas transparentes de tu PNG pasan a ser transparentes en el MediaNav.':'Esta imagen no usa transparencia: las zonas transparentes de tu PNG quedarán en negro.'}</p></div>
     ${S.layout.slots.some(sl=>sl.p===F.path)?`<div class="list"><button class="li" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><span class="tx"><b>Rediseñar los botones de Inicio</b><small>Crea los 4 estados con otro estilo, forma o icono</small></span>${CHEV}</button></div>`:''}
     ${F.rep?`<div class="card"><h3>Ya tiene una imagen nueva</h3><p class="note">Puedes cambiarle los colores en la pestaña Color o volver a la original.</p><button class="btn dg wide" id="i-rs">Quitar la imagen nueva</button></div>`:''}`;
-  $('#in-img').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)useImage(F,f)};$('#i-pick').onclick=()=>$('#in-img').click();
+  $('#in-img').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)useImage(F,f)};$('#i-pick').onclick=()=>$('#in-img').click();if($('#ic-pick'))icBind(F);
   $('#i-fit').onclick=e=>{const b=e.target.closest('button');if(!b)return;src.fit=b.dataset.v;$$('#i-fit button').forEach(x=>x.setAttribute('aria-pressed',x===b));if(src.bmp){before();reapply(F)}};
   const tg=$('#i-tg');if(tg)tg.onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;src.target=b.dataset.t;tg.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===b));if(src.target!=='all'){S.eState=+src.target;render(true)}};
   $('#i-di').onchange=e=>{src.dither=e.target.checked;if(src.bmp){before();reapply(F)}};
-  const rs=$('#i-rs');if(rs)rs.onclick=async()=>{if(!await confirmBS({title:'Quitar la imagen nueva',text:'Volverá la imagen original. Podrás deshacerlo.',ok:'Quitar',danger:true}))return;before();F.rep=null;S.src.delete(F.path);delete S.ex[F.path];bump();render(true);toast('Imagen nueva quitada',{label:'Deshacer',fn:undo})};
+  const rs=$('#i-rs');if(rs)rs.onclick=async()=>{if(!await confirmBS({title:'Quitar la imagen nueva',text:'Volverá la imagen original. Podrás deshacerlo.',ok:'Quitar',danger:true}))return;before();F.rep=null;S.src.delete(F.path);if(S.icx)delete S.icx[F.path];delete S.ex[F.path];bump();render(true);toast('Imagen nueva quitada',{label:'Deshacer',fn:undo})};
 }
 function paneInfo(p,F){const fr=frames(F),fw=F.w/fr,opts=[1,2,3,4,5,6,8].filter(n=>F.w%n===0&&F.w/n>=4);
   p.innerHTML=`<div class="card"><dl class="facts">
@@ -1044,7 +1052,7 @@ function paneInfo(p,F){const fr=frames(F),fw=F.w/fr,opts=[1,2,3,4,5,6,8].filter(
   $('#n-fr').onclick=e=>{const b=e.target.closest('[data-n]');if(!b)return;before();const n=+b.dataset.n;if(n===F.fdef)delete S.frames[F.path];else S.frames[F.path]=n;S.eFor=null;F.cv=null;bump();render(true)};
 }
 async function useImage(F,file){let bmp;try{bmp=await createImageBitmap(file)}catch(_){toast('No puedo abrir esa imagen. Prueba con PNG o JPG.');return}
-  const src=S.src.get(F.path)||{fit:'cover',target:'all',dither:true};S.src.set(F.path,src);src.bmp=bmp;src.base=null;before();
+  const src=S.src.get(F.path)||{fit:'cover',target:'all',dither:true};S.src.set(F.path,src);src.bmp=bmp;src.base=null;before();if(S.icx)delete S.icx[F.path];
   if(!F.rep&&S.ex[F.path]===undefined)S.ex[F.path]=true;await reapply(F,true);S.eTab='img';render(true);toast('Imagen sustituida',{label:'Deshacer',fn:undo})}
 async function reapply(F,fresh){
   const src=S.src.get(F.path);if(!src||!src.bmp)return;const fr=frames(F),fw=F.w/fr;
@@ -1378,7 +1386,7 @@ function drawState(x,F,w,h,s,H,g,bgc){
   const src=genIconSrc(F,g),p=g.per[F.path]||{},cx=w/2,cy=Y+Hh*(g.iy/100);
   if(src==='orig'){const mk=extractIcon(F);if(mk)drawMask(x,mk,cx,cy,g.is/56,ic,glow)}
   else if(src==='png'&&p.png){drawMask(x,p.png,cx,cy,g.is/96*1.15,ic,glow)}
-  else if(src.startsWith('lib:'))drawLib(x,src.slice(4),cx,cy,g.is,ic,glow);
+  else drawIconKey(x,src,cx,cy,g.is,ic,glow);
 }
 function genHue(F,g){const p=g.per[F.path]||{};if(p.hue!=null)return p.hue;return g.color==='orig'?origHue(F):g.hue}
 function genTile(F,g){const fr=frames(F),fw=F.w/fr,h=F.h,c=document.createElement('canvas');c.width=F.w;c.height=h;const x=c.getContext('2d');const H=genHue(F,g),bgc=cornerBase(F);
@@ -1400,7 +1408,7 @@ function miniTile(F,g,state){const fr=frames(F),fw=F.w/fr,c=document.createEleme
   const lb=LABELS[F.name.toLowerCase()];if(lb&&fw===210&&F.h===137){x.font='600 21px Tahoma,Inter,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillStyle=state%2===1?'#000':'#fff';x.fillText(lb,105,105.5,176)}return c}
 function putMini(cv,src){const x=cv.getContext('2d');cv.width=src.width;cv.height=src.height;x.drawImage(src,0,0)}
 function genSum(g){return {style:(GSTYLES.find(s=>s[0]===g.style)||GSTYLES[0])[1],shape:(GSHAPES.find(s=>s[0]===g.shape)||GSHAPES[1])[1]+(g.shape==='round'?` ${g.r} px`:'')+` · margen ${g.inset} px · esquinas ${g.corners==='key'?'transparentes':'del fondo'}`,
-  color:g.color==='orig'?'El de cada botón':'Uno para todos: '+hueName(g.hue).toLowerCase(),icons:`Tamaño ${g.is} px · altura ${g.iy} %`}}
+  color:g.color==='orig'?'El de cada botón':'Uno para todos: '+hueName(g.hue).toLowerCase(),icons:`Trazo ${(()=>{const s=icStyle();return s.fill?'relleno':(ISTY.find(x=>+x[0]===s.w)||[0,'normal'])[1].toLowerCase()})()} · tamaño ${g.is} px · altura ${g.iy} %`}}
 function scrGen(v){
   if(!S.gen)S.gen=defGen();const g=S.gen,fs=genTargets();if(!fs.length){v.innerHTML='<p class="empty">No hay botones de Inicio en el backup.</p>';return}
   setTitle('Rediseñar botones',`Inicio · ${fs.length} botones`);
@@ -1416,6 +1424,8 @@ function scrGen(v){
   const colorBody=`<div class="seg" id="g-cm"><button data-v="orig" aria-pressed="${g.color==='orig'}">El de cada botón</button><button data-v="one" aria-pressed="${g.color==='one'}">Uno para todos</button></div>
     ${g.color==='one'?swatches(g.hue,{label:'Color de los botones'}):'<p class="note">Cada botón conserva su color original. Puedes cambiar el de uno solo tocándolo en la pantalla.</p>'}`;
   const iconBody=`<p class="note">Para cambiar el icono de un botón, tócalo en la pantalla.</p>
+    <div class="field"><span class="lbl">Trazo de todos los iconos</span><div class="seg" id="g-iw">${ISTY.map(([v,l])=>{const s=icStyle(),on=v==='fill'?s.fill:!s.fill&&+v===s.w;return `<button data-v="${v}" aria-pressed="${on}">${l}</button>`}).join('')}</div>
+    <p class="note">Se aplica a la vez a todos los iconos de la biblioteca, también a los que pongas en otras imágenes. Así quedan coherentes.</p></div>
     <label class="rg" for="g-is"><span>Tamaño <output>${g.is} px</output></span><input type="range" id="g-is" min="24" max="96" value="${g.is}"></label>
     <label class="rg" for="g-iy"><span>Altura <output>${g.iy} %</output></span><input type="range" id="g-iy" min="20" max="70" value="${g.iy}"></label>
     <p class="note">El MediaNav escribe el nombre debajo, por eso los iconos van por encima del centro.</p>`;
@@ -1440,6 +1450,7 @@ function scrGen(v){
   const seg=(id,key)=>{const el=$(id);if(el)el.onclick=e=>{const b=e.target.closest('button[data-v]');if(!b)return;g[key]=b.dataset.v;render(true)}};seg('#g-co','corners');seg('#g-cm','color');
   $('#g-st').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;S.gstate=+b.dataset.s;$$('#g-st button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawPreview(c,po())};
   const rng=(id,key,suf)=>{const i=$(id);if(!i)return;paintRange(i);const out=i.closest('.rg').querySelector('output');i.oninput=()=>{g[key]=+i.value;out.textContent=i.value+suf;paintRange(i);upd()}};
+  const iw=$('#g-iw');if(iw)iw.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;setIconStyle(b.dataset.v);render(true)};
   rng('#g-r','r',' px');rng('#g-in','inset',' px');rng('#g-is','is',' px');rng('#g-iy','iy',' %');
   const cs=$('#g-acc .swg');if(cs){cs.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;g.hue=+b.dataset.h;cs.querySelectorAll('.swc').forEach(x=>x.setAttribute('aria-pressed',x===b));upd()};const cp=cs.querySelector('[data-pick]');if(cp)cp.onchange=e=>{g.hue=Math.round(hexHsl(e.target.value)[0]);upd()}}
   let down=-1;c.onpointerdown=e=>{const h=slotAt(c,e);down=h.i;if(h.i>=0){S.press=h.i;drawPreview(c,po())}};
@@ -1452,11 +1463,13 @@ function scrGen(v){
 }
 function genSheet(F,upd){
   const g=S.gen,fs=genTargets(),idx=fs.indexOf(F);S.gsel=F.path;const p=()=>g.per[F.path]||(g.per[F.path]={});
-  const icons=['orig',...Object.keys(ICONS).map(k=>'lib:'+k),'png'],cur=genIconSrc(F,g),ps=g.per[F.path]||{};
+  const cur=genIconSrc(F,g),ps=g.per[F.path]||{},sug=icSuggest(F).map(n=>'t:'+n),icons=['orig','png',...(cur.startsWith('t:')||cur.startsWith('lib:'))&&!sug.includes(cur)?[cur]:[],...sug,'all'];
+  S.icRedraw=IC.st===2?null:()=>{if($('#gs-ic'))genSheet(F,upd)};if(IC.st!==2)icLoad();
+  const icT=k=>k==='orig'?'Original':k==='png'?(ps.png?'Mi imagen':'Subir PNG'):k==='all'?'Ver todos':k.startsWith('t:')?icLabel(k.slice(2)):ICONL[k.slice(4)]||k;
   openBS(`<div class="gsh"><div class="screen"><canvas id="gs-pv" width="800" height="480" aria-label="Vista previa de Inicio con ${esc(pretty(F))} marcado"></canvas></div>
       <div class="e-bar"><div><h2>${esc(pretty(F))}</h2></div><span class="sp"></span><div class="seg" id="gs-st" role="group" aria-label="Estado"><button data-s="0" aria-pressed="${!S.gstate}">Reposo</button><button data-s="1" aria-pressed="${S.gstate===1}">Pulsado</button></div></div></div>
     <p class="lbl">Icono</p>
-    <div class="icg" id="gs-ic">${icons.map(k=>`<button class="icb" data-k="${k}" aria-pressed="${cur===k}" title="${k==='orig'?'Icono original':k==='png'?'Mi imagen':ICONL[k.slice(4)]}"><canvas width="88" height="88" data-ico="${k}"></canvas><span>${k==='orig'?'Original':k==='png'?(ps.png?'Mi imagen':'Subir PNG'):ICONL[k.slice(4)]}</span></button>`).join('')}</div>
+    <div class="icg" id="gs-ic">${icons.map(k=>`<button class="icb${k==='all'?' all':''}" data-k="${k}" aria-pressed="${cur===k}" title="${esc(icT(k))}"><canvas width="88" height="88" data-ico="${k}"></canvas><span>${esc(icT(k))}</span></button>`).join('')}</div>
     <p class="lbl">Color de este botón</p>
     <div id="gs-col">${swatches(ps.hue!=null?ps.hue:'none',{none:'Como el resto',label:'Color de este botón'})}</div>
     <div class="gnav"><button class="btn o sm" data-mv="-1"${idx<=0?' disabled':''}>‹ Anterior</button><button class="btn sm" data-done>Hecho</button><button class="btn o sm" data-mv="1"${idx>=fs.length-1?' disabled':''}>Siguiente ›</button></div>`);
@@ -1468,10 +1481,12 @@ function genSheet(F,upd){
   $$('#gs-ic canvas').forEach(cv=>{const k=cv.dataset.ico,x=cv.getContext('2d');x.clearRect(0,0,88,88);
     if(k==='orig'){const mk=extractIcon(F);if(mk)drawMask(x,mk,44,44,Math.min(70/mk.bw,70/mk.bh),col,0);else{x.fillStyle=col;x.font='600 13px Inter,sans-serif';x.textAlign='center';x.fillText('No hay',44,48)}}
     else if(k==='png'){const q=g.per[F.path]||{};if(q.png)drawMask(x,q.png,44,44,.72,col,0);else{x.strokeStyle=col;x.lineWidth=4;x.lineCap='round';x.lineJoin='round';x.beginPath();x.moveTo(44,62);x.lineTo(44,26);x.moveTo(30,40);x.lineTo(44,26);x.lineTo(58,40);x.moveTo(26,66);x.lineTo(62,66);x.stroke()}}
-    else drawLib(x,k.slice(4),44,44,52,col,0)});
+    else if(k==='all'){x.fillStyle=col;for(let i=0;i<3;i++)for(let j=0;j<3;j++){x.globalAlpha=i===1&&j===1?1:.45;x.beginPath();x.arc(28+i*16,28+j*16,4.5,0,7);x.fill()}x.globalAlpha=1}
+    else drawIconKey(x,k,44,44,52,col,0)});
   pv();
   $('#gs-ic').onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;const k=b.dataset.k;
     if(k==='png'){$('#in-img').onchange=async ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)return;try{p().png=pngMask(await createImageBitmap(f));p().icon='png';upd();genSheet(F,upd)}catch(_){toast('No puedo abrir esa imagen')}};$('#in-img').click();return}
+    if(k==='all'){iconPicker({title:'Icono para '+pretty(F),cur,back:()=>genSheet(F,upd),onPick:nk=>{p().icon=nk;upd();genSheet(F,upd)}});return}
     if(k==='orig'&&!extractIcon(F)){toast('No he podido separar el icono original de este botón');return}
     p().icon=k;$$('#gs-ic .icb').forEach(x=>x.setAttribute('aria-pressed',x===b));upd();pv()};
   const sw=$('#gs-col .swg');sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;p().hue=b.dataset.h==='none'?null:+b.dataset.h;sw.querySelectorAll('.swc').forEach(x=>x.setAttribute('aria-pressed',x===b));upd();pv()};
@@ -1754,11 +1769,143 @@ function autoEntries(rs,inc){
   return {ents:e,id};
 }
 
+/* ============ biblioteca de iconos (Tabler Icons, MIT) ============
+   site/iconos.json se descarga la primera vez que hace falta (≈300 KB) y el service worker lo guarda aparte.
+   Claves: 't:<nombre>' (biblioteca) · 'lib:<nombre>' (los 18 iconos propios de antes, siguen funcionando) · 'orig' · 'png'.
+   El estilo del trazo (fino, normal, grueso o relleno) es común a todos los iconos: es lo que los hace coherentes. */
+const IC={st:0,data:null,by:null,es:null,p:null};
+function icLoad(){if(IC.st===2)return Promise.resolve(true);if(IC.p)return IC.p;IC.st=1;
+  IC.p=fetch('iconos.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(j=>{IC.data=j;IC.by=new Map(j.i.map(x=>[x[0],x]));IC.es=new Map(j.radio);IC.st=2;
+    if(S.gen&&S.route&&S.route.n==='gen')regen();S.ver++;schedule();if(S.icRedraw)S.icRedraw();return true})
+  .catch(()=>{IC.st=3;IC.p=null;return false});return IC.p}
+const ISTY=[['1.5','Fino'],['2','Normal'],['2.5','Grueso'],['fill','Relleno']];
+function icStyle(){const g=S.gen||{};return {w:g.iw||2,fill:!!g.ifill}}
+const IP2=new Map();
+function drawTab(x,name,cx,cy,size,col,glow){
+  if(IC.st!==2){icLoad();return false}const it=IC.by.get(name);if(!it)return false;const st=icStyle(),fd=st.fill&&IC.data.f[name];
+  x.save();x.translate(cx-size/2,cy-size/2);x.scale(size/24,size/24);x.strokeStyle=col;x.fillStyle=col;x.lineWidth=st.w;x.lineCap='round';x.lineJoin='round';
+  if(glow){x.shadowColor=col;x.shadowBlur=glow*24/size}
+  for(const d of (fd||it[3]).split('|')){let p=IP2.get(d);if(!p){p=new Path2D(d);IP2.set(d,p)}if(fd)x.fill(p);else x.stroke(p)}
+  x.restore();return true}
+function drawIconKey(x,k,cx,cy,size,col,glow){if(k.startsWith('t:'))return drawTab(x,k.slice(2),cx,cy,size,col,glow);if(k.startsWith('lib:')){drawLib(x,k.slice(4),cx,cy,size,col,glow);return true}return false}
+const icLabel=n=>(IC.es&&IC.es.get(n))||n.replace(/-/g,' ');
+// Iconos propuestos según el botón (por el nombre del archivo)
+const ICSUG=[['navi',['navigation','map-2','map-pin','route','compass','gps']],['radio',['radio','antenna','broadcast','music','disc']],['media',['music','player-play','disc','headphones','playlist','usb']],
+  ['phone',['phone','phone-call','address-book','message','bluetooth','device-mobile']],['eco',['leaf','plant-2','gauge','chart-line','trophy']],['setting',['settings','adjustments-horizontal','tool']],
+  ['map',['map-2','map-pin','route','compass']],['smartphone',['device-mobile','layout-grid']],['vehicle',['car','steering-wheel','engine']],['dark',['moon','brightness']],['time',['clock','calendar']]];
+function icSuggest(F){const n=F.name.toLowerCase();for(const [w,l] of ICSUG)if(n.includes(w))return l;return ['star','heart','home','bolt']}
+// Búsqueda en español: se traduce cada palabra a las etiquetas en inglés de Tabler
+const ESW={navegacion:'navigation',navegar:'navigation',gps:'gps',mapa:'map',destino:'pin',ruta:'route',brujula:'compass',radio:'radio',antena:'antenna',emisora:'broadcast',musica:'music',cancion:'music',
+  reproducir:'play',play:'play',pausa:'pause',parar:'stop',siguiente:'next',anterior:'prev',repetir:'repeat',aleatorio:'shuffle',disco:'disc',cd:'disc',auriculares:'headphones',lista:'playlist',microfono:'microphone',
+  volumen:'volume',altavoz:'speaker',sonido:'volume',silencio:'mute',telefono:'phone',llamada:'call',llamar:'call',contactos:'address',agenda:'address',mensaje:'message',sms:'message',chat:'message',movil:'mobile',
+  ajustes:'settings',configuracion:'settings',engranaje:'settings',herramienta:'tool',llave:'key',hoja:'leaf',planta:'plant',arbol:'tree',eco:'leaf',ecologico:'leaf',indicador:'gauge',velocidad:'gauge',velocimetro:'gauge',
+  grafica:'chart',estadisticas:'chart',trofeo:'trophy',coche:'car',vehiculo:'car',volante:'steering',motor:'engine',gasolina:'gas',combustible:'gas',gasolinera:'gas',cargador:'charging',enchufe:'plug',bateria:'battery',
+  cambio:'gearbox',marchas:'gearbox',clima:'fan',climatizacion:'fan',aire:'wind',ventilador:'fan',temperatura:'temperature',termometro:'temperature',frio:'snow',calor:'flame',sol:'sun',luna:'moon',noche:'moon',
+  oscuro:'moon',brillo:'brightness',reloj:'clock',hora:'clock',alarma:'alarm',calendario:'calendar',fecha:'calendar',casa:'home',inicio:'home',estrella:'star',favorito:'star',corazon:'heart',rayo:'bolt',
+  electrico:'bolt',energia:'bolt',encendido:'power',apagar:'power',informacion:'info',ayuda:'help',aviso:'alert',alerta:'alert',peligro:'alert',camara:'camera',video:'video',pelicula:'movie',foto:'photo',
+  imagen:'photo',wifi:'wifi',red:'network',internet:'world',mundo:'world',menu:'menu',cuadricula:'grid',llama:'flame',fuego:'flame',montana:'mountain',carretera:'road',calle:'road',aparcar:'parking',
+  aparcamiento:'parking',flecha:'arrow',arriba:'up',abajo:'down',izquierda:'left',derecha:'right',buscar:'search',lupa:'search',usuario:'user',persona:'user',puerta:'door',candado:'lock',seguridad:'shield',
+  escudo:'shield',lluvia:'rain',nube:'cloud',nieve:'snow',viento:'wind',tiempo:'weather',agua:'droplet',gota:'droplet',luz:'bulb',bombilla:'bulb',bluetooth:'bluetooth',usb:'usb',tarjeta:'card',pantalla:'device',
+  tablet:'tablet',ordenador:'computer',libro:'book',documento:'file',carpeta:'folder',archivo:'file',papelera:'trash',borrar:'trash',editar:'edit',lapiz:'pencil',mano:'hand',cara:'mood',sonrisa:'smile',
+  perro:'dog',gato:'cat',pajaro:'bird',bici:'bike',bicicleta:'bike',moto:'motorbike',camion:'truck',autobus:'bus',tren:'train',avion:'plane',barco:'ship',caravana:'camper',taxi:'taxi',dinero:'cash',
+  compra:'shopping',tienda:'shop',regalo:'gift',comida:'food',cafe:'coffee',restaurante:'tools-kitchen',hospital:'hospital',deporte:'ball',futbol:'soccer',juego:'game',bandera:'flag',ubicacion:'location',
+  satelite:'satellite',senal:'signal',descarga:'download',subir:'upload',actualizar:'refresh',compartir:'share',enlace:'link',correo:'mail',email:'mail',notificacion:'bell',campana:'bell',voz:'microphone'};
+const fold=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function icSearch(q,cat){if(IC.st!==2)return [];const it=IC.data.i;
+  if(cat==='radio'&&!q)return IC.data.radio.map(x=>x[0]);
+  let L=cat==null||cat===''||cat==='radio'?it:it.filter(x=>x[1]===+cat);const ws=fold(q).split(/\s+/).filter(Boolean);
+  if(!ws.length)return L.map(x=>x[0]);
+  const sc=[];for(const x of L){const lab=fold(icLabel(x[0])),hay=x[0]+' '+x[2];let s=0;
+    for(const w of ws){const t=[w,ESW[w]].filter(Boolean);let b=0;for(const u of t){if(x[0]===u)b=Math.max(b,9);else if(x[0].startsWith(u))b=Math.max(b,6);else if(x[0].includes(u))b=Math.max(b,4);else if(hay.includes(u)||lab.includes(w))b=Math.max(b,2)}
+      if(!b){s=0;break}s+=b}
+    if(s)sc.push([s-x[0].length/100,x[0]])}
+  return sc.sort((a,b)=>b[0]-a[0]).map(x=>x[1])}
+
+/* Selector de iconos (hoja): buscar, categorías y estilo del trazo */
+function iconPicker(o){
+  const st=S.ipk||(S.ipk={q:'',cat:'radio',n:96});
+  const draw=()=>{const g=$('#ip-g');if(!g)return;
+    if(IC.st!==2){g.innerHTML=`<p class="note">${IC.st===3?'No he podido descargar la biblioteca de iconos. Necesita conexión la primera vez.':'Cargando la biblioteca de iconos…'}</p>`;if(IC.st===3){const r=document.createElement('button');r.className='btn o sm';r.textContent='Reintentar';r.onclick=()=>{IC.st=0;icLoad();draw()};g.appendChild(r)}return}
+    const L=icSearch(st.q,st.cat),sh=L.slice(0,st.n);
+    g.innerHTML=sh.length?sh.map(n=>`<button class="icb" data-k="t:${n}" aria-pressed="${o.cur==='t:'+n}" title="${esc(icLabel(n))}"><canvas width="72" height="72"></canvas><span>${esc(icLabel(n))}</span></button>`).join(''):'<p class="note">No hay iconos con esa palabra. Prueba con otra (también en inglés).</p>';
+    const col=getComputedStyle(document.body).color;g.querySelectorAll('canvas').forEach(cv=>{const x=cv.getContext('2d');drawTab(x,cv.parentNode.dataset.k.slice(2),36,36,46,col,0)});
+    $('#ip-more').hidden=L.length<=st.n;$('#ip-n').textContent=L.length===1?'1 icono':L.length.toLocaleString('es-ES')+' iconos'};
+  const cats=IC.st===2?IC.data.cats:[];
+  openBS(`<div class="ipk"><div class="ipk-h"><button class="ib" data-x aria-label="Volver">${ic('M15 6l-6 6 6 6')}</button><h2>${esc(o.title||'Elegir icono')}</h2></div>
+    <input type="search" id="ip-q" class="ipq" placeholder="Buscar: radio, música, coche, hoja…" value="${esc(st.q)}" autocomplete="off" enterkeyhint="search">
+    <div class="chips scroll" id="ip-c"><button class="chip" data-c="radio" aria-pressed="${st.cat==='radio'}">Para la radio</button><button class="chip" data-c="" aria-pressed="${st.cat===''}">Todos</button>${cats.map((c,i)=>`<button class="chip" data-c="${i}" aria-pressed="${st.cat===String(i)}">${esc(c)}</button>`).join('')}</div>
+    <div class="field"><span class="lbl">Trazo de todos los iconos</span><div class="seg" id="ip-w">${ISTY.map(([v,l])=>{const s=icStyle(),on=v==='fill'?s.fill:!s.fill&&+v===s.w;return `<button data-v="${v}" aria-pressed="${on}">${l}</button>`}).join('')}</div></div>
+    <p class="note"><span id="ip-n"></span> · Tabler Icons. «Relleno» usa la versión rellena cuando existe.</p>
+    <div class="icg" id="ip-g"></div><button class="btn o wide" id="ip-more" hidden>Ver más</button></div>`);
+  S.icRedraw=()=>{if($('#ip-g'))iconPicker(o)};
+  $('#bs [data-x]').onclick=()=>{S.icRedraw=null;o.back?o.back():closeBS()};
+  let t;$('#ip-q').oninput=e=>{st.q=e.target.value;st.n=96;if(st.q&&st.cat==='radio')st.cat='';clearTimeout(t);t=setTimeout(()=>{$$('#ip-c .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.c===st.cat));draw()},180)};
+  $('#ip-c').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;st.cat=b.dataset.c;st.n=96;$$('#ip-c .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));draw()};
+  $('#ip-more').onclick=()=>{st.n+=96;draw()};
+  $('#ip-w').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;setIconStyle(b.dataset.v);$$('#ip-w button').forEach(x=>x.setAttribute('aria-pressed',x===b));draw()};
+  $('#ip-g').onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;S.icRedraw=null;o.onPick(b.dataset.k)};
+  if(IC.st!==2)icLoad();draw()}
+function setIconStyle(v){before();if(!S.gen)S.gen=defGen();if(v==='fill'){S.gen.ifill=true}else{S.gen.ifill=false;S.gen.iw=+v}
+  if(S.genCv)regen();for(const p of Object.keys(S.icx||{})){const F=S.lc.get(p.toLowerCase());if(F)icApply(F,S.icx[p],true)}S.ver++;schedule();saveState()}
+
+/* Poner un icono de la biblioteca en cualquier imagen: se quita el icono viejo rehaciendo el fondo fila a fila
+   (con las franjas de los lados, así se conservan degradados y bordes) y se dibuja el nuevo en su sitio, con el color de cada estado. */
+function icAnalyze(F){if(F.icz&&F.iczF===frames(F))return F.icz;const fr=frames(F),fw=F.w/fr,h=F.h,pal=F.pal,idx=F.idx,out=[];
+  const isK=i=>isKey(pal[i*3],pal[i*3+1],pal[i*3+2]);
+  for(let s=0;s<fr;s++){const ox=s*fw,bg=new Array(h);
+    for(let y=0;y<h;y++){let k=0;const rs=[],gs=[],bs=[];for(let x=0;x<fw;x++){const i=idx[y*F.w+ox+x];if(isK(i)){k++;continue}rs.push(pal[i*3]);gs.push(pal[i*3+1]);bs.push(pal[i*3+2])}
+      const med=a=>{a.sort((u,v)=>u-v);return a[a.length>>1]};bg[y]=k*2>fw||!rs.length?null:[med(rs),med(gs),med(bs)]}
+    let x0=fw,y0=h,x1=-1,y1=-1;const cs=[];const B=Math.min(4,fw>>3);
+    for(let y=B;y<h-B;y++)for(let x=B;x<fw-B;x++){const i=idx[y*F.w+ox+x];const kk=isK(i),b=bg[y];let on=false,c=null;
+      if(b===null){on=!kk;c=[pal[i*3],pal[i*3+1],pal[i*3+2]]}else if(!kk){c=[pal[i*3],pal[i*3+1],pal[i*3+2]];const dr=c[0]-b[0],dg=c[1]-b[1],db=c[2]-b[2];on=Math.sqrt(dr*dr+dg*dg+db*db)>58}
+      if(on){cs.push(c);if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}}
+    let ok=cs.length>=20&&x1-x0<fw*.92&&y1-y0<h*.92;if(!ok){const m=Math.min(fw,h)*.5;x0=(fw-m)/2;x1=x0+m;y0=(h-m)/2;y1=y0+m}
+    const med=a=>{a.sort((u,v)=>u-v);return a[a.length>>1]};const col=cs.length?[med(cs.map(c=>c[0])),med(cs.map(c=>c[1])),med(cs.map(c=>c[2]))]:[255,255,255];
+    out.push({bg,x0,y0,x1,y1,col,ok})}
+  F.icz=out;F.iczF=fr;return out}
+function icApply(F,spec,quiet){
+  const fr=frames(F),fw=F.w/fr,h=F.h,A=icAnalyze(F),c=document.createElement('canvas');c.width=F.w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});
+  const im=x.createImageData(F.w,h),o=new Uint32Array(im.data.buffer),lut=lutOf(F.pal,false);for(let i=0;i<F.idx.length;i++)o[i]=lut[F.idx[i]];
+  const M=3,u=A[0],bw=Math.max(...A.map(a=>a.x1-a.x0+1)),bh=Math.max(...A.map(a=>a.y1-a.y0+1));
+  for(let s=0;s<fr;s++){const a=A[s],ox=s*fw,X0=Math.max(0,Math.floor(a.x0-M)),X1=Math.min(fw-1,Math.ceil(a.x1+M)),Y0=Math.max(0,Math.floor(a.y0-M)),Y1=Math.min(h-1,Math.ceil(a.y1+M));
+    const W=X1-X0+1;
+    for(let y=Y0;y<=Y1;y++){// se rellena en espejo con lo que hay justo a los lados (conserva textura, rayas y degradados); si no cabe, color medio de los lados
+      const side=[];for(const xx of [X0-1,X0-2,X0-3,X1+1,X1+2,X1+3])if(xx>=0&&xx<fw)side.push(o[y*F.w+ox+xx]);
+      const keyc=side.filter(v=>!(v>>>24)).length,vals=side.filter(v=>v>>>24);let v=0;
+      if(vals.length&&keyc*2<=side.length){const rs=vals.map(v=>v&255).sort((p,q)=>p-q),gs=vals.map(v=>(v>>8)&255).sort((p,q)=>p-q),bs=vals.map(v=>(v>>16)&255).sort((p,q)=>p-q),m=vals.length>>1;v=(0xFF000000|(bs[m]<<16)|(gs[m]<<8)|rs[m])>>>0}
+      const row=new Uint32Array(W),half=W/2;
+      for(let k=0;k<W;k++){const L=X0-1-k,Rr=X1+1+(W-1-k);let src=-1;
+        if(k<half){if(L>=0)src=L;else if(Rr<fw)src=Rr}else{if(Rr<fw)src=Rr;else if(L>=0)src=L}
+        row[k]=src>=0?o[y*F.w+ox+src]:v}
+      for(let k=0;k<W;k++)o[y*F.w+ox+X0+k]=row[k]}}
+  x.putImageData(im,0,0);
+  const size=spec.size||Math.max(14,Math.min(Math.min(fw,h)*.9,Math.max(bw,bh)*24/18));
+  for(let s=0;s<fr;s++){const a=A[s],cx=s*fw+(a.x0+a.x1)/2,cy=(a.y0+a.y1)/2+(spec.dy||0);
+    const col=spec.col==null||spec.col==='orig'?`rgb(${a.col.join(',')})`:spec.col==='white'?'#fff':typeof spec.col==='number'?`hsl(${spec.col} 80% ${s%2?40:62}%)`:spec.col;
+    x.save();x.beginPath();x.rect(s*fw,0,fw,h);x.clip();drawIconKey(x,spec.k,cx,cy,size,col,0);x.restore()}
+  const d=x.getImageData(0,0,F.w,h).data,useKey=F.keyCount>0,key=new Uint8Array(F.w*h);
+  for(let i=0;i<F.w*h;i++){const al=d[i*4+3];if(al<128){if(useKey)key[i]=1;else{d[i*4]=d[i*4+1]=d[i*4+2]=0}}else if(al<255){d[i*4]=d[i*4]*al/255;d[i*4+1]=d[i*4+1]*al/255;d[i*4+2]=d[i*4+2]*al/255}}
+  const q=quantize(d,F.w,h,{key,dither:false});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx};F.cv=null;
+  if(!S.icx)S.icx={};S.icx[F.path]={...spec};if(S.ex[F.path]===undefined)S.ex[F.path]=true;if(!quiet){bump()}}
+function icCard(F){const sp=(S.icx||{})[F.path];
+  return `<div class="card"><h3>Poner un icono de la biblioteca</h3><p class="note">Quita el icono que tiene y pone uno de la biblioteca en el mismo sitio, con los colores de cada estado. Todos los iconos de la biblioteca comparten estilo, así quedan coherentes entre sí.</p>
+    <div class="icrow"><canvas id="ic-cur" width="72" height="72"></canvas><button class="btn${sp?' o':''} sm" id="ic-pick">${sp?'Cambiar icono':'Elegir un icono'}</button></div>
+    ${sp?`<div class="field"><span class="lbl">Color del icono</span>${swatches(sp.col==null||sp.col==='orig'?'none':typeof sp.col==='number'?sp.col:sp.col==='white'?'white':'custom',{none:'Como el original',white:true,label:'Color del icono'})}</div>
+    <label class="rg" for="ic-sz"><span>Tamaño <output>${Math.round(sp.size||0)||'auto'}</output></span><input type="range" id="ic-sz" min="12" max="${Math.min(F.w/frames(F),F.h)}" value="${Math.round(sp.size||Math.min(F.w/frames(F),F.h)*.5)}"></label>`:''}</div>`}
+function icBind(F){const sp=()=>(S.icx||{})[F.path];const cv=$('#ic-cur');
+  const pv=()=>{if(!cv)return;const x=cv.getContext('2d');x.clearRect(0,0,72,72);const s=sp();if(s)drawIconKey(x,s.k,36,36,48,getComputedStyle(document.body).color,0);else{x.fillStyle=getComputedStyle(document.body).color;x.globalAlpha=.5;x.font='600 12px Inter,sans-serif';x.textAlign='center';x.fillText('Ninguno',36,40)}};pv();
+  S.icRedraw=null;if(sp()&&IC.st!==2)icLoad().then(()=>{pv();if(sp()){icApply(F,sp());render(true)}});
+  $('#ic-pick').onclick=()=>iconPicker({title:'Icono para '+pretty(F),cur:sp()&&sp().k,back:()=>closeBS(),onPick:async k=>{await icLoad();before();icApply(F,{...(sp()||{}),k});closeBS();render(true);toast('Icono puesto',{label:'Deshacer',fn:undo})}});
+  const card=$('#ic-pick').closest('.card'),g=card.querySelector('.swg');
+  if(g){g.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;before();const h=b.dataset.h;icApply(F,{...sp(),col:h==='none'?'orig':h==='white'?'white':+h});render(true)};
+    const pk=g.querySelector('[data-pick]');if(pk)pk.onchange=e=>{before();icApply(F,{...sp(),col:e.target.value});render(true)}}
+  const sz=$('#ic-sz');if(sz){let t;sz.oninput=e=>{sz.previousElementSibling.querySelector('output').textContent=e.target.value;clearTimeout(t);t=setTimeout(()=>{before();icApply(F,{...sp(),size:+e.target.value});schedule()},120)}}}
+
 /* ============ app web: instalación, versión, novedades y créditos (como Noticiahz y Caravanahz) ============
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-26-4.1';
+const VER='2026-10-26-5';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -1766,7 +1913,13 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Corregido: el icono al instalar salía siempre verde; ahora toma el color elegido']],
+  [VER,['Biblioteca de iconos coherente (Tabler Icons): unos 3.800 iconos con el mismo estilo, buscador en español y una selección «Para la radio»',
+    'Trazo común para todos los iconos (fino, normal, grueso o relleno): cambiarlo actualiza a la vez todos los botones e imágenes',
+    'En «Rediseñar los botones», cada botón propone los iconos que encajan con él y «Ver todos» abre el buscador',
+    'En cualquier imagen (Sustituir → Poner un icono de la biblioteca): quita el icono que tiene, rehace el fondo y pone el nuevo en su sitio con los colores de cada estado',
+    'Nueva familia de color «Negros y fondo»: cambia el negro de los fondos a un tono oscuro de cualquier color conservando el degradado',
+    'La página declara su codificación (los acentos ya no dependen del servidor)']],
+  ['2026-10-26-4.1',['Corregido: el icono al instalar salía siempre verde; ahora toma el color elegido']],
   ['2026-10-26-4',['Color de la app, como en Noticiahz: 10 colores o cualquiera con el selector, en Ajustes e historial → Pantalla. El contraste se ajusta solo',
     'Al instalar la app, el icono toma el color que tengas en ese momento y ya no cambia (para cambiarlo, reinstálala)']],
   ['2026-10-26-3',['Exportación «Automático»: el ZIP trae un script de MortScript que, en la radio, guarda lo que hay, copia las imágenes, comprueba cada una y deja todo como estaba si algo falla. Ofrece reiniciar al terminar',
@@ -1821,7 +1974,7 @@ function openCredits(){openBS(`<h2>Créditos y licencia</h2><div class="chgl">
   <section><h4>Mediaskinhz</h4><p class="note">Diseñado y creado por <b>Krahz</b>. Herramienta personal para cambiar la apariencia de la radio MediaNav del Renault Clio 4.</p></section>
   <section><h4>Formato de actualización</h4><p class="note">El archivo upgrade.lgu se genera siguiendo <b>dir2lgu</b>, del proyecto <a href="https://github.com/yosicovich/MediaNavMods" target="_blank" rel="noopener">MediaNavMods</a> de yosicovich (licencia GPL-3.0).</p></section>
   <section><h4>Licencia</h4><p class="note">Por usar ese trabajo, Mediaskinhz se publica con licencia <b>GPL-3.0</b>: puedes usarla, estudiarla y modificarla, y quien distribuya una versión modificada debe compartir también su código con la misma licencia.</p></section>
-  <section><h4>Tipografías e iconos</h4><p class="note">Inter y Newsreader (SIL Open Font License), servidas por Google Fonts. Los iconos de los botones están dibujados para esta app.</p></section>
+  <section><h4>Tipografías e iconos</h4><p class="note">Inter y Newsreader (SIL Open Font License), servidas por Google Fonts. La biblioteca de iconos es <a href="https://tabler.io/icons" target="_blank" rel="noopener">Tabler Icons</a>, de Paweł Kuna (licencia MIT, ver iconos-LICENCIA.txt).</p></section>
   <section><h4>Aviso</h4><p class="note">No tiene relación con Renault ni con LG. MediaNav es una marca de Renault. Modificar la radio es bajo tu responsabilidad: guarda siempre una copia de la carpeta original.</p></section>
   <section><h4>Privacidad</h4><p class="note">Tu backup, tus diseños y el historial se quedan en este navegador. La app no envía imágenes ni datos a ningún servidor.</p></section>
   </div><button class="btn wide" data-x>Cerrar</button>`);$('#bs [data-x]').onclick=closeBS}

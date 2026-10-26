@@ -28,6 +28,15 @@ for (const k of ['', 'xx', ...slugs]) {
   if (j && JSON.stringify({ ...j, icons: 0 }) !== JSON.stringify({ ...man, icons: 0 })) fails.push(`manifest-${k}: no coincide con manifest.webmanifest salvo los iconos (vuelve a ejecutar tools/iconos.cjs)`);
 }
 if (!fails.length) console.log(`ok manifest por color: ${slugs.length} colores + el de partida`);
+// Biblioteca de iconos: existe, se lee y lleva su licencia
+try { const ic = JSON.parse(fs.readFileSync(path.join(root, 'iconos.json'), 'utf8'));
+  if (!ic.i || ic.i.length < 1000) fails.push('iconos.json tiene muy pocos iconos');
+  if (!/MIT/.test(ic.lic || '') || !fs.existsSync(path.join(root, 'iconos-LICENCIA.txt'))) fails.push('falta la licencia de Tabler Icons');
+  const names = new Set(ic.i.map(x => x[0])); for (const [n] of ic.radio) if (!names.has(n)) fails.push('la selección «Para la radio» usa un icono que no existe: ' + n);
+  const sug = fs.readFileSync(path.join(top, 'src/icons.js'), 'utf8').match(/const ICSUG=(\[[\s\S]*?\]\]\]);/);
+  if (sug) for (const n of eval(sug[1]).flatMap(x => x[1])) if (!names.has(n)) fails.push('ICSUG propone un icono que no existe: ' + n);
+} catch (e) { fails.push('iconos.json no se puede leer: ' + e.message); }
+if (!html.includes('<meta charset="utf-8">')) fails.push('falta <meta charset="utf-8">');
 const before = html;
 try { execFileSync('python3', [path.join(top, 'build.py')], { stdio: 'pipe' }); } catch (e) { fails.push('build.py falla: ' + e.message); }
 if (fs.readFileSync(path.join(root, 'index.html'), 'utf8') !== before) fails.push('site/index.html no estaba al día: ejecuta python3 build.py y súbelo');
