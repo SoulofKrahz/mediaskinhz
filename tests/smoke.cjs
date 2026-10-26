@@ -106,6 +106,7 @@ async function run(browser, label, viewport, mobile) {
   });
   ok(mine.png === 'png' && mine.fill > .1 && mine.fill < .5, 'un PNG negro sobre blanco se convierte en silueta (no en un cuadrado): ' + Math.round(mine.fill * 100) + ' % relleno');
   ok(mine.svg === 'vec' && mine.parts === 2, 'un SVG de trazo se guarda como vector y sigue el trazo común');
+  ok(await p.evaluate(() => badName('1000045654') && badName('IMG_20261026_1') && badName('Screenshot_2026') && !badName('Navegación') && !badName('trazo')), 'reconoce los nombres de archivo sin sentido para pedir uno');
   await p.reload(); await p.waitForTimeout(2800); await p.evaluate(() => { const u = document.querySelector('#upd'); if (u) u.hidden = true; }); await p.waitForTimeout(1200);
   ok(await p.evaluate(() => MY.list.length) === 2, 'mis iconos se conservan al recargar');
   await p.evaluate(() => { S.ops.global = { ...defOps(), h: 120 }; bump(); }); await p.waitForTimeout(500); // el ejemplo no guarda cambios al recargar

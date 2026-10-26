@@ -246,7 +246,7 @@ input[type=range].hue{--trk:linear-gradient(90deg,hsl(0 80% 50%),hsl(60 80% 50%)
 .isd{border:1px solid var(--bd);border-radius:14px;background:var(--card)}.isd>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;cursor:pointer;font-weight:600;font-size:14.5px}
 .isd>summary::-webkit-details-marker{display:none}.isd>summary span{display:flex;flex-direction:column}.isd>summary small{font-weight:400;color:var(--mu);font-size:12.5px}.isd>summary b{font-weight:600;color:var(--em);font-size:13px;text-align:right}.isd[open]>summary{border-bottom:1px solid var(--bd)}.isb{padding:10px 12px 12px;display:flex;flex-direction:column;gap:10px}
 .icb.all span,.icb.add span{color:var(--em);font-weight:600}
-.icw{position:relative;display:flex}.icw .icb{flex:1}.icx{position:absolute;top:2px;right:2px;width:26px;height:26px;border-radius:50%;background:var(--card);border:1px solid var(--bd2);color:var(--mu);font-size:16px;line-height:1;display:grid;place-items:center}
+.icw{position:relative;display:flex}.icw .icb{flex:1}.icx{position:absolute;top:2px;right:2px;width:26px;height:26px;border-radius:50%;background:var(--card);border:1px solid var(--bd2);color:var(--mu);font-size:16px;line-height:1;display:grid;place-items:center}.icx.ice{right:auto;left:2px}.icx.ice svg{width:14px;height:14px}
 .icrow{display:flex;align-items:center;gap:14px}.icrow canvas{width:56px;height:56px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);flex:none}
 .bts~*,.bs>.lbl,.bs>.hs,.bs>.hsw,.bs>.bt-more,.bs>.gnav{flex-shrink:0}
 .hs{flex:none;display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;margin:0 -2px;scroll-snap-type:x proximity;scrollbar-width:none}.hs::-webkit-scrollbar{display:none}
@@ -1913,7 +1913,7 @@ function iconPicker(o){
   const draw=()=>{const g=$('#ip-g');if(!g)return;
     if(IC.st!==2){g.innerHTML=`<p class="note">${IC.st===3?'No he podido descargar la biblioteca de iconos. Necesita conexión la primera vez.':'Cargando la biblioteca de iconos…'}</p>`;if(IC.st===3){const r=document.createElement('button');r.className='btn o sm';r.textContent='Reintentar';r.onclick=()=>{IC.st=0;icLoad();draw()};g.appendChild(r)}return}
     if(st.cat==='my'){const q=fold(st.q),L=MY.list.filter(m=>!q||fold(m.name).includes(q));
-      g.innerHTML=`<button class="icb add" data-add><canvas width="72" height="72"></canvas><span>Añadir</span></button>`+L.map(m=>`<div class="icw"><button class="icb" data-k="my:${m.id}" aria-pressed="${o.cur==='my:'+m.id}" title="${esc(m.name)}"><canvas width="72" height="72"></canvas><span>${esc(m.name)}</span></button><button class="icx" data-del="${m.id}" aria-label="Borrar ${esc(m.name)}">×</button></div>`).join('');
+      g.innerHTML=`<button class="icb add" data-add><canvas width="72" height="72"></canvas><span>Añadir</span></button>`+L.map(m=>`<div class="icw"><button class="icb" data-k="my:${m.id}" aria-pressed="${o.cur==='my:'+m.id}" title="${esc(m.name)}"><canvas width="72" height="72"></canvas><span>${esc(m.name)}</span></button><button class="icx" data-del="${m.id}" aria-label="Borrar ${esc(m.name)}">×</button><button class="icx ice" data-ren="${m.id}" aria-label="Cambiar el nombre de ${esc(m.name)}">${ic('M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4')}</button></div>`).join('');
       const col=getComputedStyle(document.body).color;g.querySelectorAll('canvas').forEach(cv=>{const x=cv.getContext('2d'),k=cv.parentNode.dataset.k;if(k)drawIconKey(x,k,36,36,46,col,0);else{x.strokeStyle=col;x.lineWidth=3.5;x.lineCap='round';x.beginPath();x.moveTo(36,22);x.lineTo(36,50);x.moveTo(22,36);x.lineTo(50,36);x.stroke()}});
       $('#ip-more').hidden=true;$('#ip-n').textContent=MY.list.length===1?'1 icono tuyo':MY.list.length+' iconos tuyos';return}
     const L=icSearch(st.q,st.cat),sh=L.slice(0,st.n);
@@ -1935,7 +1935,10 @@ function iconPicker(o){
   const ipst=$('#ip-st');ipst.ontoggle=()=>{st.open=ipst.open;if(ipst.open)icStyleDraw(ipst)};icStyleBind(ipst,()=>{$('#ip-ss').textContent=icStyleSum();draw()});
   $('#ip-g').onclick=async e=>{
     if(e.target.closest('[data-add]')){const inp=$('#in-ico');inp.onchange=async ev=>{const fs=[...ev.target.files];ev.target.value='';let last=null;for(const f of fs){const m=await myAdd(f);if(m)last=m}
-        if(last){toast(fs.length>1?'Iconos añadidos':'Icono añadido');if(fs.length===1){S.icRedraw=null;o.onPick('my:'+last.id);return}}iconPicker(o)};inp.click();return}
+        if(last){if(fs.length===1&&badName(last.name)){const nm=await promptBS({title:'Nombre del icono',text:'Para reconocerlo luego en «Mis iconos».',value:'',ph:'Por ejemplo: Navegación',ok:'Guardar'});if(nm){last.name=nm;myIndex();await mySave()}}
+          toast(fs.length>1?'Iconos añadidos':'Icono añadido');if(fs.length===1){S.icRedraw=null;o.onPick('my:'+last.id);return}}iconPicker(o)};inp.click();return}
+    const rn=e.target.closest('[data-ren]');if(rn){const m=MY.by.get(rn.dataset.ren);if(!m)return;const nm=await promptBS({title:'Nombre del icono',value:m.name,ok:'Guardar'});
+      if(nm&&nm!==m.name){m.name=nm;myIndex();await mySave();toast('Nombre cambiado')}iconPicker(o);return}
     const dl=e.target.closest('[data-del]');if(dl){const m=MY.by.get(dl.dataset.del);if(!m)return;
       const used=Object.values((S.gen&&S.gen.per)||{}).some(p=>p.icon==='my:'+m.id)||Object.values(S.icx||{}).some(p=>p.k==='my:'+m.id);
       if(used){toast('Lo estás usando en tu diseño: cámbialo antes por otro icono');return}
@@ -2050,6 +2053,8 @@ function rasterMask(img){const S0=256,c=document.createElement('canvas');c.width
   for(let i=0;i<S0*S0;i++){mi.data[i*4]=mi.data[i*4+1]=mi.data[i*4+2]=255;mi.data[i*4+3]=Math.round(a[i]*255)}mx.putImageData(mi,0,0);
   const o=document.createElement('canvas');o.width=o.height=128;const ox=o.getContext('2d'),bw=x1-x0+1,bh=y1-y0+1,k=96/Math.max(bw,bh);ox.imageSmoothingQuality='high';
   ox.drawImage(m,x0,y0,bw,bh,64-bw*k/2,64-bh*k/2,bw*k,bh*k);return o.toDataURL('image/png')}
+// Nombres de archivo que no dicen nada (fotos del móvil, capturas, descargas…)
+const badName=n=>/^[\d\s_-]+$/.test(n)||/^(img|image|imagen|screenshot|captura|download|descarga|pxl|dsc|photo|foto|file|archivo|unnamed|icon)[\s_-]*[\d\s_()-]*$/i.test(n)||n.length<2;
 async function myAdd(file){const name=file.name.replace(/\.[^.]+$/,'').slice(0,40)||'Mi icono',id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);let m=null;
   const isSvg=/svg/i.test(file.type)||/\.svg$/i.test(file.name);
   if(isSvg){const txt=await file.text();const v=svgVector(txt);if(v)m={id,name,...v,kind:'vec'};
