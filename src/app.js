@@ -721,7 +721,7 @@ function bind(){
   $('#ab-back').onclick=back;$('#ab-undo').onclick=undo;$('#ab-more').onclick=openMenu;$('#scrim').onclick=closeBS;
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#bs').hidden)closeBS();else if(!ROOTN.has(S.route.n))back()}if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!/INPUT|SELECT/.test(document.activeElement.tagName)){e.preventDefault();undo()}});
   $('#view').addEventListener('click',e=>{const t=e.target;
-    const ed=t.closest('[data-edit]');if(ed){const F=S.files[+ed.dataset.f];if(F){if(S.route.n==='home'&&genTargets().includes(F))btnSheet(F);else go({n:'edit',p:F.path})}return}
+    const ed=t.closest('[data-edit]');if(ed){const F=S.files[+ed.dataset.f];if(F){if(isBtnLike(F))btnSheet(F);else go({n:'edit',p:F.path})}return}
     const g=t.closest('[data-go]');if(g){go({n:g.dataset.go});return}
     const c=t.closest('[data-cat]');if(c){S.sec=c.dataset.sec||'all';S.kind='all';S.onlyCh=false;if(c.dataset.cat!=='*'){S.cat=c.dataset.cat;remember()}go({n:'cat',c:c.dataset.cat});return}
     const a=t.closest('[data-act]');if(a&&a.dataset.act==='load')openLoad();if(a&&a.dataset.act==='kit')makeKit();if(a&&a.dataset.act==='designs'){S.focus='s-des';go({n:'settings'})}});

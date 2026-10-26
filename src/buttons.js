@@ -8,12 +8,18 @@ function btnLook(){const g=S.gen||(S.gen=defGen());if(!g.look)g.look='orig';retu
 function mainFam(F){const st=stats(F);let best=-1,n=0;for(const f of st.fam.values())if(f.k<12&&f.n>n){n=f.n;best=f.k}return best}
 function btnHueOps(F,hue){const o={...defOps(),...(S.ops.file[F.path]||{})};o.map={...(o.map||{})};
   if(o.bk!=null){delete o.map[o.bk];delete o.bk}
-  if(hue!=null){const k=mainFam(F);if(k>=0){o.map[k]={to:hue,ts:.72,tl:.5};o.bk=k}}
+  if(hue!=null){const k=mainFam(F);if(k>=0){o.map[k]=hue==='white'?{white:true}:{to:hue,ts:.72,tl:.5};o.bk=k}}
   if(!Object.keys(o.map).length)delete o.map;setFileOps(F,o)}
-function buildButton(F){const g=S.gen,p=g.per[F.path]||{},look=btnLook();
+// Iconos de una sola imagen: el color del icono tiñe toda la imagen (la transparencia no se toca)
+function btnTintOps(F,ihue){const o={...defOps(),...(S.ops.file[F.path]||{})};o.map={...(o.map||{})};
+  if(o.bm){for(const k of o.bm)delete o.map[k];delete o.bm}
+  if(ihue!=null){const ks=[...stats(F).fam.keys()].filter(k=>k!==13);for(const k of ks)o.map[k]=ihue==='white'?{white:true}:{to:ihue,ts:.82,tl:.56};o.bm=ks}
+  if(!Object.keys(o.map).length)delete o.map;setFileOps(F,o)}
+function buildButton(F){const g=S.gen||(S.gen=defGen()),p=g.per[F.path]||{},look=genTargets().includes(F)?btnLook():'orig';
   if(look==='orig'){
-    const k=p.icon&&p.icon!=='orig'&&p.icon!=='png'?p.icon:null;
-    if(k){F.rep=null;F.icz=null;icApply(F,{k},true);if(F.rep)F.rep.by='btn';if(S.icx)delete S.icx[F.path];delete S.ex[F.path]}
+    const single=frames(F)<2&&!(p.icon&&p.icon!=='orig');btnTintOps(F,single?p.ihue:null);
+    const k=p.icon&&p.icon!=='orig'&&p.icon!=='png'?p.icon:(p.ihue!=null&&!single&&extractIcon(F)?'orig':null);
+    if(k){F.rep=null;F.icz=null;icApply(F,{k,col:p.ihue==null?'orig':p.ihue,keepOn:true},true);if(F.rep)F.rep.by='btn';if(S.icx)delete S.icx[F.path];delete S.ex[F.path]}
     else{if(F.rep&&(F.rep.by==='btn'||F.rep.by==='gen'))F.rep=null;if(S.icx)delete S.icx[F.path];if(S.ex[F.path]===true)delete S.ex[F.path]}
     btnHueOps(F,p.hue)}
   else{btnHueOps(F,null);const c=genTile(F,g),d=c.getContext('2d').getImageData(0,0,F.w,F.h).data,key=new Uint8Array(F.w*F.h);
@@ -29,52 +35,60 @@ async function setLook(v){const fs=genTargets(),mine=fs.filter(handRep);
 // Para estados guardados antes de este motor
 function migrateLook(st){if(!S.gen||S.gen.look)return;const fs=genTargets(),icx=(st&&st.icx)||{};S.gen.look=fs.some(F=>F.rep&&!icx[F.path])?S.gen.style:'orig';for(const F of fs)if(F.rep&&!icx[F.path]&&S.gen.look!=='orig')F.rep.by='gen'}
 
-/* Hoja de un botón: todo lo de ese botón en un sitio (Icono · Color · Estilo · Más), al momento */
+/* Hoja de un botón, en una sola pantalla: icono, color del marco, color del icono, estilo y más.
+   Sirve para cualquier botón o icono de cualquier pantalla; el estilo solo existe para los botones de Inicio. */
+const ICW={ff:'player-track-next',rew:'player-track-prev',play:'player-play',pause:'player-pause',nowplay:'player-play',stop:'player-stop',next:'player-skip-forward',prev:'player-skip-back',
+  repeat:'repeat',shuffle:'arrows-shuffle',volume:'volume',sound:'volume',mute:'volume-off',carspeaker:'speakerphone',surround:'surround',phone:'phone',call:'phone-call',dial:'dialpad',phonebook:'address-book',
+  missed:'phone-x',outgoing:'phone-outgoing',incoming:'phone-incoming',ring:'bell-ringing',bt:'bluetooth',usb:'usb',aux:'plug',search:'search',list:'list',folder:'folder',back:'arrow-back-up',home:'home',
+  setting:'settings',set:'settings',timesetting:'clock-cog',time:'clock',timeset:'clock',clock:'clock',eco:'leaf',trip:'route',report:'report-analytics',coaching:'school',scoring:'trophy',navi:'navigation',
+  map:'map-2',nearby:'map-pin',rvc:'camera',camera:'camera',mvc:'camera-rotate',smartphone:'device-mobile',mobile:'device-mobile',siri:'microphone',antenna:'antenna',fmradio:'radio',radio:'radio',ta:'alert-triangle',
+  caution:'alert-triangle',help:'help',info:'info-circle',star:'star',up:'chevron-up',down:'chevron-down',left:'chevron-left',right:'chevron-right',arrow:'arrow-right',dark:'moon',temp:'temperature',blower:'car-fan',
+  keyboard:'keyboard',space:'space',changekey:'language',direction:'direction',music:'music',media:'music',vehicle:'car',car:'car',presets:'list-numbers',preset:'list-numbers',contents:'layout-list',office:'building'};
+function icSuggest2(F){const out=[],add=n=>{if(n&&!out.includes(n)&&(IC.st!==2||IC.by.has(n)))out.push(n)};icSuggest(F).forEach(add);
+  const ws=F.name.toLowerCase().replace(/\.bmp$/,'').split(/[_\s\-.0-9]+/).filter(Boolean);for(const w of ws)add(ICW[w]);
+  if(IC.st===2)for(const w of ws){if(out.length>=8)break;if(['btn','icon','img','bg','softkey','common','etc','line','indi','popup','control'].includes(w))continue;for(const n of icSearch(w,'').slice(0,2))add(n)}
+  const fb=['star','circle','square','heart'];for(const n of fb){if(out.length>=6)break;add(n)}return out.slice(0,9)}
 const LOOKS=()=>[['orig','Original de Renault'],...GSTYLES];
+const isBtnLike=F=>{const k=kindOf(F);return k==='btn'||k==='ico'};
 function btnSheet(F,after){
-  const g=S.gen||(S.gen=defGen()),fs=genTargets(),idx=fs.indexOf(F),look=btnLook();S.gsel=F.path;const p=()=>g.per[F.path]||(g.per[F.path]={});const ps=g.per[F.path]||{};
-  const tab=S.btab||(S.btab='icon');const cur=ps.icon||'orig',sug=icSuggest(F).map(n=>'t:'+n);
+  const g=S.gen||(S.gen=defGen()),T=genTargets(),home=T.includes(F),look=home?btnLook():'orig',list=home?T:null,idx=list?list.indexOf(F):-1;S.gsel=F.path;
+  const p=()=>g.per[F.path]||(g.per[F.path]={}),ps=g.per[F.path]||{};const cur=ps.icon||'orig',sug=icSuggest2(F).map(n=>'t:'+n);
   const icons=['orig','mine',...(cur.startsWith('t:')||cur.startsWith('lib:')||cur.startsWith('my:'))&&!sug.includes(cur)?[cur]:[],...sug,'all'];
   if(IC.st!==2){icLoad();S.icRedraw=()=>{if($('#bt-ic'))btnSheet(F,after)}}
   const icT=k=>k==='orig'?'El original':k==='mine'?'Mis iconos':k==='all'?'Ver todos':k.startsWith('lib:')?ICONL[k.slice(4)]||k:keyLabel(k);
-  const done=()=>{after&&after();const m=$('#pv');if(m)drawPreview(m,{scr:'home',state:S.gstate||0})};
+  const done=()=>{after&&after();for(const q of S.pvs)if(q.c.isConnected)drawPreview(q.c,q.o())};
   const change=fn=>{before();fn();applyButtons([F]);done();pv()};
-  openBS(`<div class="gsh"><div class="screen"><canvas id="bt-pv" width="800" height="480" aria-label="Vista previa de Inicio con ${esc(pretty(F))} marcado"></canvas></div>
-      <div class="e-bar"><div><h2>${esc(pretty(F))}</h2></div><span class="sp"></span><div class="seg" id="bt-st" role="group" aria-label="Estado"><button data-s="0" aria-pressed="${!S.gstate}">Reposo</button><button data-s="1" aria-pressed="${S.gstate===1}">Pulsado</button></div></div></div>
-    <div class="seg gtabs bt-tabs" id="bt-tabs" role="tablist">${[['icon','Icono'],['color','Color'],['look','Estilo'],['more','Más']].map(([k,l])=>`<button data-t="${k}" aria-pressed="${tab===k}">${l}</button>`).join('')}</div>
-    <div data-bp="icon"${tab==='icon'?'':' hidden'}><p class="note">Solo para este botón. Para subir el tuyo: «Mis iconos».</p><div class="icg" id="bt-ic">${icons.map(k=>`<button class="icb${k==='all'||k==='mine'?' all':''}" data-k="${k}" aria-pressed="${cur===k}" title="${esc(icT(k))}"><canvas width="88" height="88"></canvas><span>${esc(icT(k))}</span></button>`).join('')}</div></div>
-    <div data-bp="color"${tab==='color'?'':' hidden'}><p class="note">${look==='orig'?'Cambia el color principal de este botón y conserva su dibujo original.':'El color de este botón con el estilo elegido.'}</p><div id="bt-col">${swatches(ps.hue!=null?ps.hue:'none',{none:look==='orig'?'El original':'Como el resto',label:'Color de este botón'})}</div></div>
-    <div data-bp="look"${tab==='look'?'':' hidden'}><p class="note">El estilo es <b>común a los ${fs.length} botones</b> de Inicio, para que combinen. El icono y el color de cada uno se mantienen.</p><div class="ocg" id="bt-lk">${LOOKS().map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${look===k}"><canvas data-lk="${k}"></canvas><span>${l}</span></button>`).join('')}</div></div>
-    <div data-bp="more"${tab==='more'?'':' hidden'}><div class="list">
-      <button class="li" data-mo="gen"><span class="ic">${ic('M4 6h10M18 6h2M16 4v4M4 12h4M12 12h8M10 10v4M4 18h12M18 16v4')}</span><span class="tx"><b>Forma, tamaño del icono y trazo</b><small>Ajustes finos del estilo, para todos los botones</small></span>${CHEV}</button>
-      <button class="li" data-mo="edit"><span class="ic">${ic('M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4')}</span><span class="tx"><b>Editar esta imagen a fondo</b><small>Todos sus colores, sustituirla por una foto, estados</small></span>${CHEV}</button>
-      <button class="li" data-mo="reset"><span class="ic">${ic('M3 12a9 9 0 1 0 3-6.7M3 4v5h5')}</span><span class="tx"><b>Volver al original este botón</b><small>Quita su icono y su color propios</small></span>${CHEV}</button></div></div>
-    <div class="gnav"><button class="btn o sm" data-mv="-1"${idx<=0?' disabled':''}>‹ Anterior</button><button class="btn sm" data-done>Hecho</button><button class="btn o sm" data-mv="1"${idx>=fs.length-1?' disabled':''}>Siguiente ›</button></div>`);
-  const bs=$('#bs');bs.onclick=null;
-  const gcv=$('#bt-pv'),pv=()=>drawPreview(gcv,{scr:'home',state:S.gstate||0,selP:F.path});pv();
-  $('#bt-st').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;S.gstate=+b.dataset.s;$$('#bt-st button').forEach(x=>x.setAttribute('aria-pressed',x===b));pv();done()};
-  let gd=-1;gcv.onpointerdown=e=>{gd=slotAt(gcv,e).i};gcv.onpointerup=e=>{const h=slotAt(gcv,e),i=gd;gd=-1;if(i<0||h.i!==i)return;const n=slotF(S.layout.slots[i]);if(n&&n!==F&&fs.includes(n))btnSheet(n,after)};
-  $('#bt-tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;S.btab=b.dataset.t;$$('#bt-tabs button').forEach(x=>x.setAttribute('aria-pressed',x===b));$$('[data-bp]').forEach(x=>x.hidden=x.dataset.bp!==S.btab);if(S.btab==='look')drawLooks()};
+  const fsel=ps.hue==null?'none':ps.hue==='white'?'white':ps.hue,isel=ps.ihue==null?'none':ps.ihue==='white'?'white':ps.ihue;
+  openBS(`<div class="gsh bts">${home?`<div class="screen"><canvas id="bt-pv" width="800" height="480" aria-label="Vista previa de Inicio con ${esc(pretty(F))} marcado"></canvas></div>`:`<div class="btstrip"><canvas id="bt-pv" aria-label="${esc(pretty(F))} con sus estados"></canvas></div>`}
+      <div class="e-bar"><div><h2>${esc(pretty(F))}</h2></div><span class="sp"></span>${home?`<div class="seg" id="bt-st" role="group" aria-label="Estado"><button data-s="0" aria-pressed="${!S.gstate}">Reposo</button><button data-s="1" aria-pressed="${S.gstate===1}">Pulsado</button></div>`:''}</div></div>
+    <p class="lbl">Icono</p><div class="hs" id="bt-ic">${icons.map(k=>`<button class="icb${k==='all'||k==='mine'?' all':''}" data-k="${k}" aria-pressed="${cur===k}" title="${esc(icT(k))}"><canvas width="88" height="88"></canvas><span>${esc(icT(k))}</span></button>`).join('')}</div>
+    ${frames(F)>1||!F.keyCount?`<p class="lbl">Color del marco</p><div class="hsw" id="bt-fc">${swatches(fsel,{none:look==='orig'?'El original':'Como el resto',white:look==='orig',label:'Color del marco'})}</div>`:''}
+    <p class="lbl">Color del icono</p><div class="hsw" id="bt-icc">${swatches(isel,{none:'Como el original',white:true,label:'Color del icono'})}</div>
+    ${home?`<p class="lbl">Estilo <small>· común a los ${T.length} botones de Inicio</small></p><div class="hs" id="bt-lk">${LOOKS().map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${look===k}"><canvas data-lk="${k}"></canvas><span>${l}</span></button>`).join('')}</div>`:''}
+    <div class="bt-more">${home?`<button class="btn o sm" data-mo="gen">Forma y trazo</button>`:''}<button class="btn o sm" data-mo="edit">Editar a fondo</button><button class="btn o sm" data-mo="reset">Volver al original</button></div>
+    <div class="gnav">${list?`<button class="btn o sm" data-mv="-1"${idx<=0?' disabled':''}>‹ Anterior</button>`:'<span></span>'}<button class="btn sm" data-done>Hecho</button>${list?`<button class="btn o sm" data-mv="1"${idx>=list.length-1?' disabled':''}>Siguiente ›</button>`:'<span></span>'}</div>`);
+  const bs=$('#bs');bs.onclick=null;const gcv=$('#bt-pv');
+  const pv=home?()=>drawPreview(gcv,{scr:'home',state:S.gstate||0,selP:F.path}):()=>{const src=renderCanvas(F,true),k=Math.min(3,Math.max(1,Math.floor(340/F.w*2)/2||1));gcv.width=F.w;gcv.height=F.h;const x=gcv.getContext('2d');x.clearRect(0,0,F.w,F.h);x.drawImage(src,0,0);gcv.style.width=Math.min(F.w*k,window.innerWidth-56)+'px'};pv();
+  const st=$('#bt-st');if(st)st.onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;S.gstate=+b.dataset.s;$$('#bt-st button').forEach(x=>x.setAttribute('aria-pressed',x===b));pv();done()};
+  if(home){let gd=-1;gcv.onpointerdown=e=>{gd=slotAt(gcv,e).i};gcv.onpointerup=e=>{const h=slotAt(gcv,e),i=gd;gd=-1;if(i<0||h.i!==i)return;const n=slotF(S.layout.slots[i]);if(n&&n!==F&&T.includes(n))btnSheet(n,after)}}
   const col=getComputedStyle(document.body).color;
   $$('#bt-ic canvas').forEach(cv=>{const k=cv.parentNode.dataset.k,x=cv.getContext('2d');x.clearRect(0,0,88,88);
-    if(k==='orig'){const mk=extractIcon(F);if(mk)drawMask(x,mk,44,44,Math.min(70/mk.bw,70/mk.bh),col,0);else{x.fillStyle=col;x.font='600 13px Inter,sans-serif';x.textAlign='center';x.fillText('Original',44,48)}}
+    if(k==='orig'){const mk=extractIcon(F);if(mk)drawMask(x,mk,44,44,Math.min(70/mk.bw,70/mk.bh),col,0);else{const src=renderOrig(F,false),fw=F.w/frames(F),sc=Math.min(80/fw,80/F.h);x.drawImage(src,0,0,fw,F.h,44-fw*sc/2,44-F.h*sc/2,fw*sc,F.h*sc)}}
     else if(k==='mine'){x.strokeStyle=col;x.lineWidth=4;x.lineCap='round';x.lineJoin='round';x.beginPath();x.moveTo(44,62);x.lineTo(44,26);x.moveTo(30,40);x.lineTo(44,26);x.lineTo(58,40);x.moveTo(26,66);x.lineTo(62,66);x.stroke()}
     else if(k==='all'){x.fillStyle=col;for(let i=0;i<3;i++)for(let j=0;j<3;j++){x.globalAlpha=i===1&&j===1?1:.45;x.beginPath();x.arc(28+i*16,28+j*16,4.5,0,7);x.fill()}x.globalAlpha=1}
     else drawIconKey(x,k,44,44,52,col,0)});
-  const pick=k=>change(()=>{p().icon=k==='orig'?undefined:k});
   const openPicker=cat=>{S.ipk=S.ipk||{q:'',cat:'radio',n:96};if(cat){S.ipk.cat=cat;S.ipk.q=''}iconPicker({title:'Icono para '+pretty(F),cur,back:()=>btnSheet(F,after),onPick:nk=>{before();p().icon=nk;applyButtons([F]);done();btnSheet(F,after)}})};
   $('#bt-ic').onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;const k=b.dataset.k;
     if(k==='all')return openPicker(null);if(k==='mine')return openPicker('my');
-    if(k==='orig'&&btnLook()!=='orig'&&!extractIcon(F)){toast('No he podido separar el icono original de este botón');return}
-    $$('#bt-ic .icb').forEach(x=>x.setAttribute('aria-pressed',x===b));pick(k)};
-  const sw=$('#bt-col .swg');sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;sw.querySelectorAll('.swc').forEach(x=>x.setAttribute('aria-pressed',x===b));change(()=>{p().hue=b.dataset.h==='none'?null:+b.dataset.h})};
-  sw.querySelector('[data-pick]').onchange=e=>change(()=>{p().hue=Math.round(hexHsl(e.target.value)[0])});
-  const drawLooks=()=>$$('#bt-lk canvas').forEach(cv=>{const k=cv.dataset.lk;if(k==='orig'){const fr=frames(F),fw=F.w/fr,c=document.createElement('canvas');c.width=fw;c.height=F.h;c.getContext('2d').drawImage(renderOrig(F,false),0,0,fw,F.h,0,0,fw,F.h);putMini(cv,c)}else putMini(cv,miniTile(F,{...g,style:k},0))});
-  if(tab==='look')drawLooks();
-  $('#bt-lk').onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;if(await setLook(b.dataset.v)){$$('#bt-lk .ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));done();pv();const n=$('[data-bp="color"] .note');if(n)n.textContent=btnLook()==='orig'?'Cambia el color principal de este botón y conserva su dibujo original.':'El color de este botón con el estilo elegido.'}};
-  $$('[data-mo]').forEach(b=>b.onclick=async()=>{const m=b.dataset.mo;
+    $$('#bt-ic .icb').forEach(x=>x.setAttribute('aria-pressed',x===b));change(()=>{p().icon=k==='orig'?undefined:k})};
+  const swBind=(id,key)=>{const sw=$(id+' .swg');sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;sw.querySelectorAll('.swc').forEach(x=>x.setAttribute('aria-pressed',x===b));const h=b.dataset.h;change(()=>{p()[key]=h==='none'?null:h==='white'?'white':+h})};
+    sw.querySelector('[data-pick]').onchange=e=>change(()=>{p()[key]=Math.round(hexHsl(e.target.value)[0])})};
+  if($('#bt-fc'))swBind('#bt-fc','hue');swBind('#bt-icc','ihue');
+  const lk=$('#bt-lk');if(lk){$$('#bt-lk canvas').forEach(cv=>{const k=cv.dataset.lk;if(k==='orig'){const fr=frames(F),fw=F.w/fr,c=document.createElement('canvas');c.width=fw;c.height=F.h;c.getContext('2d').drawImage(renderOrig(F,false),0,0,fw,F.h,0,0,fw,F.h);putMini(cv,c)}else putMini(cv,miniTile(F,{...g,style:k},0))});
+    lk.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;if(await setLook(b.dataset.v)){$$('#bt-lk .ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));done();pv()}}}
+  $$('[data-mo]').forEach(b=>b.onclick=()=>{const m=b.dataset.mo;
     if(m==='gen'){closeBS();go({n:'gen'})}else if(m==='edit'){closeBS();go({n:'edit',p:F.path})}
     else{change(()=>{delete g.per[F.path]});toast(pretty(F)+' vuelve al original',{label:'Deshacer',fn:undo})}});
-  bs.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{const n=fs[idx+ +b.dataset.mv];if(n)btnSheet(n,after)});
+  bs.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{const n=list[idx+ +b.dataset.mv];if(n)btnSheet(n,after)});
   bs.querySelector('[data-done]').onclick=()=>{S.icRedraw=null;closeBS();after&&after()};
 }

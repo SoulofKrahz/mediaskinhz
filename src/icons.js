@@ -125,8 +125,10 @@ function icApply(F,spec,quiet){
   x.putImageData(im,0,0);
   const size=spec.size||Math.max(14,Math.min(Math.min(fw,h)*.9,Math.max(bw,bh)*24/18));
   for(let s=0;s<fr;s++){const a=A[s],cx=s*fw+(a.x0+a.x1)/2,cy=(a.y0+a.y1)/2+(spec.dy||0);
-    const col=spec.col==null||spec.col==='orig'?`rgb(${a.col.join(',')})`:spec.col==='white'?'#fff':typeof spec.col==='number'?`hsl(${spec.col} 80% ${s%2?40:62}%)`:spec.col;
-    x.save();x.beginPath();x.rect(s*fw,0,fw,h);x.clip();drawIcon(x,keyPainter(spec.k),cx,cy,size,col,0);x.restore()}
+    const orig=`rgb(${a.col.join(',')})`,col=spec.col==null||spec.col==='orig'||(spec.keepOn&&s%2===1)?orig:spec.col==='white'?(s===2?'rgba(255,255,255,.55)':'#fff'):typeof spec.col==='number'?`hsl(${spec.col} 85% ${s===2?34:s%2?40:62}%)`:spec.col;
+    // 'orig': el icono original, repintado (su silueta, sacada del estado pulsado)
+    const paint=spec.k==='orig'?(c,X,Y,sz,cc,gl)=>{const mk=extractIcon(F);if(!mk)return false;drawMask(c,mk,X,Y,sz*18/24/Math.max(mk.bw,mk.bh),cc,gl);return true}:keyPainter(spec.k);
+    x.save();x.beginPath();x.rect(s*fw,0,fw,h);x.clip();drawIcon(x,paint,cx,cy,size,col,0);x.restore()}
   const d=x.getImageData(0,0,F.w,h).data,useKey=F.keyCount>0,key=new Uint8Array(F.w*h);
   for(let i=0;i<F.w*h;i++){const al=d[i*4+3];if(al<128){if(useKey)key[i]=1;else{d[i*4]=d[i*4+1]=d[i*4+2]=0}}else if(al<255&&!useKey){d[i*4]=d[i*4]*al/255;d[i*4+1]=d[i*4+1]*al/255;d[i*4+2]=d[i*4+2]*al/255}}
   const q=quantize(d,F.w,h,{key,dither:false});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx};F.cv=null;

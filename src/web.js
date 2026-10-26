@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-26-10';
+const VER='2026-10-26-11';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,7 +11,11 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Toca un botón de Inicio en la vista previa y cámbialo ahí mismo: Icono, Color, Estilo y Más, en una sola hoja',
+  [VER,['La hoja de cada botón, en una sola pantalla: icono, color del marco, color del icono, estilo y más, sin pestañas',
+    'Color del icono por separado: con un estilo, el icono toma ese color en reposo; con el original, el icono se repinta conservando su forma',
+    'Ahora vale para toda la app: tocar cualquier botón o icono de cualquier pantalla (Multimedia, Teléfono, Radio…) abre la misma hoja',
+    'Iconos propuestos según el botón (reproducir, pausa, llamada, volumen, Bluetooth…)']],
+  ['2026-10-26-10',['Toca un botón de Inicio en la vista previa y cámbialo ahí mismo: Icono, Color, Estilo y Más, en una sola hoja',
     'Todo se aplica al momento, sin «Aplicar», y se puede deshacer',
     'El estilo «Original de Renault» es uno más: con él, el icono nuevo se pone conservando el fondo original; al cambiar de estilo se mantienen el icono y el color de cada botón',
     'Ajustes separado en pestañas: Diseños, Historial, Preferencias y App']],

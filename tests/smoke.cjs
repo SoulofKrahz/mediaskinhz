@@ -126,14 +126,18 @@ async function run(browser, label, viewport, mobile) {
   // Hoja única del botón: icono y color al momento, con el aspecto original
   await p.evaluate(() => { S.gen = defGen(); go({ n: 'home' }); }); await p.waitForTimeout(500);
   await p.evaluate(() => btnSheet(genTargets()[0])); await p.waitForTimeout(800);
-  ok(await p.locator('#bt-tabs button').count() === 4, 'al tocar un botón se abre su hoja con Icono, Color, Estilo y Más');
+  ok(await p.locator('#bt-ic').count() && await p.locator('#bt-fc').count() && await p.locator('#bt-icc').count() && await p.locator('#bt-lk').count(), 'al tocar un botón se abre su hoja con icono, color del marco, color del icono y estilo en una sola pantalla');
   await tap('#bt-ic .icb:nth-child(3)'); await p.waitForTimeout(600);
   ok(await p.evaluate(() => { const F = genTargets()[0]; return !!F.rep && F.rep.by === 'btn' && S.gen.look === 'orig'; }), 'cambiar el icono se aplica al momento, conservando el aspecto original');
-  await tap('#bt-tabs [data-t="look"]'); await p.waitForTimeout(300); await tap('#bt-lk [data-v="flat"]'); await p.waitForTimeout(900);
+  await tap('#bt-icc button[data-h="white"]'); await p.waitForTimeout(500);
+  ok(await p.evaluate(() => S.gen.per[genTargets()[0].path].ihue === 'white'), 'el color del icono se elige aparte');
+  await tap('#bt-lk [data-v="flat"]'); await p.waitForTimeout(900);
   ok(await p.evaluate(() => S.gen.look === 'flat' && genTargets().every(F => F.rep && F.rep.by === 'gen')), 'elegir un estilo redibuja los botones al momento');
   await tap('#bt-lk [data-v="orig"]'); await p.waitForTimeout(900);
   ok(await p.evaluate(() => { const [a, ...r] = genTargets(); return a.rep && a.rep.by === 'btn' && r.every(F => !F.rep); }), 'volver al original conserva el icono elegido y deja el resto como estaba');
   await tap('#bs [data-done]'); await p.waitForTimeout(300);
+  // La misma hoja vale para cualquier botón de otra pantalla
+  ok(await p.evaluate(() => { const F = S.files.find(f => kindOf(f) === 'btn' && !genTargets().includes(f)); if (!F) return true; btnSheet(F); const ok = !!document.querySelector('#bt-icc') && !document.querySelector('#bt-lk'); closeBS(); return ok; }), 'la hoja sirve también para botones de otras pantallas (sin estilo)');
   // Familia «Negros y fondo»
   ok(await p.evaluate(() => { const F = S.files.find(f => /HOME_BG/i.test(f.path)); return famsOfFiles([F]).some(f => f.k === 13); }), 'el fondo de Inicio ofrece la familia «Negros y fondo»');
   // Exportar (ejemplo) → descarga un ZIP
