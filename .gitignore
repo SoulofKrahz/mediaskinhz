@@ -1,0 +1,14 @@
+node_modules/
+.DS_Store
+.wrangler/
+site/version.txt
+package-lock.json
+__pycache__/
+# vista previa local y archivos personales: nunca al repositorio (es público)
+/index.html
+/v2-backup.html
+*.zip
+*.bmp
+*.BMP
+*.lgu
+M1/
