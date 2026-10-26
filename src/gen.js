@@ -172,8 +172,8 @@ function scrGen(v){
   c.onpointerleave=c.onpointercancel=()=>{down=-1;if(S.press!==-1){S.press=-1;drawPreview(c,po())}};
   c.onpointerup=e=>{const h=slotAt(c,e),i=down;down=-1;S.press=-1;drawPreview(c,po());if(i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F&&fs.includes(F))genSheet(F,upd)}};
   $$('[data-gb]',v).forEach(b=>b.onclick=()=>{const F=S.lc.get(b.dataset.gb.toLowerCase());if(F)genSheet(F,upd)});
-  $('#g-ap').onclick=async()=>{const over=fs.filter(F=>F.rep&&!(S.genApplied||{})[F.path]);if(over.length&&!await confirmBS({title:'Sustituir imágenes nuevas',text:`${over.map(F=>esc(pretty(F))).join(', ')} ya ${over.length===1?'tiene':'tienen'} una imagen nueva que pusiste tú. Se sustituirá por el diseño generado. Se guardará antes un punto de restauración.`,ok:'Sustituir',danger:true}))return;
-    await addPoint('Antes de rediseñar los botones','auto');applyGen();S.genApplied={};for(const F of fs)S.genApplied[F.path]=1;go({n:'home'})};
+  $('#g-ap').onclick=async()=>{const over=fs.filter(F=>F.rep&&!(S.genApplied||{})[F.path]);if(over.length&&!await confirmBS({title:'Sustituir imágenes nuevas',text:`${over.map(F=>esc(pretty(F))).join(', ')} ya ${over.length===1?'tiene':'tienen'} una imagen nueva que pusiste tú. Se sustituirá por el diseño generado. Se guardará antes una copia automática.`,ok:'Sustituir',danger:true}))return;
+    await addPoint('Antes de rediseñar los botones','auto');applyGen();S.genApplied={};for(const F of fs)S.genApplied[F.path]=1;go({n:'home'});if(!S.demo)setTimeout(()=>toast('¿Te gusta? Guárdalo con un nombre',{label:'Guardar',fn:saveDesign,ms:7000}),3400)};
   $('#g-reset').onclick=async()=>{if(!await confirmBS({title:'Empezar de cero',text:'Se pierden el estilo, la forma, los colores y los iconos que has elegido aquí. Podrás deshacerlo.',ok:'Empezar de cero'}))return;before();S.gen=defGen();render(true);toast('Diseño reiniciado',{label:'Deshacer',fn:undo})};
 }
 function genSheet(F,upd){

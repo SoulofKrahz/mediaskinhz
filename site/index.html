@@ -246,6 +246,14 @@ input[type=range].hue{--trk:linear-gradient(90deg,hsl(0 80% 50%),hsl(60 80% 50%)
 .icb.all span,.icb.add span{color:var(--em);font-weight:600}
 .icw{position:relative;display:flex}.icw .icb{flex:1}.icx{position:absolute;top:2px;right:2px;width:26px;height:26px;border-radius:50%;background:var(--card);border:1px solid var(--bd2);color:var(--mu);font-size:16px;line-height:1;display:grid;place-items:center}
 .icrow{display:flex;align-items:center;gap:14px}.icrow canvas{width:56px;height:56px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);flex:none}
+.qa{display:grid;grid-template-columns:1fr 1fr;gap:10px}.qai{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:14px;border-radius:16px;background:var(--card);border:1px solid var(--bd);min-height:110px}
+.qai .ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--tint);color:var(--em);margin-bottom:6px}.qai b{font-size:15px;line-height:1.25}.qai small{font-size:12.5px;color:var(--mu);line-height:1.35}
+.qai:first-child{background:var(--em);border-color:var(--em);color:var(--onem)}.qai:first-child .ic{background:rgba(255,255,255,.18);color:var(--onem)}.qai:first-child small{color:var(--onem);opacity:.85}
+.dsg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.dsc{border:1px solid var(--bd);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;background:var(--card)}.dsc.on{border-color:var(--em2);box-shadow:0 0 0 1px var(--em2)}
+.dsi{position:relative;display:block;aspect-ratio:5/3;background:#000;width:100%}.dsi img{width:100%;height:100%;object-fit:cover;display:block}.dsi .pill{position:absolute;top:6px;left:6px}.dsn{color:#9aa;font-size:12px;display:grid;place-items:center;height:100%}
+.dst{padding:8px 10px 2px;display:flex;flex-direction:column;min-width:0}.dst b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dst small{font-size:12px;color:var(--mu)}
+.dsa{display:flex;gap:2px;padding:4px 6px 8px;align-items:center}.dsa .btn{flex:1;padding:6px;min-height:40px;font-size:13.5px}.dsa .ib{width:40px;height:40px}.ib.dgi:hover{color:var(--bad);background:var(--badbg)}
 .acs{display:flex;flex-wrap:wrap;gap:10px}.acs .swc{width:42px;min-width:42px}
 .acr{display:flex;align-items:center;gap:12px;padding-top:4px}.acr>span{flex:1;min-width:0;display:flex;flex-direction:column}.acr small{font-size:12.5px;color:var(--mu);line-height:1.4}
 .cpick{width:48px;height:40px;border:1px solid var(--bd);border-radius:10px;background:none;padding:2px;flex:none;cursor:pointer}
@@ -656,7 +664,7 @@ function setFileOps(F,v){if(empty(v))delete S.ops.file[F.path];else S.ops.file[F
 const H=[];
 const genCopy=g=>g?{...g,per:Object.fromEntries(Object.entries(g.per||{}).map(([k,p])=>[k,{...p}]))}:null;
 function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),icx:structuredClone(S.icx||{}),reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep])}}
-function before(){H.push(snap());if(H.length>80)H.shift();updUndo()}
+function before(){S.curDesign=null;H.push(snap());if(H.length>80)H.shift();updUndo()}
 function undo(){const s=H.pop();if(!s)return;Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen,icx:s.icx||{}});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
   S.ver++;render(true);toast('Cambio deshecho');saveState()}
 function updUndo(){$('#ab-undo').disabled=!H.length}
@@ -683,7 +691,7 @@ async function ingest(list,opts){
 async function fromFileList(fl){
   const arr=[...fl];if(!arr.length)return;
   if(arr.length===1&&/\.rar$/i.test(arr[0].name)){toast('El navegador no puede abrir .rar. Descomprímelo y elige la carpeta, o comprímelo como .zip.',{ms:7000});return}
-  if(!S.demo){const n=S.files.filter(changed).length;if(n){if(!await confirmBS({title:'Cargar otro backup',text:`Sustituirá el backup actual y su diseño (${n} ${n===1?'imagen cambiada':'imágenes cambiadas'}). Se guardará antes un punto de restauración, que volverá a aparecer si cargas este mismo backup.`,ok:'Cargar el nuevo',danger:true}))return;await addPoint('Antes de cargar otro backup','auto')}}
+  if(!S.demo){const n=S.files.filter(changed).length;if(n){if(!await confirmBS({title:'Cargar otro backup',text:`Sustituirá el backup actual y su diseño (${n} ${n===1?'imagen cambiada':'imágenes cambiadas'}). Se guardará antes un copia automática, que volverá a aparecer si cargas este mismo backup.`,ok:'Cargar el nuevo',danger:true}))return;await addPoint('Antes de cargar otro backup','auto')}}
   const z=arr.find(f=>/\.zip$/i.test(f.name));closeBS();toast('Leyendo tu backup…',{ms:90000});
   try{let list,png=0;
     if(z&&arr.length===1){list=await readZip(await z.arrayBuffer(),n=>{if(/\.png$/i.test(n)){png++;return false}return /\.bmp$/i.test(n)})}
@@ -820,10 +828,10 @@ function scrHome(v){
     </div>
     <div class="stack">
       ${S.demo?`<div class="card demo"><h2>Esto es un ejemplo</h2><p>Las imágenes son de muestra. Carga tu backup (la carpeta <b>M1</b> o un ZIP) para editar las de tu MediaNav. No sale de tu móvil.</p><button class="btn wide" data-act="load">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}Cargar mi backup</button></div>`:''}
+      ${S.scr==='home'&&!S.demo&&genTargets().length?`<div class="qa"><button class="qai" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><b>Rediseñar los botones</b><small>Estilo, iconos y color</small></button><button class="qai" data-act="designs"><span class="ic">${ic('M5 3h11l3 3v15H5zM8 3v6h8V3M8 21v-7h8v7')}</span><b>Mis diseños</b><small>Guardar y cambiar entre ellos</small></button></div>`:S.scr==='home'&&genTargets().length?`<div class="list"><button class="li" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><span class="tx"><b>Rediseñar los botones</b><small>Estilo, forma, color e iconos nuevos</small></span>${CHEV}</button></div>`:''}
       <p class="sec-t">En esta pantalla</p>
       <div class="list">${rows.join('')||'<p class="empty">No hay imágenes de esta pantalla en el backup.</p>'}</div>
-      ${S.scr==='home'&&genTargets().length?`<div class="list"><button class="li" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><span class="tx"><b>Rediseñar los botones</b><small>Estilo, forma, color e iconos nuevos</small></span>${CHEV}</button></div>`:''}
-      ${!S.demo&&S.scr==='home'?`<div class="card"><h3>${ic('M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3')}Prueba en el coche</h3><p class="note">Antes de cambiar formas, prueba este kit de 3 imágenes. Comprueba de una vez si la transparencia funciona en los botones, qué es cada estado y dónde está cada botón (con una foto).</p><button class="btn o wide" data-act="kit">Descargar el kit de prueba</button></div>`:''}
+      ${!S.demo&&S.scr==='home'?`<div class="list"><button class="li" data-act="kit"><span class="ic">${ic('M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3')}</span><span class="tx"><b>Kit de prueba para el coche</b><small>3 imágenes para comprobar transparencia, estados y posiciones</small></span>${CHEV}</button></div>`:''}
       ${S.scr==='home'?`<div class="list"><button class="li" data-go="layout"><span class="ic">${ic('M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20')}</span><span class="tx"><b>Distribución de los botones</b><small>Moverlos, cuadrícula y qué botón va en cada hueco</small></span>${CHEV}</button></div>`:''}
       ${nSec&&S.scr!=='home'?`<div class="list"><button class="li" data-cat="${catOf({sec})}" data-sec="${esc(sec)}"><span class="ic">${ic('M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z')}</span><span class="tx"><b>Todas las imágenes de ${esc(SECL.get(sec))}</b><small>${nSec} imágenes</small></span>${CHEV}</button></div>`:''}
       <div class="list"><button class="li" data-go="theme"><span class="ic">${ic(ROOTS[1][2])}</span><span class="tx"><b>Cambiar el color de toda la radio</b><small>${esc(describe(S.ops.global)||'Sin tema')}</small></span>${CHEV}</button></div>
@@ -1237,7 +1245,8 @@ function closeBS(){const b=$('#bs');if(b.hidden)return;b.hidden=true;$('#scrim')
 function openMenu(){const dark=document.documentElement.dataset.theme?document.documentElement.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
   openBS(`<button class="mi" data-m="load">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}<span>${S.demo?'Cargar mi backup':'Cargar otro backup'}<small>Carpeta M1 o un ZIP</small></span></button>
     ${S.demo?'':`<button class="mi" data-m="kit">${ic('M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3')}<span>Kit de prueba para el coche<small>3 imágenes que resuelven las dudas antes de rediseñar</small></span></button>`}
-    <button class="mi" data-m="settings">${ic('M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 12h2M19 12h2M12 3v2M12 19v2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4')}<span>Ajustes e historial<small>Exportaciones, puntos de restauración y preferencias</small></span></button>
+    ${S.demo?'':`<button class="mi" data-m="save">${ic('M5 3h11l3 3v15H5zM8 3v6h8V3M8 21v-7h8v7')}<span>Guardar el diseño<small>Con un nombre, para volver a él cuando quieras</small></span></button>`}
+    <button class="mi" data-m="settings">${ic('M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 12h2M19 12h2M12 3v2M12 19v2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4')}<span>Ajustes e historial<small>Mis diseños, exportaciones y preferencias</small></span></button>
     <button class="mi" data-m="theme">${ic(dark?'M12 3v2M12 19v2M5 5l1.5 1.5M17.5 17.5L19 19M3 12h2M19 12h2M5 19l1.5-1.5M17.5 6.5L19 5M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z':'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z')}<span>${dark?'Modo claro':'Modo oscuro'}</span></button>
     ${updBadge()?`<button class="mi dgr" data-m="reset">${ic('M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14')}<span>Quitar todos los cambios<small>Se puede deshacer</small></span></button>`:''}
     ${S.demo?'':`<button class="mi dgr" data-m="close">${ic('M18 6L6 18M6 6l12 12')}<span>Cerrar el backup<small>Borra tu backup y tus cambios de este navegador</small></span></button>`}`);
@@ -1245,8 +1254,9 @@ function openMenu(){const dark=document.documentElement.dataset.theme?document.d
     if(m==='load')openLoad();
     else if(m==='kit'){closeBS();makeKit()}
     else if(m==='settings'){closeBS();go({n:'settings'})}
+    else if(m==='save'){closeBS();saveDesign()}
     else if(m==='theme'){const v=dark?'light':'dark';document.documentElement.dataset.theme=v;try{localStorage.setItem('skinhz-theme',v)}catch(_){}closeBS()}
-    else if(m==='reset'){const n=updBadge();if(!await confirmBS({title:'Quitar todos los cambios',text:`Las ${n} imágenes cambiadas volverán a ser las originales. Se guardará antes un punto de restauración y también podrás deshacerlo.`,ok:'Quitar los cambios',danger:true}))return;
+    else if(m==='reset'){const n=updBadge();if(!await confirmBS({title:'Quitar todos los cambios',text:`Las ${n} imágenes cambiadas volverán a ser las originales. Se guardará antes una copia automática y también podrás deshacerlo.`,ok:'Quitar los cambios',danger:true}))return;
       await addPoint('Antes de quitar todos los cambios','auto');before();S.ops={global:null,sec:{},file:{}};S.ex={};for(const F of S.files)F.rep=null;S.src=new Map();bump();render(true);toast('Cambios quitados',{label:'Deshacer',fn:undo})}
     else if(m==='close'){if(!await confirmBS({title:'Cerrar el backup',text:'Se borran de este navegador tu backup y el diseño actual. El historial y los puntos de restauración se conservan y volverán a aparecer si cargas el mismo backup. Esto no se puede deshacer.',ok:'Cerrar el backup',danger:true,always:true}))return;
       await addPoint('Al cerrar el backup','auto');try{await idb.del('files');await idb.del('state')}catch(_){}await demo();S.stack=[];S.route={n:'home'};render();toast('Backup cerrado')}}}
@@ -1270,7 +1280,7 @@ function bind(){
     const ed=t.closest('[data-edit]');if(ed){const F=S.files[+ed.dataset.f];if(F)go({n:'edit',p:F.path});return}
     const g=t.closest('[data-go]');if(g){go({n:g.dataset.go});return}
     const c=t.closest('[data-cat]');if(c){S.sec=c.dataset.sec||'all';S.kind='all';S.onlyCh=false;if(c.dataset.cat!=='*'){S.cat=c.dataset.cat;remember()}go({n:'cat',c:c.dataset.cat});return}
-    const a=t.closest('[data-act]');if(a&&a.dataset.act==='load')openLoad();if(a&&a.dataset.act==='kit')makeKit()});
+    const a=t.closest('[data-act]');if(a&&a.dataset.act==='load')openLoad();if(a&&a.dataset.act==='kit')makeKit();if(a&&a.dataset.act==='designs'){S.focus='s-des';go({n:'settings'})}});
   $('#in-dir').onchange=e=>{fromFileList(e.target.files);e.target.value=''};$('#in-zip').onchange=e=>{fromFileList(e.target.files);e.target.value=''};
   let dc=0;const da=$('#dropall');
   addEventListener('dragenter',e=>{if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')&&S.route.n!=='edit'){dc++;da.hidden=false}});
@@ -1490,8 +1500,8 @@ function scrGen(v){
   c.onpointerleave=c.onpointercancel=()=>{down=-1;if(S.press!==-1){S.press=-1;drawPreview(c,po())}};
   c.onpointerup=e=>{const h=slotAt(c,e),i=down;down=-1;S.press=-1;drawPreview(c,po());if(i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F&&fs.includes(F))genSheet(F,upd)}};
   $$('[data-gb]',v).forEach(b=>b.onclick=()=>{const F=S.lc.get(b.dataset.gb.toLowerCase());if(F)genSheet(F,upd)});
-  $('#g-ap').onclick=async()=>{const over=fs.filter(F=>F.rep&&!(S.genApplied||{})[F.path]);if(over.length&&!await confirmBS({title:'Sustituir imágenes nuevas',text:`${over.map(F=>esc(pretty(F))).join(', ')} ya ${over.length===1?'tiene':'tienen'} una imagen nueva que pusiste tú. Se sustituirá por el diseño generado. Se guardará antes un punto de restauración.`,ok:'Sustituir',danger:true}))return;
-    await addPoint('Antes de rediseñar los botones','auto');applyGen();S.genApplied={};for(const F of fs)S.genApplied[F.path]=1;go({n:'home'})};
+  $('#g-ap').onclick=async()=>{const over=fs.filter(F=>F.rep&&!(S.genApplied||{})[F.path]);if(over.length&&!await confirmBS({title:'Sustituir imágenes nuevas',text:`${over.map(F=>esc(pretty(F))).join(', ')} ya ${over.length===1?'tiene':'tienen'} una imagen nueva que pusiste tú. Se sustituirá por el diseño generado. Se guardará antes una copia automática.`,ok:'Sustituir',danger:true}))return;
+    await addPoint('Antes de rediseñar los botones','auto');applyGen();S.genApplied={};for(const F of fs)S.genApplied[F.path]=1;go({n:'home'});if(!S.demo)setTimeout(()=>toast('¿Te gusta? Guárdalo con un nombre',{label:'Guardar',fn:saveDesign,ms:7000}),3400)};
   $('#g-reset').onclick=async()=>{if(!await confirmBS({title:'Empezar de cero',text:'Se pierden el estilo, la forma, los colores y los iconos que has elegido aquí. Podrás deshacerlo.',ok:'Empezar de cero'}))return;before();S.gen=defGen();render(true);toast('Diseño reiniciado',{label:'Deshacer',fn:undo})};
 }
 function genSheet(F,upd){
@@ -1575,18 +1585,30 @@ const sig=()=>S.root+':'+S.files.length;
 async function getList(k){try{return (await idb.get(k))||[]}catch(_){return []}}
 function packState(){const reps={};for(const F of S.files)if(F.rep)reps[F.path]={pal:F.rep.pal,idx:F.rep.idx,keyIdx:F.rep.keyIdx};
   let gen=null;if(S.gen){gen={...S.gen,per:{}};for(const [k,p] of Object.entries(S.gen.per||{}))gen.per[k]={icon:p.icon==='png'?undefined:p.icon,hue:p.hue}}
-  return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen,reps}}
+  return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen,reps,icx:structuredClone(S.icx||{})}}
+// Miniatura de la pantalla de Inicio para reconocer cada diseño
+function designThumb(){try{const c=document.createElement('canvas');c.width=800;c.height=480;drawPreview(c,{scr:'home'});const t=document.createElement('canvas');t.width=240;t.height=144;const x=t.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(c,0,0,240,144);return t.toDataURL('image/jpeg',.8)}catch(_){return null}}
+function promptBS(o){return new Promise(res=>{
+  openBS(`<h2>${o.title}</h2>${o.text?`<p class="note">${o.text}</p>`:''}<input class="ipq" id="pb-in" maxlength="40" value="${esc(o.value||'')}" placeholder="${esc(o.ph||'')}" enterkeyhint="done" autocomplete="off"><div class="cfm"><button class="btn o" data-c="0">Cancelar</button><button class="btn" data-c="1">${o.ok||'Guardar'}</button></div>`);
+  S.bsCancel=()=>res(null);const inp=$('#pb-in');setTimeout(()=>{inp.focus();inp.select()},60);
+  const done=v=>{S.bsCancel=null;closeBS();res(v)};const val=()=>inp.value.trim()||o.value||'Mi diseño';
+  $('#bs').onclick=e=>{const x=e.target.closest('[data-c]');if(!x)return;done(x.dataset.c==='1'?val():null)};inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();done(val())}}})}
+function designName(){const g=S.gen,ap=S.genApplied&&Object.keys(S.genApplied).length;if(g&&ap){const st=(GSTYLES.find(x=>x[0]===g.style)||GSTYLES[0])[1];return st+(g.color==='one'?' '+hueName(g.hue).toLowerCase():'')}return 'Mi diseño'}
+async function saveDesign(){if(S.demo){toast('Carga tu backup para guardar diseños');return}const n=S.files.filter(changed).length;if(!n){toast('Todavía no hay cambios que guardar');return}
+  const name=await promptBS({title:'Guardar el diseño',text:`Se guardan tus ${n} ${n===1?'imagen cambiada':'imágenes cambiadas'} con este nombre. Podrás volver a él cuando quieras.`,value:designName(),ok:'Guardar'});if(!name)return;
+  const id=await addPoint(name,'manual');if(id){S.curDesign=id;toast(`«${name}» guardado`,{label:'Ver',fn:()=>go({n:'settings'})})}}
 async function addPoint(label,kind){
   if(S.demo)return null;if(kind==='auto'&&!SET.auto)return null;
   const n=S.files.filter(changed).length;if(kind==='auto'&&!n)return null;
   const pts=await getList('points'),p={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),t:Date.now(),label,kind:kind||'manual',sig:sig(),n,st:packState()};
-  pts.unshift(p);let a=0;const keep=pts.filter(x=>x.kind!=='auto'||++a<=12).slice(0,40);
-  try{await idb.set('points',keep)}catch(_){toast('No queda espacio en el navegador para guardar el punto de restauración',{ms:5000});return null}return p.id}
+  if(kind==='manual')p.thumb=designThumb();
+  pts.unshift(p);let a=0,e=0;const keep=pts.filter(x=>x.kind==='manual'||(x.kind==='auto'?++a<=12:++e<=15));
+  try{await idb.set('points',keep)}catch(_){toast('No queda espacio en el navegador para guardar el diseño',{ms:5000});return null}return p.id}
 async function restorePoint(id){
   const p=(await getList('points')).find(x=>x.id===id);if(!p)return;
-  if(!await confirmBS({title:'Volver a este diseño',text:`Se cargará «${esc(p.label)}» (${p.n} ${p.n===1?'imagen cambiada':'imágenes cambiadas'}). Antes se guarda lo que tienes ahora como punto de restauración, por si quieres volver.`,ok:'Volver a este diseño',always:true}))return;
+  if(!await confirmBS({title:'Volver a este diseño',text:`Se cargará «${esc(p.label)}» (${p.n} ${p.n===1?'imagen cambiada':'imágenes cambiadas'}). Lo que tienes ahora se guarda antes como copia automática, por si quieres volver.`,ok:'Cargar',always:true}))return;
   await addPoint('Antes de volver a «'+p.label+'»','auto');before();for(const F of S.files)F.rep=null;S.src=new Map();S.ops={global:null,sec:{},file:{}};S.ex={};S.frames={};
-  applyState(p.st);if(!p.st.gen)S.gen=null;bump();render(true);toast('Diseño restaurado',{label:'Deshacer',fn:undo})}
+  applyState(p.st);if(!p.st.gen)S.gen=null;if(p.kind==='manual')S.curDesign=p.id;bump();render(true);toast(`«${p.label}» cargado`,{label:'Deshacer',fn:undo})}
 async function recordExport(o){
   if(S.demo)return;const pid=await addPoint('Exportación · '+o.count+' '+(o.count===1?'imagen':'imágenes'),'export');
   const xs=await getList('exports');xs.unshift({id:Date.now().toString(36),t:Date.now(),sig:sig(),mode:o.mode,hw:o.hw,inc:o.inc,files:o.files,name:o.name,size:o.blob.size,pid,blob:o.blob.size<=25e6?o.blob:null});
@@ -1605,7 +1627,7 @@ const fsz=n=>n>1e6?(n/1e6).toFixed(1).replace('.',',')+' MB':Math.max(1,Math.rou
 async function scrSettings(v){
   setTitle('Ajustes e historial',`<span class="lw">Mediaskin<em>hz</em></span> · ${S.demo?'ejemplo':'backup '+esc(S.root)}`);
   v.innerHTML='<p class="note">Cargando…</p>';
-  const [pts,xs]=await Promise.all([getList('points'),getList('exports')]),mine=p=>p.sig===sig(),P=pts.filter(mine),X=xs.filter(mine);
+  const [pts,xs]=await Promise.all([getList('points'),getList('exports')]),mine=p=>p.sig===sig(),P=pts.filter(mine),X=xs.filter(mine),D=P.filter(p=>p.kind==='manual'),A=P.filter(p=>p.kind!=='manual');
   let est=null;try{est=navigator.storage&&navigator.storage.estimate?await navigator.storage.estimate():null}catch(_){}
   const about=await aboutHTML();if(S.route.n!=='settings')return;
   const seg=(id,cur,opts)=>`<div class="seg" id="${id}">${opts.map(([k,l])=>`<button data-v="${k}" aria-pressed="${cur===k}">${l}</button>`).join('')}</div>`;
@@ -1615,14 +1637,17 @@ async function scrSettings(v){
         <div class="hx-a"><button class="btn o sm" data-a="undo">Deshacer en el coche</button>${x.blob?'<button class="btn o sm" data-a="again">Descargar otra vez</button>':''}${x.pid&&P.some(p=>p.id===x.pid)?'<button class="btn o sm" data-a="back">Volver a este diseño</button>':''}</div>
         <details><summary>Ver archivos</summary><div class="hx-f">${x.files.map(f=>`<span>${esc(f)}</span>`).join('')}</div></details></div>`).join('')}</div>
       <p class="note">«Deshacer en el coche» baja un ZIP con solo los originales de esa exportación, listo para copiar igual que la exportación.</p>`:'<p class="note">Aún no has exportado nada. Cada exportación quedará aquí, con un botón para deshacerla en el coche.</p>'}</div>
-    <div class="card"><h3>Puntos de restauración</h3><p class="note">Copias de tu diseño que se guardan solas antes de cada cambio grande y en cada exportación. Se conservan aunque cierres la página.</p>
-      ${S.demo?'':`<button class="btn o wide" id="s-pt">Guardar el diseño actual</button>`}
-      ${P.length?`<div class="hl">${P.map(p=>`<div class="hx"><div class="hx-h"><span class="tx"><b>${esc(p.label)}</b><small>${fdt(p.t)} · ${p.n} ${p.n===1?'imagen cambiada':'imágenes cambiadas'}${p.kind==='auto'?' · automático':''}</small></span></div>
-        <div class="hx-a"><button class="btn o sm" data-p="${p.id}">Volver a este diseño</button><button class="btn dg sm" data-pd="${p.id}">Borrar</button></div></div>`).join('')}</div>`:'<p class="note">Todavía no hay ninguno.</p>'}</div>
+    <div class="card" id="s-des"><h3>Mis diseños</h3>
+      ${S.demo?'<p class="note">Carga tu backup para guardar diseños.</p>':`<button class="btn wide" id="s-pt">Guardar el diseño actual</button>`}
+      ${D.length?`<div class="dsg">${D.map(p=>`<div class="dsc${S.curDesign===p.id?' on':''}" data-d="${p.id}"><button class="dsi" data-a="load" aria-label="Cargar ${esc(p.label)}">${p.thumb?`<img src="${p.thumb}" alt="">`:'<span class="dsn">Sin vista previa</span>'}${S.curDesign===p.id?'<span class="pill p-col">Cargado</span>':''}</button>
+        <div class="dst"><b>${esc(p.label)}</b><small>${fdt(p.t)} · ${p.n} ${p.n===1?'imagen':'imágenes'}</small></div>
+        <div class="dsa"><button class="btn o sm" data-a="load">Cargar</button><button class="ib" data-a="ren" aria-label="Cambiar el nombre" title="Cambiar el nombre">${ic('M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4')}</button><button class="ib dgi" data-a="del" aria-label="Borrar" title="Borrar">${ic('M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3')}</button></div></div>`).join('')}</div>`:'<p class="note">Guarda aquí los diseños que te gusten, con su nombre, para cambiar entre ellos o volver atrás.</p>'}
+      ${A.length?`<details class="isd"><summary><span>Copias automáticas<small>Antes de cada cambio grande y en cada exportación</small></span><b>${A.length}</b></summary><div class="isb"><div class="hl">${A.map(p=>`<div class="hx"><div class="hx-h"><span class="tx"><b>${esc(p.label)}</b><small>${fdt(p.t)} · ${p.n} ${p.n===1?'imagen cambiada':'imágenes cambiadas'}</small></span></div>
+        <div class="hx-a"><button class="btn o sm" data-p="${p.id}">Volver a este</button><button class="btn dg sm" data-pd="${p.id}">Borrar</button></div></div>`).join('')}</div></div></details>`:''}</div>
   </div><div class="stack">
     <div class="card"><h3>Seguridad</h3>
       <label class="swrow" for="s-cf"><span>Pedir confirmación<small>Antes de cargar otro backup, quitar cambios, sustituir imágenes nuevas o cerrar el backup</small></span><input class="sw" type="checkbox" id="s-cf"${SET.confirm?' checked':''}></label>
-      <label class="swrow" for="s-au"><span>Puntos de restauración automáticos<small>Se guarda una copia del diseño antes de cada cambio grande</small></span><input class="sw" type="checkbox" id="s-au"${SET.auto?' checked':''}></label></div>
+      <label class="swrow" for="s-au"><span>Copias automáticas<small>Se guarda una copia del diseño antes de cada cambio grande</small></span><input class="sw" type="checkbox" id="s-au"${SET.auto?' checked':''}></label></div>
     <div class="card"><h3>Exportación por defecto</h3>
       <div class="field"><span class="lbl">Cómo instalar</span>${seg('s-xm',SET.xmode,[['tc','Total Commander'],['auto','Automático'],['lgu','Actualización']])}</div>
       <div class="field"><span class="lbl">Equipo (para la actualización)</span>${seg('s-hw',String(SET.xhw),[['2','Evolution'],['1','1.ª generación']])}</div>
@@ -1634,22 +1659,27 @@ async function scrSettings(v){
         <div class="acr"><span><b id="s-acn">Esmeralda</b><small>Color personalizado: la app ajusta el contraste sola. <span id="s-icn"></span></small></span><input type="color" id="s-acc" class="cpick" aria-label="Color personalizado"></div></div></div>
     <div class="card"><h3>Datos en este navegador</h3>
       <dl class="facts"><div><dt>Backup</dt><dd>${S.demo?'Ejemplo':esc(S.root)+' · '+S.files.length+' imágenes'}</dd></div><div><dt>Espacio usado</dt><dd>${est&&est.usage?fsz(est.usage):'No disponible'}</dd></div>
-      <div><dt>Puntos</dt><dd>${P.length}</dd></div><div><dt>Exportaciones</dt><dd>${X.length}</dd></div></dl>
-      ${P.length||X.length?'<button class="btn dg wide" id="s-clr">Borrar historial y puntos</button>':''}
+      <div><dt>Diseños</dt><dd>${D.length}</dd></div><div><dt>Copias automáticas</dt><dd>${A.length}</dd></div><div><dt>Exportaciones</dt><dd>${X.length}</dd></div></dl>
+      ${P.length||X.length?'<button class="btn dg wide" id="s-clr">Borrar historial, diseños y copias</button>':''}
       <p class="note">Nada sale de tu dispositivo. Si borras los datos del sitio en el navegador, se pierden el backup, el historial y los puntos.</p></div>
     ${about}
   </div></div>`;
   bindAbout();accUi();
+  if(S.focus){const f=$('#'+S.focus);S.focus=null;if(f)setTimeout(()=>{f.scrollIntoView({block:'start'});scrollBy(0,-70)},30)}
   const segOn=(id,f)=>{const el=$(id);el.onclick=e=>{const b=e.target.closest('button[data-v]');if(!b)return;el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));f(b.dataset.v)}};
   segOn('#s-xm',x=>{SET.xmode=x;S.xmode=x;saveSet()});segOn('#s-hw',x=>{SET.xhw=+x;S.xhw=+x;saveSet()});segOn('#s-pv',x=>{SET.pv=x;saveSet()});
   segOn('#s-th',x=>{SET.theme=x;saveSet();try{if(x==='auto'){localStorage.removeItem('skinhz-theme');delete document.documentElement.dataset.theme}else{localStorage.setItem('skinhz-theme',x);document.documentElement.dataset.theme=x}}catch(_){}});
   $('#s-cf').onchange=e=>{SET.confirm=e.target.checked;saveSet()};$('#s-au').onchange=e=>{SET.auto=e.target.checked;saveSet()};$('#s-xo').onchange=e=>{SET.xorig=e.target.checked;saveSet()};
-  const sp=$('#s-pt');if(sp)sp.onclick=async()=>{const n=S.files.filter(changed).length;if(!n){toast('No hay cambios que guardar');return}await addPoint('Guardado a mano','manual');toast('Diseño guardado');render(true)};
+  const sp=$('#s-pt');if(sp)sp.onclick=async()=>{await saveDesign();render(true)};
+  $$('.dsc',v).forEach(el=>el.onclick=async e=>{const b=e.target.closest('[data-a]');if(!b)return;const id=el.dataset.d,a=b.dataset.a,L=await getList('points'),p=L.find(x=>x.id===id);if(!p)return;
+    if(a==='load')return restorePoint(id);
+    if(a==='ren'){const nm=await promptBS({title:'Cambiar el nombre',value:p.label,ok:'Guardar'});if(!nm)return;p.label=nm;try{await idb.set('points',L)}catch(_){}render(true);return}
+    if(a==='del'){if(!await confirmBS({title:'Borrar «'+esc(p.label)+'»',text:'El diseño guardado se borrará. Lo que tienes ahora en pantalla no cambia.',ok:'Borrar',danger:true}))return;try{await idb.set('points',L.filter(x=>x.id!==id))}catch(_){}if(S.curDesign===id)S.curDesign=null;render(true);toast('Diseño borrado')}});
   $$('[data-p]',v).forEach(b=>b.onclick=()=>restorePoint(b.dataset.p));
-  $$('[data-pd]',v).forEach(b=>b.onclick=async()=>{if(!await confirmBS({title:'Borrar el punto',text:'Este punto de restauración se borrará y no se podrá recuperar.',ok:'Borrar',danger:true}))return;const l=(await getList('points')).filter(x=>x.id!==b.dataset.pd);try{await idb.set('points',l)}catch(_){}render(true)});
+  $$('[data-pd]',v).forEach(b=>b.onclick=async()=>{if(!await confirmBS({title:'Borrar la copia',text:'Esta copia automática se borrará y no se podrá recuperar.',ok:'Borrar',danger:true}))return;const l=(await getList('points')).filter(x=>x.id!==b.dataset.pd);try{await idb.set('points',l)}catch(_){}render(true)});
   $$('.hx[data-x]',v).forEach(el=>el.onclick=async e=>{const b=e.target.closest('[data-a]');if(!b)return;const x=X.find(y=>y.id===el.dataset.x);if(!x)return;
     if(b.dataset.a==='undo')undoZip(x);else if(b.dataset.a==='again')saveBlob(x.blob,x.name);else if(b.dataset.a==='back')restorePoint(x.pid)});
-  const cl=$('#s-clr');if(cl)cl.onclick=async()=>{if(!await confirmBS({title:'Borrar historial y puntos',text:'Se borrarán todas las exportaciones guardadas y los puntos de restauración de este backup. Tu diseño actual no cambia.',ok:'Borrar todo',danger:true}))return;
+  const cl=$('#s-clr');if(cl)cl.onclick=async()=>{if(!await confirmBS({title:'Borrar historial, diseños y copias',text:'Se borrarán todas las exportaciones guardadas, tus diseños y las copias automáticas de este backup. Tu diseño actual no cambia.',ok:'Borrar todo',danger:true}))return;
     try{await idb.set('points',pts.filter(p=>!mine(p)));await idb.set('exports',xs.filter(x=>!mine(x)))}catch(_){}render(true);toast('Historial borrado')};
 }
 
@@ -2061,7 +2091,7 @@ function icStyleSum(){const s=icStyle(),f=icFx(),w=s.fill?'relleno':(ISTY.find(x
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-26-8';
+const VER='2026-10-26-9';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -2069,7 +2099,12 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['«Rediseñar los botones» más sencillo: sin desplegables, con pestañas fijas bajo la pantalla (Botones, Estilo, Iconos, Color y Forma)',
+  [VER,['«Mis diseños»: guarda tus diseños con nombre y una miniatura de Inicio; cárgalos, cámbiales el nombre o bórralos. Las copias automáticas van aparte, plegadas',
+    'Guardar el diseño también desde el menú ⋯ y al aplicar el rediseño de los botones',
+    'Las copias automáticas ya no pueden borrar tus diseños guardados',
+    'Corregido: un diseño guardado no recordaba los iconos de la biblioteca puestos en el editor',
+    'Pantalla: «Rediseñar los botones» y «Mis diseños» arriba, justo debajo de la vista previa']],
+  ['2026-10-26-8',['«Rediseñar los botones» más sencillo: sin desplegables, con pestañas fijas bajo la pantalla (Botones, Estilo, Iconos, Color y Forma)',
     'Pestaña Iconos: trazo, acabado y fondo del icono a la vista. Pestaña Botones: el icono y el color de cada uno, con «Cambiar»']],
   ['2026-10-26-7.1',['Más fácil de encontrar: en «Rediseñar los botones», la lista «Icono y color de cada botón» va justo debajo de la pantalla, con «Cambiar» en cada uno',
     'En la hoja de cada botón, «Mis iconos» (para subir el tuyo) y «Ver todos» están explicados']],

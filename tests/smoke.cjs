@@ -37,7 +37,7 @@ async function run(browser, label, viewport, mobile) {
   ok(await p.locator('#bs [data-m="settings"]').count() === 1, 'el menú tiene «Ajustes e historial»');
   await tap('#bs [data-m="settings"]'); await p.waitForTimeout(700);
   ok(await p.evaluate(() => S.route.n) === 'settings', 'abre Ajustes e historial');
-  for (const t of ['Historial de exportaciones', 'Puntos de restauración', 'Seguridad', 'Exportación por defecto', 'Instalar la app'])
+  for (const t of ['Historial de exportaciones', 'Mis diseños', 'Seguridad', 'Exportación por defecto', 'Instalar la app'])
     ok(await p.locator('#view h3', { hasText: t }).count() === 1, 'Ajustes muestra «' + t + '»');
   ok((await p.locator('.abt').innerText()).includes('Krahz'), 'créditos de autor en Ajustes');
   await tap('#w-chg'); await p.waitForTimeout(300);
@@ -118,6 +118,10 @@ async function run(browser, label, viewport, mobile) {
   await p.evaluate(() => { undo(); S.gen.ifx = 'none'; S.gen.ibox = 'none'; }); await p.waitForTimeout(300);
   const sty = await p.evaluate(() => { const F = genTargets()[0], bad = []; for (const [k] of GSTYLES) { try { const c = genTile(F, { ...S.gen, style: k }); const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let v = 0; for (let i = 0; i < d.length; i += 4) v += d[i] + d[i + 1] + d[i + 2]; if (!v) bad.push(k); } catch (e) { bad.push(k + ': ' + e.message); } } return { n: GSTYLES.length, bad }; });
   ok(sty.n >= 14 && !sty.bad.length, `los ${sty.n} estilos de botón se dibujan` + (sty.bad.length ? ': fallan ' + sty.bad.join(', ') : ''));
+  // Diálogo para poner nombre (lo usan «Mis diseños»)
+  const nm = p.evaluate(() => promptBS({ title: 'Prueba', value: 'Mi diseño' })); await p.waitForTimeout(300);
+  await p.fill('#pb-in', 'Neón azul'); await p.keyboard.press('Enter');
+  ok(await nm === 'Neón azul', 'se puede poner nombre a un diseño');
   // Familia «Negros y fondo»
   ok(await p.evaluate(() => { const F = S.files.find(f => /HOME_BG/i.test(f.path)); return famsOfFiles([F]).some(f => f.k === 13); }), 'el fondo de Inicio ofrece la familia «Negros y fondo»');
   // Exportar (ejemplo) → descarga un ZIP

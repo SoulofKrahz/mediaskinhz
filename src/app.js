@@ -108,7 +108,7 @@ function setFileOps(F,v){if(empty(v))delete S.ops.file[F.path];else S.ops.file[F
 const H=[];
 const genCopy=g=>g?{...g,per:Object.fromEntries(Object.entries(g.per||{}).map(([k,p])=>[k,{...p}]))}:null;
 function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),icx:structuredClone(S.icx||{}),reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep])}}
-function before(){H.push(snap());if(H.length>80)H.shift();updUndo()}
+function before(){S.curDesign=null;H.push(snap());if(H.length>80)H.shift();updUndo()}
 function undo(){const s=H.pop();if(!s)return;Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen,icx:s.icx||{}});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
   S.ver++;render(true);toast('Cambio deshecho');saveState()}
 function updUndo(){$('#ab-undo').disabled=!H.length}
@@ -135,7 +135,7 @@ async function ingest(list,opts){
 async function fromFileList(fl){
   const arr=[...fl];if(!arr.length)return;
   if(arr.length===1&&/\.rar$/i.test(arr[0].name)){toast('El navegador no puede abrir .rar. Descomprímelo y elige la carpeta, o comprímelo como .zip.',{ms:7000});return}
-  if(!S.demo){const n=S.files.filter(changed).length;if(n){if(!await confirmBS({title:'Cargar otro backup',text:`Sustituirá el backup actual y su diseño (${n} ${n===1?'imagen cambiada':'imágenes cambiadas'}). Se guardará antes un punto de restauración, que volverá a aparecer si cargas este mismo backup.`,ok:'Cargar el nuevo',danger:true}))return;await addPoint('Antes de cargar otro backup','auto')}}
+  if(!S.demo){const n=S.files.filter(changed).length;if(n){if(!await confirmBS({title:'Cargar otro backup',text:`Sustituirá el backup actual y su diseño (${n} ${n===1?'imagen cambiada':'imágenes cambiadas'}). Se guardará antes un copia automática, que volverá a aparecer si cargas este mismo backup.`,ok:'Cargar el nuevo',danger:true}))return;await addPoint('Antes de cargar otro backup','auto')}}
   const z=arr.find(f=>/\.zip$/i.test(f.name));closeBS();toast('Leyendo tu backup…',{ms:90000});
   try{let list,png=0;
     if(z&&arr.length===1){list=await readZip(await z.arrayBuffer(),n=>{if(/\.png$/i.test(n)){png++;return false}return /\.bmp$/i.test(n)})}
@@ -272,10 +272,10 @@ function scrHome(v){
     </div>
     <div class="stack">
       ${S.demo?`<div class="card demo"><h2>Esto es un ejemplo</h2><p>Las imágenes son de muestra. Carga tu backup (la carpeta <b>M1</b> o un ZIP) para editar las de tu MediaNav. No sale de tu móvil.</p><button class="btn wide" data-act="load">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}Cargar mi backup</button></div>`:''}
+      ${S.scr==='home'&&!S.demo&&genTargets().length?`<div class="qa"><button class="qai" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><b>Rediseñar los botones</b><small>Estilo, iconos y color</small></button><button class="qai" data-act="designs"><span class="ic">${ic('M5 3h11l3 3v15H5zM8 3v6h8V3M8 21v-7h8v7')}</span><b>Mis diseños</b><small>Guardar y cambiar entre ellos</small></button></div>`:S.scr==='home'&&genTargets().length?`<div class="list"><button class="li" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><span class="tx"><b>Rediseñar los botones</b><small>Estilo, forma, color e iconos nuevos</small></span>${CHEV}</button></div>`:''}
       <p class="sec-t">En esta pantalla</p>
       <div class="list">${rows.join('')||'<p class="empty">No hay imágenes de esta pantalla en el backup.</p>'}</div>
-      ${S.scr==='home'&&genTargets().length?`<div class="list"><button class="li" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><span class="tx"><b>Rediseñar los botones</b><small>Estilo, forma, color e iconos nuevos</small></span>${CHEV}</button></div>`:''}
-      ${!S.demo&&S.scr==='home'?`<div class="card"><h3>${ic('M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3')}Prueba en el coche</h3><p class="note">Antes de cambiar formas, prueba este kit de 3 imágenes. Comprueba de una vez si la transparencia funciona en los botones, qué es cada estado y dónde está cada botón (con una foto).</p><button class="btn o wide" data-act="kit">Descargar el kit de prueba</button></div>`:''}
+      ${!S.demo&&S.scr==='home'?`<div class="list"><button class="li" data-act="kit"><span class="ic">${ic('M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3')}</span><span class="tx"><b>Kit de prueba para el coche</b><small>3 imágenes para comprobar transparencia, estados y posiciones</small></span>${CHEV}</button></div>`:''}
       ${S.scr==='home'?`<div class="list"><button class="li" data-go="layout"><span class="ic">${ic('M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20')}</span><span class="tx"><b>Distribución de los botones</b><small>Moverlos, cuadrícula y qué botón va en cada hueco</small></span>${CHEV}</button></div>`:''}
       ${nSec&&S.scr!=='home'?`<div class="list"><button class="li" data-cat="${catOf({sec})}" data-sec="${esc(sec)}"><span class="ic">${ic('M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z')}</span><span class="tx"><b>Todas las imágenes de ${esc(SECL.get(sec))}</b><small>${nSec} imágenes</small></span>${CHEV}</button></div>`:''}
       <div class="list"><button class="li" data-go="theme"><span class="ic">${ic(ROOTS[1][2])}</span><span class="tx"><b>Cambiar el color de toda la radio</b><small>${esc(describe(S.ops.global)||'Sin tema')}</small></span>${CHEV}</button></div>
@@ -689,7 +689,8 @@ function closeBS(){const b=$('#bs');if(b.hidden)return;b.hidden=true;$('#scrim')
 function openMenu(){const dark=document.documentElement.dataset.theme?document.documentElement.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
   openBS(`<button class="mi" data-m="load">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}<span>${S.demo?'Cargar mi backup':'Cargar otro backup'}<small>Carpeta M1 o un ZIP</small></span></button>
     ${S.demo?'':`<button class="mi" data-m="kit">${ic('M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3')}<span>Kit de prueba para el coche<small>3 imágenes que resuelven las dudas antes de rediseñar</small></span></button>`}
-    <button class="mi" data-m="settings">${ic('M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 12h2M19 12h2M12 3v2M12 19v2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4')}<span>Ajustes e historial<small>Exportaciones, puntos de restauración y preferencias</small></span></button>
+    ${S.demo?'':`<button class="mi" data-m="save">${ic('M5 3h11l3 3v15H5zM8 3v6h8V3M8 21v-7h8v7')}<span>Guardar el diseño<small>Con un nombre, para volver a él cuando quieras</small></span></button>`}
+    <button class="mi" data-m="settings">${ic('M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 12h2M19 12h2M12 3v2M12 19v2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4')}<span>Ajustes e historial<small>Mis diseños, exportaciones y preferencias</small></span></button>
     <button class="mi" data-m="theme">${ic(dark?'M12 3v2M12 19v2M5 5l1.5 1.5M17.5 17.5L19 19M3 12h2M19 12h2M5 19l1.5-1.5M17.5 6.5L19 5M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z':'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z')}<span>${dark?'Modo claro':'Modo oscuro'}</span></button>
     ${updBadge()?`<button class="mi dgr" data-m="reset">${ic('M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14')}<span>Quitar todos los cambios<small>Se puede deshacer</small></span></button>`:''}
     ${S.demo?'':`<button class="mi dgr" data-m="close">${ic('M18 6L6 18M6 6l12 12')}<span>Cerrar el backup<small>Borra tu backup y tus cambios de este navegador</small></span></button>`}`);
@@ -697,8 +698,9 @@ function openMenu(){const dark=document.documentElement.dataset.theme?document.d
     if(m==='load')openLoad();
     else if(m==='kit'){closeBS();makeKit()}
     else if(m==='settings'){closeBS();go({n:'settings'})}
+    else if(m==='save'){closeBS();saveDesign()}
     else if(m==='theme'){const v=dark?'light':'dark';document.documentElement.dataset.theme=v;try{localStorage.setItem('skinhz-theme',v)}catch(_){}closeBS()}
-    else if(m==='reset'){const n=updBadge();if(!await confirmBS({title:'Quitar todos los cambios',text:`Las ${n} imágenes cambiadas volverán a ser las originales. Se guardará antes un punto de restauración y también podrás deshacerlo.`,ok:'Quitar los cambios',danger:true}))return;
+    else if(m==='reset'){const n=updBadge();if(!await confirmBS({title:'Quitar todos los cambios',text:`Las ${n} imágenes cambiadas volverán a ser las originales. Se guardará antes una copia automática y también podrás deshacerlo.`,ok:'Quitar los cambios',danger:true}))return;
       await addPoint('Antes de quitar todos los cambios','auto');before();S.ops={global:null,sec:{},file:{}};S.ex={};for(const F of S.files)F.rep=null;S.src=new Map();bump();render(true);toast('Cambios quitados',{label:'Deshacer',fn:undo})}
     else if(m==='close'){if(!await confirmBS({title:'Cerrar el backup',text:'Se borran de este navegador tu backup y el diseño actual. El historial y los puntos de restauración se conservan y volverán a aparecer si cargas el mismo backup. Esto no se puede deshacer.',ok:'Cerrar el backup',danger:true,always:true}))return;
       await addPoint('Al cerrar el backup','auto');try{await idb.del('files');await idb.del('state')}catch(_){}await demo();S.stack=[];S.route={n:'home'};render();toast('Backup cerrado')}}}
@@ -722,7 +724,7 @@ function bind(){
     const ed=t.closest('[data-edit]');if(ed){const F=S.files[+ed.dataset.f];if(F)go({n:'edit',p:F.path});return}
     const g=t.closest('[data-go]');if(g){go({n:g.dataset.go});return}
     const c=t.closest('[data-cat]');if(c){S.sec=c.dataset.sec||'all';S.kind='all';S.onlyCh=false;if(c.dataset.cat!=='*'){S.cat=c.dataset.cat;remember()}go({n:'cat',c:c.dataset.cat});return}
-    const a=t.closest('[data-act]');if(a&&a.dataset.act==='load')openLoad();if(a&&a.dataset.act==='kit')makeKit()});
+    const a=t.closest('[data-act]');if(a&&a.dataset.act==='load')openLoad();if(a&&a.dataset.act==='kit')makeKit();if(a&&a.dataset.act==='designs'){S.focus='s-des';go({n:'settings'})}});
   $('#in-dir').onchange=e=>{fromFileList(e.target.files);e.target.value=''};$('#in-zip').onchange=e=>{fromFileList(e.target.files);e.target.value=''};
   let dc=0;const da=$('#dropall');
   addEventListener('dragenter',e=>{if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')&&S.route.n!=='edit'){dc++;da.hidden=false}});
