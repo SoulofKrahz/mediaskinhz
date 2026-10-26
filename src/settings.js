@@ -69,7 +69,9 @@ async function scrSettings(v){
       <label class="swrow" for="s-xo"><span>Incluir los originales<small>Para poder deshacer en el coche</small></span><input class="sw" type="checkbox" id="s-xo"${SET.xorig?' checked':''}></label></div>
     <div class="card"><h3>Pantalla</h3>
       <div class="field"><span class="lbl">Tamaño de la vista previa en el móvil</span>${seg('s-pv',SET.pv,[['s','Pequeña'],['m','Normal'],['l','Grande']])}</div>
-      <div class="field"><span class="lbl">Tema de la app</span>${seg('s-th',SET.theme,[['auto','Automático'],['light','Claro'],['dark','Oscuro']])}</div></div>
+      <div class="field"><span class="lbl">Tema de la app</span>${seg('s-th',SET.theme,[['auto','Automático'],['light','Claro'],['dark','Oscuro']])}</div>
+      <div class="field"><span class="lbl">Color de la app</span><div class="acs" id="s-acs" role="radiogroup" aria-label="Color de la app"></div>
+        <div class="acr"><span><b id="s-acn">Esmeralda</b><small>Color personalizado: la app ajusta el contraste sola. <span id="s-icn"></span></small></span><input type="color" id="s-acc" class="cpick" aria-label="Color personalizado"></div></div></div>
     <div class="card"><h3>Datos en este navegador</h3>
       <dl class="facts"><div><dt>Backup</dt><dd>${S.demo?'Ejemplo':esc(S.root)+' · '+S.files.length+' imágenes'}</dd></div><div><dt>Espacio usado</dt><dd>${est&&est.usage?fsz(est.usage):'No disponible'}</dd></div>
       <div><dt>Puntos</dt><dd>${P.length}</dd></div><div><dt>Exportaciones</dt><dd>${X.length}</dd></div></dl>
@@ -77,7 +79,7 @@ async function scrSettings(v){
       <p class="note">Nada sale de tu dispositivo. Si borras los datos del sitio en el navegador, se pierden el backup, el historial y los puntos.</p></div>
     ${about}
   </div></div>`;
-  bindAbout();
+  bindAbout();accUi();
   const segOn=(id,f)=>{const el=$(id);el.onclick=e=>{const b=e.target.closest('button[data-v]');if(!b)return;el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));f(b.dataset.v)}};
   segOn('#s-xm',x=>{SET.xmode=x;S.xmode=x;saveSet()});segOn('#s-hw',x=>{SET.xhw=+x;S.xhw=+x;saveSet()});segOn('#s-pv',x=>{SET.pv=x;saveSet()});
   segOn('#s-th',x=>{SET.theme=x;saveSet();try{if(x==='auto'){localStorage.removeItem('skinhz-theme');delete document.documentElement.dataset.theme}else{localStorage.setItem('skinhz-theme',x);document.documentElement.dataset.theme=x}}catch(_){}});
@@ -90,3 +92,18 @@ async function scrSettings(v){
   const cl=$('#s-clr');if(cl)cl.onclick=async()=>{if(!await confirmBS({title:'Borrar historial y puntos',text:'Se borrarán todas las exportaciones guardadas y los puntos de restauración de este backup. Tu diseño actual no cambia.',ok:'Borrar todo',danger:true}))return;
     try{await idb.set('points',pts.filter(p=>!mine(p)));await idb.set('exports',xs.filter(x=>!mine(x)))}catch(_){}render(true);toast('Historial borrado')};
 }
+
+/* ---- Color de la app (como Noticiahz) ---- */
+const PRE=[['Esmeralda',null,null],['Turquesa',185,.85],['Azul',214,.9],['Índigo',243,.8],['Violeta',272,.7],['Rosa',328,.75],['Coral',6,.85],['Naranja',27,.95],['Ámbar',42,.95],['Grafito',215,.12]];
+const hsOf=x=>{const r=parseInt(x.slice(1,3),16)/255,g=parseInt(x.slice(3,5),16)/255,b=parseInt(x.slice(5,7),16)/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn,l=(mx+mn)/2;let h=0;if(d){h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h=Math.round(h*60);if(h<0)h+=360}const s=d?d/(1-Math.abs(2*l-1)):0;return[h,Math.max(.1,Math.min(.95,s))]};
+const hexHs=(h,s)=>{const a=s*Math.min(.4,.6),f=n=>{const k=(n+h/30)%12;return .4-a*Math.max(-1,Math.min(k-3,9-k,1))};return'#'+[f(0),f(8),f(4)].map(v=>('0'+Math.round(v*255).toString(16)).slice(-2)).join('')};
+const accGet=()=>window.msPf?msPf():{};
+function accSet(h,s){try{if(h==null)localStorage.removeItem('mediaskinhz-acc');else localStorage.setItem('mediaskinhz-acc',JSON.stringify({h,s}))}catch(_){}if(window.msLook)msLook()}
+function icnUi(){const e=$('#s-icn');if(!e)return;if(!WEB){e.textContent='';return}const fz=window.msInApp&&(msInApp()||msLocked());
+  e.innerHTML=fz?'El icono de la app instalada se quedó con el color que tenías al instalarla; para cambiarlo, reinstálala.'+(msInApp()?'':' <button class="lnk" id="s-icu">¿Ya la desinstalaste? Usar este color al instalar</button>'):'Al instalar la app, el icono tomará este color.';
+  const u=$('#s-icu');if(u)u.onclick=()=>{msUnlock();icnUi();toast('Al instalar, el icono tomará este color')}}
+function accUi(){const box=$('#s-acs');if(!box)return;icnUi();const {h,s}=accGet();const sel=h==null?0:PRE.findIndex((x,i)=>i&&x[1]===h&&Math.abs(x[2]-s)<.005);
+  box.innerHTML=PRE.map(([n,ph,ps],i)=>`<button class="swc" data-i="${i}" style="--c:${ph==null?'#059669':hexHs(ph,ps*.8)}" role="radio" aria-pressed="${i===sel}" aria-checked="${i===sel}" aria-label="${n}" title="${n}"></button>`).join('');
+  $('#s-acn').textContent=sel>=0?PRE[sel][0]:'Personalizado';const pk=$('#s-acc');if(document.activeElement!==pk)pk.value=h==null?'#059669':hexHs(h,s*.8);
+  box.onclick=e=>{const b=e.target.closest('[data-i]');if(!b)return;const[,ph,ps]=PRE[+b.dataset.i];accSet(ph,ps);accUi()};
+  let t;pk.oninput=e=>{const[ph,ps]=hsOf(e.target.value);if(window.msApply)msApply(ph,ps);clearTimeout(t);t=setTimeout(()=>{accSet(ph,+ps.toFixed(2));accUi()},250)}}

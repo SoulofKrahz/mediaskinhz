@@ -14,6 +14,20 @@ for (const f of shell) if (f !== './' && !fs.existsSync(path.join(root, f))) fai
 const man = JSON.parse(fs.readFileSync(path.join(root, 'manifest.webmanifest'), 'utf8'));
 for (const ic of man.icons) if (!fs.existsSync(path.join(root, ic.src))) fails.push('falta el icono ' + ic.src);
 if (!html.includes('rel="manifest"')) fails.push('site/index.html no enlaza el manifest');
+// _worker.js: con la cookie de cada color sirve el manifest de ese color (y el normal sin cookie o con una rara)
+const W = (await import(path.join(root, '_worker.js'))).default;
+const env = { ASSETS: { fetch: async r => { const f = path.join(root, new URL(r.url).pathname); return fs.existsSync(f) ? new Response(fs.readFileSync(f)) : new Response('no', { status: 404 }); } } };
+const slugs = [...fs.readFileSync(path.join(top, 'src/settings.js'), 'utf8').match(/const PRE=(\[\[.*?\]\]);/)[1].matchAll(/\['([^']+)',\d+/g)].map(m => m[1].normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase());
+const wk = fs.readFileSync(path.join(root, '_worker.js'), 'utf8');
+for (const k of slugs) { if (!wk.includes(`'${k}'`)) fails.push(`_worker.js (COLORS) no conoce el color ${k}`); if (!html.includes(`'${k}'`)) fails.push(`msIco no conoce el color ${k}`); }
+for (const k of ['', 'xx', ...slugs]) {
+  const r = await W.fetch(new Request('https://x.dev/manifest.webmanifest', { headers: k ? { Cookie: 'a=1; ms_ic=' + k } : {} }), env);
+  const j = await r.json().catch(() => null), want = slugs.includes(k) ? `ic/${k}-192.png` : 'icon-192.png';
+  if (!j || !j.icons || j.icons[0].src !== want) fails.push(`manifest con ms_ic=${k || '(nada)'}: esperaba ${want}`);
+  else for (const ic of j.icons) if (!fs.existsSync(path.join(root, ic.src))) fails.push('falta el icono ' + ic.src);
+  if (j && JSON.stringify({ ...j, icons: 0 }) !== JSON.stringify({ ...man, icons: 0 })) fails.push(`manifest-${k}: no coincide con manifest.webmanifest salvo los iconos (vuelve a ejecutar tools/iconos.cjs)`);
+}
+if (!fails.length) console.log(`ok manifest por color: ${slugs.length} colores + el de partida`);
 const before = html;
 try { execFileSync('python3', [path.join(top, 'build.py')], { stdio: 'pipe' }); } catch (e) { fails.push('build.py falla: ' + e.message); }
 if (fs.readFileSync(path.join(root, 'index.html'), 'utf8') !== before) fails.push('site/index.html no estaba al día: ejecuta python3 build.py y súbelo');

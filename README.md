@@ -11,7 +11,10 @@ La web está en `site/` y se publica sola en Cloudflare Pages al subir cambios a
 - Versión visible en la app: menú ⋯ → Ajustes e historial. Si hay una más nueva publicada, la app avisa.
 - En cada cambio: subir `VER` en `src/web.js`, `V` en `site/sw.js` (`msz-` + la misma versión) y añadir la entrada en `CHANGES`.
 - Formato de `VER`: `AAAA-MM-DD-N` (N = 0, 1, 2… dentro del día) y `AAAA-MM-DD-N.M` para cambios menores.
-- Iconos: `node tools/iconos.cjs` (con Playwright) regenera los PNG de `site/` a partir del dibujo.
+- Color de la app (como Noticiahz): el motor está en `src/head.html` (msAcc), las muestras en `src/settings.js` (PRE).
+  Cada color tiene icono y manifest propios; `_worker.js` sirve en `manifest.webmanifest` el del color con el que se instala
+  (cookie `ms_ic`, congelada al instalar con `ms_icl`).
+- Iconos: `node tools/iconos.cjs` (con Playwright) regenera los PNG de `site/` y `site/ic/` y los manifests por color.
 
 ## Estructura de `src/`
 - `head.html` — estilos (los de Noticiahz) y el esqueleto de la página.

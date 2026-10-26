@@ -8,6 +8,54 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Mediaskinhz">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<script>
+/* Color de la app: el mismo motor que Noticiahz. Genera la paleta clara y oscura con contraste mínimo garantizado. */
+window.msAcc=function(h,s){
+ var C=function(h,s,l){s=Math.max(0,Math.min(1,s));l=l/100;var a=s*Math.min(l,1-l),f=function(n){var k=(n+h/30)%12;return l-a*Math.max(-1,Math.min(k-3,9-k,1))};return[f(0),f(8),f(4)]};
+ var hx=function(r){return'#'+r.map(function(v){return('0'+Math.round(v*255).toString(16)).slice(-2)}).join('')};
+ var Lm=function(r){var q=r.map(function(v){return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*q[0]+.7152*q[1]+.0722*q[2]};
+ var cr=function(a,b){var x=Lm(a),y=Lm(b);return(Math.max(x,y)+.05)/(Math.min(x,y)+.05)};
+ var W=[1,1,1],N=function(x){return[parseInt(x.slice(1,3),16)/255,parseInt(x.slice(3,5),16)/255,parseInt(x.slice(5,7),16)/255]};
+ var bg=N('#f4f6fa');
+ var l=34;while(l>10&&cr(C(h,s,l),W)<5.6)l--;var em=C(h,s,l);
+ var l2=Math.min(l+7,42);while(l2>l&&cr(C(h,s,l2),bg)<3.2)l2--;var e2=C(h,s,l2);
+ var tint=C(h,.55*s,94),cdD=N('#152033');
+ var ld=58;while(ld<90&&cr(C(h,s*.75,ld),cdD)<6.5)ld++;var emD=C(h,s*.75,ld);
+ var e2D=C(h,s*.8,Math.max(ld-12,36)),onD=C(h,.6,6);
+ // En colores oscuros (poco contraste con los botones negros del logo) los botones van en blanco
+ var K=N('#06150f'),lt=cr(e2,K)<2.6,ltD=cr(e2D,K)<2.6,lv=function(f){return f?';--lgn:#fff;--lgo:.42':';--lgn:#06150f;--lgo:1'};
+ var D='--em:'+hx(emD)+';--em2:'+hx(e2D)+';--tint:hsla('+Math.round(h)+','+Math.round(s*80)+'%,48%,.14);--onem:'+hx(onD)+lv(ltD);
+ var css='html:root{--em:'+hx(em)+';--em2:'+hx(e2)+';--tint:'+hx(tint)+';--onem:#fff'+lv(lt)+'}'
+  +'@media (prefers-color-scheme:dark){html:root:not([data-theme=light]){'+D+'}}html:root[data-theme=dark]{'+D+'}';
+ return{css:css,fav:hx(e2),lt:lt}};
+window.msApply=function(h,s){var st=document.getElementById('acs');if(h==null||isNaN(h)){if(st)st.remove();return null}var a=msAcc(+h,s==null?.85:+s);if(!st){st=document.createElement('style');st.id='acs';document.head.appendChild(st)}st.textContent=a.css;return a};
+// Icono instalado (como Noticiahz): toma el color que tengas AL INSTALAR y luego queda congelado (cambiarlo después obliga a
+// Chrome a reinstalar la app por debajo, y eso falla). Cookie ms_ic = color del icono; ms_icl = congelado (la app está instalada).
+window.msIco=function(h,s){if(h==null||isNaN(h))return'';h=+h;s=s==null?.85:+s;if(s<.3)return'grafito';var P=[['',152],['turquesa',185],['azul',214],['indigo',243],['violeta',272],['rosa',328],['coral',6],['naranja',27],['ambar',42]],b=P[0],d=1e9;P.forEach(function(x){var e=Math.abs(h-x[1])%360;e=Math.min(e,360-e);if(e<d){d=e;b=x}});return b[0]};
+window.msCk=function(k,v){var c=k+'='+v+';path=/;max-age='+(v===''?0:31536000)+';SameSite=Lax'+(location.protocol==='https:'?';Secure':'');try{document.cookie=c}catch(e){}};
+window.msLocked=function(){return /(^|;\s*)ms_icl=1/.test(document.cookie)};
+window.msInApp=function(){try{return matchMedia('(display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui)').matches||navigator.standalone===true}catch(e){return false}};
+// Chrome lee el manifest al cargar la página y no vuelve a pedirlo: al cambiar el color se reinserta el <link> (misma
+// dirección) para que lo vuelva a leer con la cookie nueva y «Instalar» use ya el color elegido, sin recargar.
+window.msRelink=function(){try{var m=document.querySelector('link[rel=manifest]');if(!m)return;var n=m.cloneNode();m.parentNode.replaceChild(n,m)}catch(e){}};
+window.msMan=function(h,s){var k=msIco(h,s)||'',a=document.querySelector('link[rel=apple-touch-icon]');if(msInApp()){if(!msLocked())msCk('ms_icl','1');return}if(msLocked())return;
+ var o=(document.cookie.match(/(?:^|;\s*)ms_ic=([a-z]*)/)||[])[1]||'';msCk('ms_ic',k);if(a)a.setAttribute('href',k?'ic/'+k+'-apple.png':'apple-touch-icon.png');if(k!==o&&document.readyState!=='loading')msRelink()};
+window.msPf=function(){try{return JSON.parse(localStorage.getItem('mediaskinhz-acc'))||{}}catch(e){return{}}};
+// Favicon del color elegido
+window.msFav=function(a){var c=a?a.fav:'#059669',t=a&&a.lt?"fill='white' fill-opacity='.42'":"fill='%2306150f'";
+ var r=function(x,y,o){return"<rect x='"+x+"' y='"+y+"' width='13' height='13' rx='3' "+(o||t)+"/>"};
+ var svg="<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='15' fill='"+c+"'/>"+r(9,17)+r(25.5,17,"fill='white'")+r(42,17)+r(9,34)+r(25.5,34)+r(42,34)+"</svg>";
+ var l=document.querySelector('link[rel=icon]');if(l)l.href='data:image/svg+xml,'+svg.replace(/#/g,'%23')};
+window.msLook=function(){var p=msPf(),a=msApply(p.h,p.s);msMan(p.h,p.s);msFav(a);return a};
+try{msLook()}catch(e){}
+// Si Chrome ofrece instalar, es que la app no está instalada: se descongela y el icono vuelve a seguir el color. Al instalar, se congela.
+addEventListener('beforeinstallprompt',function(){if(msLocked()){msCk('ms_icl','');var q=msPf();msMan(q.h,q.s)}});
+addEventListener('appinstalled',function(){msCk('ms_icl','1')});
+// En el navegador, si el icono está congelado pero Chrome dice que la app ya no está instalada, se descongela
+// (beforeinstallprompt no siempre llega justo después de desinstalar). Necesita related_applications en el manifest.
+window.msUnlock=function(){msCk('ms_icl','');var q=msPf();msMan(q.h,q.s)};
+window.msCheck=function(){if(msInApp()||!msLocked()||!navigator.getInstalledRelatedApps)return Promise.resolve(null);return navigator.getInstalledRelatedApps().then(function(l){if(!l||!l.length){msUnlock();return true}return false}).catch(function(){return null})};msCheck();
+</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="theme-color" content="#f4f6fa">
@@ -185,6 +233,10 @@ input[type=range].hue{--trk:linear-gradient(90deg,hsl(0 80% 50%),hsl(60 80% 50%)
 .swc.none{background:linear-gradient(135deg,var(--card) 44%,var(--bad) 45%,var(--bad) 55%,var(--card) 56%);color:var(--tx)}
 .swc.white{background:#fff;color:#111}
 .swc.pick{background:conic-gradient(red,#ff0,lime,cyan,blue,#f0f,red);overflow:hidden;cursor:pointer}
+.acs{display:flex;flex-wrap:wrap;gap:10px}.acs .swc{width:42px;min-width:42px}
+.acr{display:flex;align-items:center;gap:12px;padding-top:4px}.acr>span{flex:1;min-width:0;display:flex;flex-direction:column}.acr small{font-size:12.5px;color:var(--mu);line-height:1.4}
+.cpick{width:48px;height:40px;border:1px solid var(--bd);border-radius:10px;background:none;padding:2px;flex:none;cursor:pointer}
+.lnk{color:var(--em);font-weight:600;text-decoration:underline;font-size:inherit;padding:0}
 .swc.pick input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
 details.card>summary{cursor:pointer;font-weight:600;font-size:15.5px;list-style:none;display:flex;align-items:center;justify-content:space-between;min-height:28px}
 details.card>summary::after{content:"";width:9px;height:9px;border:solid var(--mu);border-width:0 2px 2px 0;transform:rotate(45deg) translateY(-3px);transition:transform .15s}
@@ -357,7 +409,7 @@ body[data-route="edit"] .toast,body[data-route="layout"] .toast{bottom:calc(18px
 </div></header>
 <main id="view"></main>
 <nav class="bnav" id="bnav" aria-label="Vistas"></nav>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="logo-mark" viewBox="0 0 64 64"><rect width="64" height="64" rx="15" fill="var(--em2)"/><g fill="var(--lgn,#06150f)"><rect x="9" y="17" width="13" height="13" rx="3"/><rect x="25.5" y="17" width="13" height="13" rx="3" fill="#fff"/><rect x="42" y="17" width="13" height="13" rx="3"/><rect x="9" y="34" width="13" height="13" rx="3"/><rect x="25.5" y="34" width="13" height="13" rx="3"/><rect x="42" y="34" width="13" height="13" rx="3"/></g></symbol></svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="logo-mark" viewBox="0 0 64 64"><rect width="64" height="64" rx="15" fill="var(--em2)"/><g fill="var(--lgn,#06150f)" fill-opacity="var(--lgo,1)"><rect x="9" y="17" width="13" height="13" rx="3"/><rect x="25.5" y="17" width="13" height="13" rx="3" fill="#fff" fill-opacity="1"/><rect x="42" y="17" width="13" height="13" rx="3"/><rect x="9" y="34" width="13" height="13" rx="3"/><rect x="25.5" y="34" width="13" height="13" rx="3"/><rect x="42" y="34" width="13" height="13" rx="3"/></g></symbol></svg>
 <div class="upd" id="upd" hidden role="status" aria-live="polite"><div class="upd-t"><b>Hay una versión nueva</b><small id="upd-v"></small></div><button class="ib" id="upd-x" aria-label="Ahora no" title="Ahora no"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button><button class="btn sm" id="upd-go">Actualizar</button></div>
 <div class="scrim" id="scrim" hidden></div>
 <div class="bs" id="bs" hidden role="dialog" aria-modal="true"></div>
@@ -1529,7 +1581,9 @@ async function scrSettings(v){
       <label class="swrow" for="s-xo"><span>Incluir los originales<small>Para poder deshacer en el coche</small></span><input class="sw" type="checkbox" id="s-xo"${SET.xorig?' checked':''}></label></div>
     <div class="card"><h3>Pantalla</h3>
       <div class="field"><span class="lbl">Tamaño de la vista previa en el móvil</span>${seg('s-pv',SET.pv,[['s','Pequeña'],['m','Normal'],['l','Grande']])}</div>
-      <div class="field"><span class="lbl">Tema de la app</span>${seg('s-th',SET.theme,[['auto','Automático'],['light','Claro'],['dark','Oscuro']])}</div></div>
+      <div class="field"><span class="lbl">Tema de la app</span>${seg('s-th',SET.theme,[['auto','Automático'],['light','Claro'],['dark','Oscuro']])}</div>
+      <div class="field"><span class="lbl">Color de la app</span><div class="acs" id="s-acs" role="radiogroup" aria-label="Color de la app"></div>
+        <div class="acr"><span><b id="s-acn">Esmeralda</b><small>Color personalizado: la app ajusta el contraste sola. <span id="s-icn"></span></small></span><input type="color" id="s-acc" class="cpick" aria-label="Color personalizado"></div></div></div>
     <div class="card"><h3>Datos en este navegador</h3>
       <dl class="facts"><div><dt>Backup</dt><dd>${S.demo?'Ejemplo':esc(S.root)+' · '+S.files.length+' imágenes'}</dd></div><div><dt>Espacio usado</dt><dd>${est&&est.usage?fsz(est.usage):'No disponible'}</dd></div>
       <div><dt>Puntos</dt><dd>${P.length}</dd></div><div><dt>Exportaciones</dt><dd>${X.length}</dd></div></dl>
@@ -1537,7 +1591,7 @@ async function scrSettings(v){
       <p class="note">Nada sale de tu dispositivo. Si borras los datos del sitio en el navegador, se pierden el backup, el historial y los puntos.</p></div>
     ${about}
   </div></div>`;
-  bindAbout();
+  bindAbout();accUi();
   const segOn=(id,f)=>{const el=$(id);el.onclick=e=>{const b=e.target.closest('button[data-v]');if(!b)return;el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));f(b.dataset.v)}};
   segOn('#s-xm',x=>{SET.xmode=x;S.xmode=x;saveSet()});segOn('#s-hw',x=>{SET.xhw=+x;S.xhw=+x;saveSet()});segOn('#s-pv',x=>{SET.pv=x;saveSet()});
   segOn('#s-th',x=>{SET.theme=x;saveSet();try{if(x==='auto'){localStorage.removeItem('skinhz-theme');delete document.documentElement.dataset.theme}else{localStorage.setItem('skinhz-theme',x);document.documentElement.dataset.theme=x}}catch(_){}});
@@ -1550,6 +1604,21 @@ async function scrSettings(v){
   const cl=$('#s-clr');if(cl)cl.onclick=async()=>{if(!await confirmBS({title:'Borrar historial y puntos',text:'Se borrarán todas las exportaciones guardadas y los puntos de restauración de este backup. Tu diseño actual no cambia.',ok:'Borrar todo',danger:true}))return;
     try{await idb.set('points',pts.filter(p=>!mine(p)));await idb.set('exports',xs.filter(x=>!mine(x)))}catch(_){}render(true);toast('Historial borrado')};
 }
+
+/* ---- Color de la app (como Noticiahz) ---- */
+const PRE=[['Esmeralda',null,null],['Turquesa',185,.85],['Azul',214,.9],['Índigo',243,.8],['Violeta',272,.7],['Rosa',328,.75],['Coral',6,.85],['Naranja',27,.95],['Ámbar',42,.95],['Grafito',215,.12]];
+const hsOf=x=>{const r=parseInt(x.slice(1,3),16)/255,g=parseInt(x.slice(3,5),16)/255,b=parseInt(x.slice(5,7),16)/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn,l=(mx+mn)/2;let h=0;if(d){h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h=Math.round(h*60);if(h<0)h+=360}const s=d?d/(1-Math.abs(2*l-1)):0;return[h,Math.max(.1,Math.min(.95,s))]};
+const hexHs=(h,s)=>{const a=s*Math.min(.4,.6),f=n=>{const k=(n+h/30)%12;return .4-a*Math.max(-1,Math.min(k-3,9-k,1))};return'#'+[f(0),f(8),f(4)].map(v=>('0'+Math.round(v*255).toString(16)).slice(-2)).join('')};
+const accGet=()=>window.msPf?msPf():{};
+function accSet(h,s){try{if(h==null)localStorage.removeItem('mediaskinhz-acc');else localStorage.setItem('mediaskinhz-acc',JSON.stringify({h,s}))}catch(_){}if(window.msLook)msLook()}
+function icnUi(){const e=$('#s-icn');if(!e)return;if(!WEB){e.textContent='';return}const fz=window.msInApp&&(msInApp()||msLocked());
+  e.innerHTML=fz?'El icono de la app instalada se quedó con el color que tenías al instalarla; para cambiarlo, reinstálala.'+(msInApp()?'':' <button class="lnk" id="s-icu">¿Ya la desinstalaste? Usar este color al instalar</button>'):'Al instalar la app, el icono tomará este color.';
+  const u=$('#s-icu');if(u)u.onclick=()=>{msUnlock();icnUi();toast('Al instalar, el icono tomará este color')}}
+function accUi(){const box=$('#s-acs');if(!box)return;icnUi();const {h,s}=accGet();const sel=h==null?0:PRE.findIndex((x,i)=>i&&x[1]===h&&Math.abs(x[2]-s)<.005);
+  box.innerHTML=PRE.map(([n,ph,ps],i)=>`<button class="swc" data-i="${i}" style="--c:${ph==null?'#059669':hexHs(ph,ps*.8)}" role="radio" aria-pressed="${i===sel}" aria-checked="${i===sel}" aria-label="${n}" title="${n}"></button>`).join('');
+  $('#s-acn').textContent=sel>=0?PRE[sel][0]:'Personalizado';const pk=$('#s-acc');if(document.activeElement!==pk)pk.value=h==null?'#059669':hexHs(h,s*.8);
+  box.onclick=e=>{const b=e.target.closest('[data-i]');if(!b)return;const[,ph,ps]=PRE[+b.dataset.i];accSet(ph,ps);accUi()};
+  let t;pk.oninput=e=>{const[ph,ps]=hsOf(e.target.value);if(window.msApply)msApply(ph,ps);clearTimeout(t);t=setTimeout(()=>{accSet(ph,+ps.toFixed(2));accUi()},250)}}
 
 /* ============ instalación automática con MortScript ============
    El ZIP lleva la carpeta Mediaskinhz/ para la raíz del USB:
@@ -1689,7 +1758,7 @@ function autoEntries(rs,inc){
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-26-3';
+const VER='2026-10-26-4';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -1697,7 +1766,9 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Exportación «Automático»: el ZIP trae un script de MortScript que, en la radio, guarda lo que hay, copia las imágenes, comprueba cada una y deja todo como estaba si algo falla. Ofrece reiniciar al terminar',
+  [VER,['Color de la app, como en Noticiahz: 10 colores o cualquiera con el selector, en Ajustes e historial → Pantalla. El contraste se ajusta solo',
+    'Al instalar la app, el icono toma el color que tengas en ese momento y ya no cambia (para cambiarlo, reinstálala)']],
+  ['2026-10-26-3',['Exportación «Automático»: el ZIP trae un script de MortScript que, en la radio, guarda lo que hay, copia las imágenes, comprueba cada una y deja todo como estaba si algo falla. Ofrece reiniciar al terminar',
     'deshacer.mscr devuelve la radio a como estaba antes de instalar; «Deshacer en el coche» del historial también sale en modo automático']],
   ['2026-10-26-2',['Se llama Mediaskinhz y se puede instalar como app desde Chrome (Ajustes e historial → Instalar)',
     'Confirmación antes de todo lo que no tiene vuelta atrás: cargar otro backup, quitar todos los cambios, cerrar el backup, sustituir imágenes nuevas por el diseño generado, empezar de cero',

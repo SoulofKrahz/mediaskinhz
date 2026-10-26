@@ -46,6 +46,18 @@ async function run(browser, label, viewport, mobile) {
   await tap('#w-cr'); await p.waitForTimeout(300);
   ok((await p.locator('#bs').innerText()).includes('GPL-3.0'), 'Créditos menciona la licencia GPL-3.0 y MediaNavMods');
   await tap('#bs [data-x]'); await p.waitForTimeout(200);
+  // Color de la app: se aplica, se recuerda y deja el color del icono en la cookie
+  const em0 = await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--em').trim());
+  await tap('#s-acs [data-i="2"]'); await p.waitForTimeout(300);
+  const em1 = await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--em').trim());
+  ok(em1 && em1 !== em0, 'elegir Azul cambia el color de la app (' + em0 + ' → ' + em1 + ')');
+  ok((await p.locator('#s-acn').innerText()) === 'Azul', 'muestra el nombre del color elegido');
+  ok(/ms_ic=azul/.test(await p.evaluate(() => document.cookie)), 'el icono de la app tomará el color azul al instalar');
+  await p.reload(); await p.waitForTimeout(1200);
+  ok(await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--em').trim()) === em1, 'el color se recuerda al recargar');
+  await p.evaluate(() => go({ n: 'settings' })); await p.waitForTimeout(700);
+  await tap('#s-acs [data-i="0"]'); await p.waitForTimeout(300);
+  ok(await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--em').trim()) === em0, 'Esmeralda vuelve al color de partida');
   // Ajuste que se guarda
   await tap('#s-xm [data-v="lgu"]'); await p.reload(); await p.waitForTimeout(1500);
   ok(await p.evaluate(() => SET.xmode) === 'lgu', 'el modo de exportación por defecto se recuerda al recargar');

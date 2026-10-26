@@ -4,7 +4,7 @@
 //   la app avisa y recarga solo cuando tú pulsas «Actualizar» (tu diseño se guarda antes).
 // - Las fuentes de Google se guardan aparte (FONTS) para no perderlas en cada actualización.
 // V = 'msz-' + la VER de src/web.js
-const V = 'msz-2026-10-26-3';
+const V = 'msz-2026-10-26-4';
 const FONTS = 'msz-fonts';
 // './' y no 'index.html': Cloudflare Pages redirige /index.html → / y una respuesta redirigida no vale para abrir la página
 const SHELL = ['./', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'];
@@ -21,6 +21,12 @@ self.addEventListener('fetch', e => {
   const u = new URL(r.url);
   if (u.origin === location.origin) {
     if (u.pathname.endsWith('/version.txt')) return; // siempre a la red: dice si hay versión nueva
+    // El manifest cambia según el color con el que se instala (lo decide _worker.js por la cookie): de la red y, sin conexión, la copia
+    if (u.pathname.endsWith('/manifest.webmanifest')) {
+      e.respondWith(fetch(r).then(x => { if (x.ok) { const y = x.clone(); caches.open(V).then(c => c.put('manifest.webmanifest', y)); } return x; })
+        .catch(() => caches.open(V).then(c => c.match('manifest.webmanifest'))));
+      return;
+    }
     if (r.mode === 'navigate') return e.respondWith(caches.open(V).then(c => c.match('./')).then(x => x || fetch(r)));
     return e.respondWith(caches.open(V).then(c => c.match(r, { ignoreSearch: true })).then(x => x || fetch(r)));
   }
