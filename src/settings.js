@@ -23,7 +23,7 @@ function promptBS(o){return new Promise(res=>{
   S.bsCancel=()=>res(null);const inp=$('#pb-in');setTimeout(()=>{inp.focus();inp.select()},60);
   const done=v=>{S.bsCancel=null;closeBS();res(v)};const val=()=>inp.value.trim()||o.value||'Mi diseño';
   $('#bs').onclick=e=>{const x=e.target.closest('[data-c]');if(!x)return;done(x.dataset.c==='1'?val():null)};inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();done(val())}}})}
-function designName(){const g=S.gen,ap=S.genApplied&&Object.keys(S.genApplied).length;if(g&&ap){const st=(GSTYLES.find(x=>x[0]===g.style)||GSTYLES[0])[1];return st+(g.color==='one'?' '+hueName(g.hue).toLowerCase():'')}return 'Mi diseño'}
+function designName(){const g=S.gen;if(g&&g.look&&g.look!=='orig'){const st=(GSTYLES.find(x=>x[0]===g.style)||GSTYLES[0])[1];return st+(g.color==='one'?' '+hueName(g.hue).toLowerCase():'')}return 'Mi diseño'}
 async function saveDesign(){if(S.demo){toast('Carga tu backup para guardar diseños');return}const n=S.files.filter(changed).length;if(!n){toast('Todavía no hay cambios que guardar');return}
   const name=await promptBS({title:'Guardar el diseño',text:`Se guardan tus ${n} ${n===1?'imagen cambiada':'imágenes cambiadas'} con este nombre. Podrás volver a él cuando quieras.`,value:designName(),ok:'Guardar'});if(!name)return;
   const id=await addPoint(name,'manual');if(id){S.curDesign=id;toast(`«${name}» guardado`,{label:'Ver',fn:()=>go({n:'settings'})})}}
@@ -38,7 +38,7 @@ async function restorePoint(id){
   const p=(await getList('points')).find(x=>x.id===id);if(!p)return;
   if(!await confirmBS({title:'Volver a este diseño',text:`Se cargará «${esc(p.label)}» (${p.n} ${p.n===1?'imagen cambiada':'imágenes cambiadas'}). Lo que tienes ahora se guarda antes como copia automática, por si quieres volver.`,ok:'Cargar',always:true}))return;
   await addPoint('Antes de volver a «'+p.label+'»','auto');before();for(const F of S.files)F.rep=null;S.src=new Map();S.ops={global:null,sec:{},file:{}};S.ex={};S.frames={};
-  applyState(p.st);if(!p.st.gen)S.gen=null;if(p.kind==='manual')S.curDesign=p.id;bump();render(true);toast(`«${p.label}» cargado`,{label:'Deshacer',fn:undo})}
+  applyState(p.st);if(!p.st.gen)S.gen=null;else if(!S.gen.look)migrateLook(p.st);if(p.kind==='manual')S.curDesign=p.id;bump();render(true);toast(`«${p.label}» cargado`,{label:'Deshacer',fn:undo})}
 async function recordExport(o){
   if(S.demo)return;const pid=await addPoint('Exportación · '+o.count+' '+(o.count===1?'imagen':'imágenes'),'export');
   const xs=await getList('exports');xs.unshift({id:Date.now().toString(36),t:Date.now(),sig:sig(),mode:o.mode,hw:o.hw,inc:o.inc,files:o.files,name:o.name,size:o.blob.size,pid,blob:o.blob.size<=25e6?o.blob:null});
@@ -95,6 +95,7 @@ async function scrSettings(v){
     ${about}
   </div></div>`;
   bindAbout();accUi();
+  settingsTabs(v);
   if(S.focus){const f=$('#'+S.focus);S.focus=null;if(f)setTimeout(()=>{f.scrollIntoView({block:'start'});scrollBy(0,-70)},30)}
   const segOn=(id,f)=>{const el=$(id);el.onclick=e=>{const b=e.target.closest('button[data-v]');if(!b)return;el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));f(b.dataset.v)}};
   segOn('#s-xm',x=>{SET.xmode=x;S.xmode=x;saveSet()});segOn('#s-hw',x=>{SET.xhw=+x;S.xhw=+x;saveSet()});segOn('#s-pv',x=>{SET.pv=x;saveSet()});
@@ -127,3 +128,16 @@ function accUi(){const box=$('#s-acs');if(!box)return;icnUi();const {h,s}=accGet
   $('#s-acn').textContent=sel>=0?PRE[sel][0]:'Personalizado';const pk=$('#s-acc');if(document.activeElement!==pk)pk.value=h==null?'#059669':hexHs(h,s*.8);
   box.onclick=e=>{const b=e.target.closest('[data-i]');if(!b)return;const[,ph,ps]=PRE[+b.dataset.i];accSet(ph,ps);accUi()};
   let t;pk.oninput=e=>{const[ph,ps]=hsOf(e.target.value);if(window.msApply)msApply(ph,ps);clearTimeout(t);t=setTimeout(()=>{accSet(ph,+ps.toFixed(2));accUi()},250)}}
+
+/* Ajustes en pestañas: cada tarjeta va a su categoría (Diseños · Historial · Preferencias · App) */
+const STABS=[['des','Diseños'],['hist','Historial'],['pref','Preferencias'],['app','App']];
+const SCARD={'Mis diseños':'des','Historial de exportaciones':'hist','Seguridad':'pref','Exportación por defecto':'pref','Pantalla':'pref','Instalar la app':'app','Datos en este navegador':'app'};
+function settingsTabs(v){if(S.focus==='s-des')S.stab='des';const cur=S.stab||(S.stab='des');
+  const cards=[...v.querySelectorAll('.card')].filter(c=>!c.parentElement.closest('.card')),abt=v.querySelector('.abt'),box=document.createElement('div');box.className='stack stw';
+  const bar=document.createElement('div');bar.className='seg gtabs';bar.id='s-tabs';bar.setAttribute('role','tablist');bar.innerHTML=STABS.map(([k,l])=>`<button data-t="${k}" aria-pressed="${cur===k}">${l}</button>`).join('');
+  box.appendChild(bar);const ttl=c=>{const h=c.querySelector('h3');return h?h.textContent.trim():''},ord=Object.keys(SCARD);
+  for(const [k] of STABS)for(const c of cards.filter(c=>SCARD[ttl(c)]===k).sort((a,b)=>ord.indexOf(ttl(a))-ord.indexOf(ttl(b)))){c.dataset.sp=k;box.appendChild(c)}
+  if(abt){abt.dataset.sp='app';box.appendChild(abt)}
+  for(const el of box.querySelectorAll('[data-sp]'))el.hidden=el.dataset.sp!==cur;
+  v.innerHTML='';v.appendChild(box);
+  bar.onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;S.stab=b.dataset.t;bar.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));box.querySelectorAll('[data-sp]').forEach(el=>el.hidden=el.dataset.sp!==S.stab);scrollTo(0,0)}}

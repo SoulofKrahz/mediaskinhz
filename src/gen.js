@@ -50,7 +50,7 @@ function pngMask(bmp){const s=96,c=document.createElement('canvas');c.width=c.he
 
 /* ============ generador ============ */
 const GSTYLES=[['glow','Brillo inferior'],['flat','Plano'],['outline','Contorno'],['glass','Cristal'],['neon','Neón'],['tile','Mosaico'],['minimal','Mínimo'],['metal','Aluminio'],['carbon','Carbono'],['aurora','Aurora'],['hud','Futurista'],['frost','Esmerilado'],['soft','Suave'],['vivid','Degradado vivo']];
-const defGen=()=>({style:'glow',shape:'round',r:14,inset:4,corners:'bg',color:'orig',hue:156,is:56,iy:42,per:{}});
+const defGen=()=>({look:'orig',style:'glow',shape:'round',r:14,inset:4,corners:'bg',color:'orig',hue:156,is:56,iy:42,per:{}});
 function origHue(F){if(F.oh!=null)return F.oh;const cnt=new Uint32Array(256);for(let i=0;i<F.idx.length;i++)cnt[F.idx[i]]++;let sx=0,sy=0;
   for(let i=0;i<F.n;i++){if(!cnt[i])continue;const r=F.pal[i*3],g=F.pal[i*3+1],b=F.pal[i*3+2];if(isKey(r,g,b))continue;const C=(Math.max(r,g,b)-Math.min(r,g,b))/255;if(C<.2)continue;const [h]=rgb2hsl(r,g,b),w=cnt[i]*C*C;sx+=Math.cos(h*Math.PI/180)*w;sy+=Math.sin(h*Math.PI/180)*w}
   F.oh=sx||sy?Math.round(((Math.atan2(sy,sx)*180/Math.PI)+360)%360):210;return F.oh}
@@ -113,10 +113,7 @@ function genTile(F,g){const fr=frames(F),fw=F.w/fr,h=F.h,c=document.createElemen
   return c}
 function genTargets(){return S.layout.slots.map(slotF).filter(F=>F&&frames(F)>=2)}
 function regen(){S.genCv=new Map();for(const F of genTargets())S.genCv.set(F.path,genTile(F,S.gen))}
-function applyGen(){const fs=genTargets();if(!fs.length)return;before();
-  for(const F of fs){const c=S.genCv.get(F.path)||genTile(F,S.gen),d=c.getContext('2d').getImageData(0,0,F.w,F.h).data,key=new Uint8Array(F.w*F.h);
-    for(let i=0;i<F.w*F.h;i++)if(d[i*4+3]<128)key[i]=1;const q=quantize(d,F.w,F.h,{key,dither:true});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx};S.ex[F.path]=true;F.cv=null}
-  bump();saveState();toast(`${fs.length} botones rediseñados`,{label:'Deshacer',fn:undo})}
+function applyGen(){const fs=genTargets();if(!fs.length)return;before();S.gen.look=S.gen.style||'glow';applyButtons(fs);toast(`${fs.length} botones rediseñados`,{label:'Deshacer',fn:undo})}
 
 const GSHAPES=[['rect','Rectángulo'],['round','Redondeado'],['pill','Píldora']];
 function miniTile(F,g,state){const fr=frames(F),fw=F.w/fr,c=document.createElement('canvas');c.width=fw;c.height=F.h;const x=c.getContext('2d');drawState(x,F,fw,F.h,Math.min(state||0,fr-1),genHue(F,g),g,cornerBase(F));
@@ -131,7 +128,7 @@ function scrGen(v){
   if(!S.gsel||!fs.some(F=>F.path===S.gsel))S.gsel=fs[0].path;if(!S.gtab)S.gtab='btn';
   const ref=()=>S.lc.get(S.gsel.toLowerCase())||fs[0],sm=genSum(g);
   const item=(k,icon,title,sum,body)=>`<div class="acc-i${S.gopen===k?' open':''}" data-k="${k}"><button class="acc-h" aria-expanded="${S.gopen===k}"><span class="ic">${ic(icon)}</span><span class="tx"><b>${title}</b><small data-sum="${k}">${esc(sum)}</small></span>${CHEV}</button>${S.gopen===k?`<div class="acc-b">${body}</div>`:''}</div>`;
-  const styleBody=`<div class="ocg">${GSTYLES.map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${g.style===k}"><canvas data-ms="${k}"></canvas><span>${l}</span></button>`).join('')}</div>`;
+  const look=btnLook(),styleBody=`<div class="ocg" id="g-lk">${LOOKS().map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${look===k}"><canvas data-ms="${k}"></canvas><span>${l}</span></button>`).join('')}</div>`;
   const shapeBody=`<div class="ocg">${GSHAPES.map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${g.shape===k}"><canvas data-mf="${k}"></canvas><span>${l}</span></button>`).join('')}</div>
     ${g.shape==='round'?`<label class="rg" for="g-r"><span>Redondeo <output>${g.r} px</output></span><input type="range" id="g-r" min="2" max="48" value="${g.r}"></label>`:''}
     <label class="rg" for="g-in"><span>Margen alrededor <output>${g.inset} px</output></span><input type="range" id="g-in" min="0" max="24" value="${g.inset}"></label>
@@ -150,31 +147,30 @@ function scrGen(v){
     <div class="stack">
     <div class="seg gtabs" id="g-tabs" role="tablist"><button data-t="btn" role="tab" aria-pressed="${S.gtab==='btn'}">Botones</button><button data-t="style" role="tab" aria-pressed="${S.gtab==='style'}">Estilo</button><button data-t="icons" role="tab" aria-pressed="${S.gtab==='icons'}">Iconos</button><button data-t="color" role="tab" aria-pressed="${S.gtab==='color'}">Color</button><button data-t="shape" role="tab" aria-pressed="${S.gtab==='shape'}">Forma</button></div>
     <div data-pn="btn"${S.gtab==='btn'?'':' hidden'}><div class="card gbl"><p class="note">Toca un botón para elegir su icono (de la biblioteca o uno tuyo) y su color.</p><div class="list">${fs.map(F=>{const p=g.per[F.path]||{},ii=genIconSrc(F,g);return `<button class="li" data-gb="${esc(F.path)}"><span class="th"><canvas data-gt="${esc(F.path)}"></canvas></span><span class="tx"><b>${esc(pretty(F))}</b><small>Icono ${ii==='orig'?'original':ii==='png'?'propio':esc(String(ii.startsWith('lib:')?ICONL[ii.slice(4)]||'propio':keyLabel(ii)).toLowerCase())} · ${p.hue!=null?'color '+hueName(p.hue).toLowerCase():'color como el resto'}</small></span><span class="pill p-col">Cambiar</span></button>`}).join('')}</div><p class="note">También puedes tocarlo en la pantalla de arriba. Tu propio icono: «Cambiar» → «Mis iconos».</p></div></div>
-    <div class="card" data-pn="style"${S.gtab==='style'?'':' hidden'}><p class="note">Cómo es el botón: el fondo, el borde y cómo se ilumina al pulsarlo.</p>${styleBody}</div>
+    <div class="card" data-pn="style"${S.gtab==='style'?'':' hidden'}><p class="note">Cómo son los ${fs.length} botones: el fondo, el borde y cómo se iluminan al pulsar. «Original de Renault» los deja como vienen, con tus iconos y colores.</p>${styleBody}</div>
     <div class="card" data-pn="icons"${S.gtab==='icons'?'':' hidden'}>${iconBody}</div>
     <div class="card" data-pn="color"${S.gtab==='color'?'':' hidden'}>${colorBody}</div>
     <div class="card" data-pn="shape"${S.gtab==='shape'?'':' hidden'}>${shapeBody}</div>
-    <p class="note">Solo cambia los botones de la pantalla de Inicio. Hasta que pulses Aplicar, nada se guarda.</p></div></div>
-    <div class="gbar"><button class="btn o" id="g-reset">Empezar de cero</button><button class="btn" id="g-ap">Aplicar a ${fs.length} botones</button></div>`;
-  const c=$('#pv'),po=()=>({scr:'home',gen:true,state:S.gstate||0});regen();mountPreview(c,po);
-  const minis=()=>{const F=ref();$$('[data-ms]',v).forEach(cv=>putMini(cv,miniTile(F,{...g,style:cv.dataset.ms},0)));$$('[data-mf]',v).forEach(cv=>putMini(cv,miniTile(F,{...g,shape:cv.dataset.mf},0)));
+    <p class="note">Solo cambia los botones de la pantalla de Inicio. Los cambios se aplican al momento y se pueden deshacer.</p></div></div>
+    <div class="gbar"><button class="btn o" id="g-reset">Empezar de cero</button><button class="btn" id="g-ap">Listo</button></div>`;
+  const c=$('#pv'),po=()=>({scr:'home',state:S.gstate||0});mountPreview(c,po);
+  const minis=()=>{const F=ref();$$('[data-ms]',v).forEach(cv=>{const k=cv.dataset.ms;if(k==='orig'){const fr=frames(F),fw=F.w/fr,t=document.createElement('canvas');t.width=fw;t.height=F.h;t.getContext('2d').drawImage(renderOrig(F,false),0,0,fw,F.h,0,0,fw,F.h);putMini(cv,t)}else putMini(cv,miniTile(F,{...g,style:k},0))});$$('[data-mf]',v).forEach(cv=>putMini(cv,miniTile(F,{...g,shape:cv.dataset.mf},0)));
     $$('[data-gt]',v).forEach(cv=>{const G=S.lc.get(cv.dataset.gt.toLowerCase());if(G)putMini(cv,miniTile(G,g,0))});const s2=genSum(g);for(const k in s2){const e=$(`[data-sum="${k}"]`,v);if(e)e.textContent=s2[k]}};
-  const upd=()=>{regen();drawPreview(c,po());minis();saveState()};minis();
+  const upd=()=>{if(btnLook()!=='orig')applyButtonsSoon();minis();saveState()};minis();
   $('#g-tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;S.gtab=b.dataset.t;$$('#g-tabs button').forEach(x=>x.setAttribute('aria-pressed',x===b));$$('[data-pn]',v).forEach(p=>p.hidden=p.dataset.pn!==S.gtab);if(S.gtab==='icons'){const ist=$('#g-ist');if(ist)icStyleDraw(ist)}};
-  $$('.ocg',v).forEach(gr=>gr.onclick=e=>{const b=e.target.closest('.ocd');if(!b)return;if(b.querySelector('[data-ms]')){g.style=b.dataset.v;gr.querySelectorAll('.ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));upd()}else{g.shape=b.dataset.v;render(true)}});
+  $$('.ocg',v).forEach(gr=>gr.onclick=e=>{const b=e.target.closest('.ocd');if(!b)return;if(b.querySelector('[data-ms]')){setLook(b.dataset.v).then(ok=>{if(ok){gr.querySelectorAll('.ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));minis()}})}else{g.shape=b.dataset.v;render(true)}});
   const seg=(id,key)=>{const el=$(id);if(el)el.onclick=e=>{const b=e.target.closest('button[data-v]');if(!b)return;g[key]=b.dataset.v;render(true)}};seg('#g-co','corners');seg('#g-cm','color');
   $('#g-st').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;S.gstate=+b.dataset.s;$$('#g-st button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawPreview(c,po())};
   const rng=(id,key,suf)=>{const i=$(id);if(!i)return;paintRange(i);const out=i.closest('.rg').querySelector('output');i.oninput=()=>{g[key]=+i.value;out.textContent=i.value+suf;paintRange(i);upd()}};
-  const ist=$('#g-ist');if(ist)icStyleBind(ist,()=>{regen();drawPreview(c,po());minis()});
+  const ist=$('#g-ist');if(ist)icStyleBind(ist,()=>minis());
   rng('#g-r','r',' px');rng('#g-in','inset',' px');rng('#g-is','is',' px');rng('#g-iy','iy',' %');
   const cs=$('[data-pn="color"] .swg',v);if(cs){cs.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;g.hue=+b.dataset.h;cs.querySelectorAll('.swc').forEach(x=>x.setAttribute('aria-pressed',x===b));upd()};const cp=cs.querySelector('[data-pick]');if(cp)cp.onchange=e=>{g.hue=Math.round(hexHsl(e.target.value)[0]);upd()}}
   let down=-1;c.onpointerdown=e=>{const h=slotAt(c,e);down=h.i;if(h.i>=0){S.press=h.i;drawPreview(c,po())}};
   c.onpointerleave=c.onpointercancel=()=>{down=-1;if(S.press!==-1){S.press=-1;drawPreview(c,po())}};
-  c.onpointerup=e=>{const h=slotAt(c,e),i=down;down=-1;S.press=-1;drawPreview(c,po());if(i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F&&fs.includes(F))genSheet(F,upd)}};
-  $$('[data-gb]',v).forEach(b=>b.onclick=()=>{const F=S.lc.get(b.dataset.gb.toLowerCase());if(F)genSheet(F,upd)});
-  $('#g-ap').onclick=async()=>{const over=fs.filter(F=>F.rep&&!(S.genApplied||{})[F.path]);if(over.length&&!await confirmBS({title:'Sustituir imágenes nuevas',text:`${over.map(F=>esc(pretty(F))).join(', ')} ya ${over.length===1?'tiene':'tienen'} una imagen nueva que pusiste tú. Se sustituirá por el diseño generado. Se guardará antes una copia automática.`,ok:'Sustituir',danger:true}))return;
-    await addPoint('Antes de rediseñar los botones','auto');applyGen();S.genApplied={};for(const F of fs)S.genApplied[F.path]=1;go({n:'home'});if(!S.demo)setTimeout(()=>toast('¿Te gusta? Guárdalo con un nombre',{label:'Guardar',fn:saveDesign,ms:7000}),3400)};
-  $('#g-reset').onclick=async()=>{if(!await confirmBS({title:'Empezar de cero',text:'Se pierden el estilo, la forma, los colores y los iconos que has elegido aquí. Podrás deshacerlo.',ok:'Empezar de cero'}))return;before();S.gen=defGen();render(true);toast('Diseño reiniciado',{label:'Deshacer',fn:undo})};
+  c.onpointerup=e=>{const h=slotAt(c,e),i=down;down=-1;S.press=-1;drawPreview(c,po());if(i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F&&fs.includes(F))btnSheet(F,minis)}};
+  $$('[data-gb]',v).forEach(b=>b.onclick=()=>{const F=S.lc.get(b.dataset.gb.toLowerCase());if(F)btnSheet(F,minis)});
+  $('#g-ap').onclick=()=>{go({n:'home'});if(!S.demo&&S.files.some(changed))setTimeout(()=>toast('¿Te gusta? Guárdalo con un nombre',{label:'Guardar',fn:saveDesign,ms:7000}),600)};
+  $('#g-reset').onclick=async()=>{if(!await confirmBS({title:'Empezar de cero',text:'Los 6 botones vuelven al original de Renault: se quitan el estilo, la forma, los colores y los iconos elegidos. Podrás deshacerlo.',ok:'Empezar de cero'}))return;before();S.gen=defGen();applyButtons();render(true);toast('Diseño reiniciado',{label:'Deshacer',fn:undo})};
 }
 function genSheet(F,upd){
   const g=S.gen,fs=genTargets(),idx=fs.indexOf(F);S.gsel=F.path;const p=()=>g.per[F.path]||(g.per[F.path]={});

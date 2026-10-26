@@ -24,6 +24,7 @@ async function run(browser, label, viewport, mobile) {
     return r.fulfill({ status: 200, contentType: MIME[path.extname(f).slice(1)] || 'application/octet-stream', body: fs.readFileSync(f) });
   });
   const tap = sel => mobile ? p.locator(sel).first().tap() : p.locator(sel).first().click();
+  const stab = async t => { if (await p.locator('#s-tabs').count()) { await tap('#s-tabs [data-t="' + t + '"]'); await p.waitForTimeout(200); } };
   await p.goto(BASE); await p.waitForTimeout(1800);
   ok((await p.title()) === 'Mediaskinhz', 'el título es Mediaskinhz');
   ok(await p.locator('#view canvas').count() > 0, 'arranca con las imágenes de ejemplo y su vista previa');
@@ -40,7 +41,7 @@ async function run(browser, label, viewport, mobile) {
   for (const t of ['Historial de exportaciones', 'Mis diseños', 'Seguridad', 'Exportación por defecto', 'Instalar la app'])
     ok(await p.locator('#view h3', { hasText: t }).count() === 1, 'Ajustes muestra «' + t + '»');
   ok((await p.locator('.abt').innerText()).includes('Krahz'), 'créditos de autor en Ajustes');
-  await tap('#w-chg'); await p.waitForTimeout(300);
+  await stab('app'); await tap('#w-chg'); await p.waitForTimeout(300);
   ok((await p.locator('#bs h2').innerText()) === 'Novedades' && await p.locator('#bs .chgl section').count() >= 3, 'Novedades abre con sus versiones');
   await tap('#bs [data-x]'); await p.waitForTimeout(200);
   await tap('#w-cr'); await p.waitForTimeout(300);
@@ -48,7 +49,7 @@ async function run(browser, label, viewport, mobile) {
   await tap('#bs [data-x]'); await p.waitForTimeout(200);
   // Color de la app: se aplica, se recuerda y deja el color del icono en la cookie
   const em0 = await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--em').trim());
-  await tap('#s-acs [data-i="2"]'); await p.waitForTimeout(300);
+  await stab('pref'); await tap('#s-acs [data-i="2"]'); await p.waitForTimeout(300);
   const em1 = await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--em').trim());
   ok(em1 && em1 !== em0, 'elegir Azul cambia el color de la app (' + em0 + ' → ' + em1 + ')');
   ok((await p.locator('#s-acn').innerText()) === 'Azul', 'muestra el nombre del color elegido');
@@ -62,10 +63,10 @@ async function run(browser, label, viewport, mobile) {
   await p.waitForTimeout(1200);
   ok(await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--em').trim()) === em1, 'el color se recuerda al recargar');
   await p.evaluate(() => go({ n: 'settings' })); await p.waitForTimeout(700);
-  await tap('#s-acs [data-i="0"]'); await p.waitForTimeout(300);
+  await stab('pref'); await tap('#s-acs [data-i="0"]'); await p.waitForTimeout(300);
   ok(await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--em').trim()) === em0, 'Esmeralda vuelve al color de partida');
   // Ajuste que se guarda
-  await tap('#s-xm [data-v="lgu"]'); await p.reload(); await p.waitForTimeout(2800); await p.evaluate(() => { const u = document.querySelector('#upd'); if (u) u.hidden = true; }); await p.waitForTimeout(1500);
+  await stab('pref'); await tap('#s-xm [data-v="lgu"]'); await p.reload(); await p.waitForTimeout(2800); await p.evaluate(() => { const u = document.querySelector('#upd'); if (u) u.hidden = true; }); await p.waitForTimeout(1500);
   ok(await p.evaluate(() => SET.xmode) === 'lgu', 'el modo de exportación por defecto se recuerda al recargar');
   await p.evaluate(() => { SET.xmode = 'tc'; S.xmode = 'tc'; saveSet(); });
 
@@ -122,6 +123,17 @@ async function run(browser, label, viewport, mobile) {
   const nm = p.evaluate(() => promptBS({ title: 'Prueba', value: 'Mi diseño' })); await p.waitForTimeout(300);
   await p.fill('#pb-in', 'Neón azul'); await p.keyboard.press('Enter');
   ok(await nm === 'Neón azul', 'se puede poner nombre a un diseño');
+  // Hoja única del botón: icono y color al momento, con el aspecto original
+  await p.evaluate(() => { S.gen = defGen(); go({ n: 'home' }); }); await p.waitForTimeout(500);
+  await p.evaluate(() => btnSheet(genTargets()[0])); await p.waitForTimeout(800);
+  ok(await p.locator('#bt-tabs button').count() === 4, 'al tocar un botón se abre su hoja con Icono, Color, Estilo y Más');
+  await tap('#bt-ic .icb:nth-child(3)'); await p.waitForTimeout(600);
+  ok(await p.evaluate(() => { const F = genTargets()[0]; return !!F.rep && F.rep.by === 'btn' && S.gen.look === 'orig'; }), 'cambiar el icono se aplica al momento, conservando el aspecto original');
+  await tap('#bt-tabs [data-t="look"]'); await p.waitForTimeout(300); await tap('#bt-lk [data-v="flat"]'); await p.waitForTimeout(900);
+  ok(await p.evaluate(() => S.gen.look === 'flat' && genTargets().every(F => F.rep && F.rep.by === 'gen')), 'elegir un estilo redibuja los botones al momento');
+  await tap('#bt-lk [data-v="orig"]'); await p.waitForTimeout(900);
+  ok(await p.evaluate(() => { const [a, ...r] = genTargets(); return a.rep && a.rep.by === 'btn' && r.every(F => !F.rep); }), 'volver al original conserva el icono elegido y deja el resto como estaba');
+  await tap('#bs [data-done]'); await p.waitForTimeout(300);
   // Familia «Negros y fondo»
   ok(await p.evaluate(() => { const F = S.files.find(f => /HOME_BG/i.test(f.path)); return famsOfFiles([F]).some(f => f.k === 13); }), 'el fondo de Inicio ofrece la familia «Negros y fondo»');
   // Exportar (ejemplo) → descarga un ZIP

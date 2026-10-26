@@ -175,11 +175,11 @@ const idb={db:null,open(){if(this.db)return Promise.resolve(this.db);return new 
   async tx(mode,fn){const db=await this.open();return new Promise((res,rej)=>{const t=db.transaction('kv',mode),st=t.objectStore('kv'),q=fn(st);t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error)})},
   get(k){return this.tx('readonly',s=>s.get(k))},set(k,v){return this.tx('readwrite',s=>s.put(v,k))},del(k){return this.tx('readwrite',s=>s.delete(k))}};
 let saveT=0;
-function saveState(now){if(S.demo)return Promise.resolve();clearTimeout(saveT);const run=()=>{const reps={};for(const F of S.files)if(F.rep)reps[F.path]={pal:F.rep.pal,idx:F.rep.idx,keyIdx:F.rep.keyIdx};
+function saveState(now){if(S.demo)return Promise.resolve();clearTimeout(saveT);const run=()=>{const reps={};for(const F of S.files)if(F.rep)reps[F.path]={pal:F.rep.pal,idx:F.rep.idx,keyIdx:F.rep.keyIdx,by:F.rep.by};
   let gen=null;if(S.gen){gen={...S.gen,per:{}};for(const [k,p] of Object.entries(S.gen.per||{}))gen.per[k]={icon:p.icon==='png'?undefined:p.icon,hue:p.hue}}
   return idb.set('state',{v:2,ops:S.ops,ex:S.ex,frames:S.frames,layout:S.layout,reps,gen,icx:S.icx||{}}).catch(()=>{})};if(now)return run();saveT=setTimeout(run,600)}
 function applyState(st){if(!st)return;S.ops=st.ops||S.ops;S.icx=st.icx||{};if(st.gen)S.gen=st.gen;S.ex=st.ex||{};S.frames=st.frames||{};if(st.layout&&!(st.layout.slots&&st.layout.slots[0]&&st.layout.slots[0].x===75&&st.layout.slots[0].y===134))S.layout=st.layout;
-  for(const [p,r] of Object.entries(st.reps||{})){const F=S.lc.get(p.toLowerCase());if(F&&r.idx&&r.idx.length===F.w*F.h){F.rep={pal:r.pal,idx:r.idx,keyIdx:r.keyIdx};if(r.exempt&&S.ex[F.path]===undefined)S.ex[F.path]=true}}S.ver++}
+  for(const [p,r] of Object.entries(st.reps||{})){const F=S.lc.get(p.toLowerCase());if(F&&r.idx&&r.idx.length===F.w*F.h){F.rep={pal:r.pal,idx:r.idx,keyIdx:r.keyIdx,by:r.by};if(r.exempt&&S.ex[F.path]===undefined)S.ex[F.path]=true}}migrateLook(st);S.ver++}
 function remember(){try{localStorage.setItem('skinhz-ui',JSON.stringify({cat:S.cat,grid:S.gridOn,gs:S.gridSize,snap:S.snap,scr:S.scr}))}catch(_){}}
 function recall(){let u={};try{u=JSON.parse(localStorage.getItem('skinhz-ui')||'{}')||{}}catch(_){}
   if(u.cat&&CATL.has(u.cat))S.cat=u.cat;if(typeof u.grid==='boolean')S.gridOn=u.grid;if(u.gs)S.gridSize=u.gs;if(u.snap===false)S.snap=false;if(u.scr&&SCRBG.has(u.scr))S.scr=u.scr}
@@ -268,11 +268,11 @@ function scrHome(v){
     <div class="stack stick">
       <div class="chips scroll" id="h-scr">${have.map(([k,l])=>`<button class="chip" data-s="${k}" aria-pressed="${k===S.scr}">${l}</button>`).join('')}</div>
       <div class="screen"><canvas id="pv" width="800" height="480" aria-label="Vista previa de la pantalla ${esc(SCRL.get(S.scr))}"></canvas></div>
-      <div class="e-bar"><div class="seg" id="h-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="${S.hcmp!=='orig'}">Ahora</button><button data-v="orig" aria-pressed="${S.hcmp==='orig'}">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">${S.scr==='home'?'Toca un botón para editarlo':'Fondo con tu tema'}</span></div>
+      <div class="e-bar"><div class="seg" id="h-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="${S.hcmp!=='orig'}">Ahora</button><button data-v="orig" aria-pressed="${S.hcmp==='orig'}">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">${S.scr==='home'?'Toca un botón para cambiar su icono, color o estilo':'Fondo con tu tema'}</span></div>
     </div>
     <div class="stack">
       ${S.demo?`<div class="card demo"><h2>Esto es un ejemplo</h2><p>Las imágenes son de muestra. Carga tu backup (la carpeta <b>M1</b> o un ZIP) para editar las de tu MediaNav. No sale de tu móvil.</p><button class="btn wide" data-act="load">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}Cargar mi backup</button></div>`:''}
-      ${S.scr==='home'&&!S.demo&&genTargets().length?`<div class="qa"><button class="qai" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><b>Rediseñar los botones</b><small>Estilo, iconos y color</small></button><button class="qai" data-act="designs"><span class="ic">${ic('M5 3h11l3 3v15H5zM8 3v6h8V3M8 21v-7h8v7')}</span><b>Mis diseños</b><small>Guardar y cambiar entre ellos</small></button></div>`:S.scr==='home'&&genTargets().length?`<div class="list"><button class="li" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><span class="tx"><b>Rediseñar los botones</b><small>Estilo, forma, color e iconos nuevos</small></span>${CHEV}</button></div>`:''}
+      ${S.scr==='home'&&!S.demo&&genTargets().length?`<div class="qa"><button class="qai" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><b>Estilo de los botones</b><small>Los 6 a la vez: estilo, forma y trazo</small></button><button class="qai" data-act="designs"><span class="ic">${ic('M5 3h11l3 3v15H5zM8 3v6h8V3M8 21v-7h8v7')}</span><b>Mis diseños</b><small>Guardar y cambiar entre ellos</small></button></div>`:S.scr==='home'&&genTargets().length?`<div class="list"><button class="li" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><span class="tx"><b>Rediseñar los botones</b><small>Estilo, forma, color e iconos nuevos</small></span>${CHEV}</button></div>`:''}
       <p class="sec-t">En esta pantalla</p>
       <div class="list">${rows.join('')||'<p class="empty">No hay imágenes de esta pantalla en el backup.</p>'}</div>
       ${!S.demo&&S.scr==='home'?`<div class="list"><button class="li" data-act="kit"><span class="ic">${ic('M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3')}</span><span class="tx"><b>Kit de prueba para el coche</b><small>3 imágenes para comprobar transparencia, estados y posiciones</small></span>${CHEV}</button></div>`:''}
@@ -287,7 +287,7 @@ function scrHome(v){
     c.onpointerdown=e=>{const h=slotAt(c,e);down=h.i;if(h.i>=0){S.press=h.i;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})}};
     c.onpointermove=e=>{if(e.pointerType!=='mouse')return;const h=slotAt(c,e);c.style.cursor=h.i>=0?'pointer':'default';if(down<0&&S.press!==h.i){S.press=h.i;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})}};
     c.onpointerleave=c.onpointercancel=()=>{down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})};
-    c.onpointerup=e=>{const h=slotAt(c,e);const i=down;down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'});if(i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F)go({n:'edit',p:F.path})}}}
+    c.onpointerup=e=>{const h=slotAt(c,e);const i=down;down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'});if(i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F){if(genTargets().includes(F))btnSheet(F);else go({n:'edit',p:F.path})}}}}
   S.slow=()=>{};
 }
 
@@ -721,7 +721,7 @@ function bind(){
   $('#ab-back').onclick=back;$('#ab-undo').onclick=undo;$('#ab-more').onclick=openMenu;$('#scrim').onclick=closeBS;
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#bs').hidden)closeBS();else if(!ROOTN.has(S.route.n))back()}if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!/INPUT|SELECT/.test(document.activeElement.tagName)){e.preventDefault();undo()}});
   $('#view').addEventListener('click',e=>{const t=e.target;
-    const ed=t.closest('[data-edit]');if(ed){const F=S.files[+ed.dataset.f];if(F)go({n:'edit',p:F.path});return}
+    const ed=t.closest('[data-edit]');if(ed){const F=S.files[+ed.dataset.f];if(F){if(S.route.n==='home'&&genTargets().includes(F))btnSheet(F);else go({n:'edit',p:F.path})}return}
     const g=t.closest('[data-go]');if(g){go({n:g.dataset.go});return}
     const c=t.closest('[data-cat]');if(c){S.sec=c.dataset.sec||'all';S.kind='all';S.onlyCh=false;if(c.dataset.cat!=='*'){S.cat=c.dataset.cat;remember()}go({n:'cat',c:c.dataset.cat});return}
     const a=t.closest('[data-act]');if(a&&a.dataset.act==='load')openLoad();if(a&&a.dataset.act==='kit')makeKit();if(a&&a.dataset.act==='designs'){S.focus='s-des';go({n:'settings'})}});
