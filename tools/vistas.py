@@ -49,8 +49,16 @@ for sc in src['scenarios']:
     sets.add(fk)
     key = (g, band, nm); seen[key] += 1
     if seen[key] > 1: nm = f'{nm} {seen[key]}'
-    C = []
+    C, kept = [], []
+    def iou(a, b):
+        ix = max(0, min(a[0] + a[2], b[0] + b[2]) - max(a[0], b[0])); iy = max(0, min(a[1] + a[3], b[1] + b[3]) - max(a[1], b[1]))
+        i = ix * iy; u = a[2] * a[3] + b[2] * b[3] - i
+        return i / u if u else 0
     for c in cs:
+        # listas de varias páginas (p. ej. Opciones de Radio): el programa crea todas encima; se queda la primera
+        r = c['rect']; hf = bool(c.get('filename'))
+        if not nm.startswith('Teclado') and any(k[1] == hf and (k[0] == r or iou(k[0], r) > .35) for k in kept): continue
+        kept.append((r, hf))
         f = c['filename'].replace('\\', '/').lower() if c.get('filename') else ''
         x, y, w, h = c['rect']
         t = ES.get(c.get('text') or '', c.get('text') or '')

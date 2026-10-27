@@ -151,6 +151,10 @@ async function run(browser, label, viewport, mobile) {
   if (allP) { await tap('#bs #bt-all'); await p.waitForTimeout(300); await tap('#bs [data-c="1"]').catch(() => {}); await p.waitForTimeout(1500);
     ok(await p.evaluate(P => secBtns(S.lc.get(P.toLowerCase()) || S.files.find(f => f.path === P)).every(G => { const q = S.gen.per[G.path] || {}; return q.look === 'flat' && q.hue === 24 && q.ihue === 'white'; }), allP), 'usar en todos copia el estilo y los colores');
     await p.evaluate(() => { closeBS(); undo(); }); }
+  // Tamaño de los iconos de dentro: se guarda y redibuja los botones tocados sin romper el formato
+  ok(await p.evaluate(async () => { const F = S.files.find(f => kindOf(f) === 'btn' && frames(f) >= 2 && !genTargets().includes(f) && extractIcon(f)); if (!F) return true;
+    before(); await setIsIn(1.35, [F]); const a = S.gen.isIn === 1.35 && F.rep && outBytes(F).length === 1078 + (((F.w + 3) & ~3) * F.h); undo(); return a; }), 'el tamaño de los iconos de dentro se aplica');
+  ok(await p.evaluate(() => typeof fgroups === 'function' && FWFR['phone/phone_dial_btn_call.bmp'] === 8), 'el botón de llamar se trata como dos iconos (llamar y colgar)');
   // Ventana de cada pantalla y «Común»: abren y enseñan sus bloques
   for (const sc of ['radio', 'media', 'phone', 'eco', 'setting', 'common']) {
     await p.evaluate(s => go({ n: 'scr', s }), sc); await p.waitForTimeout(400);

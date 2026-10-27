@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-27-5';
+const VER='2026-10-27-6';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,7 +11,12 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Corregido: el botón de llamar perdía el icono con un estilo. Tiene 8 estados (llamar y colgar): ahora cada uno conserva su icono y colgar mantiene su rojo',
+  [VER,['Corregido: los iconos de la barra de abajo del teléfono (micro, altavoz del móvil, altavoz del coche, llamada entrante, todas) se perdían con un estilo o al cambiarles el color. La textura de rayas del estado pulsado se confundía con el dibujo',
+    'Tamaño de los iconos de dentro: como el original, algo mayor (por defecto), grande o muy grande. En la ventana de cada pantalla y en la hoja de cada botón',
+    'Los iconos anchos (altavoz, coche) crecen a lo ancho en vez de encogerse',
+    'Al cambiar el icono ya no quedan restos del original en ningún estado',
+    'Vistas de dentro: en las listas de varias páginas (Opciones de Radio, Avisos, ayuda del asistente de voz) se ve solo la primera, sin piezas montadas unas encima de otras']],
+  ['2026-10-27-5',['Corregido: el botón de llamar perdía el icono con un estilo. Tiene 8 estados (llamar y colgar): ahora cada uno conserva su icono y colgar mantiene su rojo',
     'El número de estados de 22 imágenes (separadores, iconos de la agenda, flechas de las ventanas, puntos de página…) sale del programa de la radio, no de una suposición',
     'Con estilo, el icono original de los botones de dentro mantiene su tamaño (antes la casita salía diminuta y otros, demasiado grandes)',
     'Teléfono: los teclados se llaman por su juego de teclas (1, 2, 3) y si enseñan letras o símbolos, sin repetidos']],

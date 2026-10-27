@@ -62,6 +62,7 @@ function scrScreen(v,r){
       ${sty.length?`<p class="lbl">El mismo estilo para los ${sty.length} botones</p><div class="chips scroll" id="sc-lk">${LOOKS().map(([k,l])=>`<button class="chip" data-v="${k}" aria-pressed="${curLook===k}">${l}</button>`).join('')}</div>
         <p class="lbl">Color del marco de todos</p><div class="hsw" id="sc-fc">${swatches(same('hue'),{none:'El original',white:true,label:'Color del marco de todos'})}</div>
         <p class="lbl">Color del icono de todos</p><div class="hsw" id="sc-icc">${swatches(same('ihue'),{none:'Como el original',white:true,label:'Color del icono de todos'})}</div>`:''}
+      ${isInHTML('sc-isz')}<p class="note">Agranda los iconos de los botones de esta pantalla y de los que ya hayas cambiado en otras. Inicio tiene su propio tamaño (Estilo de los botones → Forma).</p>
       <div class="grid sc-grid">${btns.map(tile).join('')}</div></div>`:''}
     ${rest.length?`<div class="card"><h3>Otras piezas <small class="cnt">${rest.length}</small></h3><p class="note">Barras, listas, fondos de ventanas… Tócalas para cambiar sus colores o sustituirlas.</p><div class="list">${rest.map(F=>fileRow(F,KINDL.get(kindOf(F)))).join('')}</div></div>`:''}
     </div></div>`;
@@ -88,5 +89,6 @@ function scrScreen(v,r){
   for(const [id,key] of [['#sc-fc','hue'],['#sc-icc','ihue']]){const sw=$(id+' .swg');if(!sw)continue;
     sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;const h=b.dataset.h;allCol(key,h==='none'?null:h==='white'?'white':+h)};
     sw.querySelector('[data-pick]').onchange=e=>allCol(key,Math.round(hexHsl(e.target.value)[0]))}
+  const isz=$('#sc-isz');if(isz)isz.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;await setIsIn(+b.dataset.v,btns);render(true)};
   mountThumbs(v);
 }

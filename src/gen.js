@@ -45,9 +45,11 @@ function extractIcon1(F,base){const fr=frames(F);if(fr<2){F.ico=null;return null
     for(let i=0;i<fw*h;i++){const v=cl((bl[i]-.22)/.36);m[i]=v*v*(3-2*v)}
     let x0=fw,y0=h,x1=-1,y1=-1,sum=0;for(let y=0;y<h;y++)for(let x=0;x<fw;x++)if(m[y*fw+x]>.5){sum++;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
     return {m,sum,x0,y0,x1,y1,ok:sum>=30&&x1-x0<=fw*.9&&y1-y0<=h*.9}};
-  // se recorta del estado pulsado, pero solo si también hay icono en reposo: los botones de solo texto (p. ej. «Principal», «Lista»)
+  // se recorta de un estado donde salga limpio, pero solo si también hay icono en reposo: los botones de solo texto (p. ej. «Principal», «Lista»)
   // tienen una textura de rayas que en el pulsado parece un dibujo
-  const r=det((base+1)*fw);if(!r.ok||det(base*fw).sum<30){F.ico=null;return null}const {m,x0,y0,x1,y1}=r;
+  // se prueba primero el pulsado y luego reposo, apagado y pulsado-activo: en algunos (p. ej. el micro del teléfono) la textura del pulsado tapa el dibujo
+  // hay icono si se ve en reposo y también en el estado apagado (los de solo texto tienen el apagado vacío)
+  if(det(base*fw).sum<30||(base+2<fr&&det((base+2)*fw).sum<30)){F.ico=null;return null}let r=null;for(const k of [1,0,2,3]){if(base+k>=fr)continue;const t=det((base+k)*fw);if(t.ok){r=t;break}}if(!r){F.ico=null;return null}const {m,x0,y0,x1,y1}=r;
   const c=document.createElement('canvas');c.width=fw;c.height=h;const x=c.getContext('2d'),im=x.createImageData(fw,h);
   for(let i=0;i<fw*h;i++){im.data[i*4]=im.data[i*4+1]=im.data[i*4+2]=255;im.data[i*4+3]=Math.round(m[i]*255)}x.putImageData(im,0,0);
   F.ico={cv:c,bx:x0,by:y0,bw:x1-x0+1,bh:y1-y0+1};return F.ico}
@@ -62,7 +64,7 @@ function pngMask(bmp){const s=96,c=document.createElement('canvas');c.width=c.he
 
 /* ============ generador ============ */
 const GSTYLES=[['glow','Brillo inferior'],['flat','Plano'],['outline','Contorno'],['glass','Cristal'],['neon','Neón'],['tile','Mosaico'],['minimal','Mínimo'],['metal','Aluminio'],['carbon','Carbono'],['aurora','Aurora'],['hud','Futurista'],['hudb','Futurista grande'],['hudf','Futurista marco'],['chamfer','Biselado'],['scan','Escáner'],['led','Luces LED'],['double','Doble línea'],['side','Barra lateral'],['beam','Haz central'],['frost','Esmerilado'],['soft','Suave'],['vivid','Degradado vivo']];
-const defGen=()=>({look:'orig',style:'glow',shape:'round',r:14,inset:4,corners:'bg',color:'orig',hue:156,is:56,iy:42,per:{}});
+const defGen=()=>({isIn:1.15,look:'orig',style:'glow',shape:'round',r:14,inset:4,corners:'bg',color:'orig',hue:156,is:56,iy:42,per:{}});
 function origHue(F){if(F.oh!=null)return F.oh;const cnt=new Uint32Array(256);for(let i=0;i<F.idx.length;i++)cnt[F.idx[i]]++;let sx=0,sy=0;
   for(let i=0;i<F.n;i++){if(!cnt[i])continue;const r=F.pal[i*3],g=F.pal[i*3+1],b=F.pal[i*3+2];if(isKey(r,g,b))continue;const C=(Math.max(r,g,b)-Math.min(r,g,b))/255;if(C<.2)continue;const [h]=rgb2hsl(r,g,b),w=cnt[i]*C*C;sx+=Math.cos(h*Math.PI/180)*w;sy+=Math.sin(h*Math.PI/180)*w}
   F.oh=sx||sy?Math.round(((Math.atan2(sy,sx)*180/Math.PI)+360)%360):210;return F.oh}
@@ -146,10 +148,10 @@ function drawState(x,F,w,h,s,H,g,bgc){
       x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const gl=x.createLinearGradient(0,Y,0,Y+Hh*.5);gl.addColorStop(0,'rgba(255,255,255,.25)');gl.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh*.5);x.restore();
       if(on){x.lineWidth=3;x.strokeStyle='rgba(255,255,255,.75)';rrect(x,X+2.5,Y+2.5,W-5,Hh-5,Math.max(0,r-1.5));x.stroke()}ic=dim?'rgba(255,255,255,.5)':'#ffffff';break}
     default:x.fillStyle=on?lin(`hsl(${H} 90% 62%)`,`hsl(${H} 85% 46%)`):lin('#16191e','#060708',`hsl(${H} 85% ${dim?20:44}%)`);x.fill();x.lineWidth=2;x.strokeStyle=on?`hsl(${H} 70% 40%)`:`hsl(${H} 55% ${dim?18:32}%)`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=on?`hsl(${H} 70% 20%)`:`hsl(${H} 85% ${dim?32:60}%)`}
-  const home=S.layout.slots.some(s=>s.p===F.path),isz=home?g.is:Math.max(14,Math.min(g.is*h/137*1.25,Math.min(w,h)*.62)),src=grp?'orig':genIconSrc(F,g),p=grp?{}:g.per[F.path]||{},cx=w/2,cy=home?Y+Hh*(g.iy/100):h/2;
+  const home=S.layout.slots.some(s=>s.p===F.path),isIn=g.isIn||1.15,isz=home?g.is:Math.max(14,Math.min(h*.44*isIn,Math.min(w,h)*.8)),src=grp?'orig':genIconSrc(F,g),p=grp?{}:g.per[F.path]||{},cx=w/2,cy=home?Y+Hh*(g.iy/100):h/2;
   if(p.ihue!=null&&!on)ic=p.ihue==='white'?(dim?'rgba(255,255,255,.5)':'#ffffff'):`hsl(${p.ihue} 85% ${dim?34:62}%)`;
   // el icono original: en Inicio a la medida elegida; dentro, a su tamaño de siempre (× el tamaño elegido) sin salirse del botón
-  if(src==='orig'){const mk=extractIcon(F,grp);if(mk){const k=home?isz/56:Math.min(g.is/56,Math.min(w,h)*.72/Math.max(mk.bw,mk.bh));drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,mk,X,Y,k*sz/isz,col,gl);return true},cx,cy,isz,ic,glow)}}
+  if(src==='orig'){const mk=extractIcon(F,grp);if(mk){const k=home?isz/56:Math.min(isIn,W*.8/mk.bw,Hh*.8/mk.bh);drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,mk,X,Y,k*sz/isz,col,gl);return true},cx,cy,isz,ic,glow)}}
   else if(src==='png'&&p.png){drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,p.png,X,Y,sz/96*1.15,col,gl);return true},cx,cy,isz,ic,glow)}
   else if(src!=='none')drawIcon(x,keyPainter(src),cx,cy,isz,ic,glow);
 }

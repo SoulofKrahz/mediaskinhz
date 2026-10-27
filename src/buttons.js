@@ -18,7 +18,7 @@ function btnTintOps(F,ihue){const o={...defOps(),...(S.ops.file[F.path]||{})};o.
 function buildButton(F){const g=S.gen||(S.gen=defGen()),p=g.per[F.path]||{},look=genTargets().includes(F)?btnLook():(p.look||'orig');
   if(look==='orig'){
     const single=frames(F)<2&&!(p.icon&&p.icon!=='orig');btnTintOps(F,single?p.ihue:null);
-    const k=p.icon&&p.icon!=='orig'&&p.icon!=='png'?p.icon:(p.ihue!=null&&!single&&extractIcon(F)?'orig':null);
+    const k=p.icon&&p.icon!=='orig'&&p.icon!=='png'?p.icon:((p.ihue!=null||p.rs)&&!single&&extractIcon(F)?'orig':null);
     if(k){F.rep=null;F.icz=null;icApply(F,{k,col:p.ihue==null?'orig':p.ihue,keepOn:true},true);if(F.rep)F.rep.by='btn';if(S.icx)delete S.icx[F.path];delete S.ex[F.path]}
     else{if(F.rep&&(F.rep.by==='btn'||F.rep.by==='gen'))F.rep=null;if(S.icx)delete S.icx[F.path];if(S.ex[F.path]===true)delete S.ex[F.path]}
     btnHueOps(F,p.hue)}
@@ -56,6 +56,17 @@ const isBtnLike=F=>{const k=kindOf(F);return k==='btn'||k==='ico'};
 const styledOut=()=>S.files.filter(F=>((S.gen&&S.gen.per[F.path])||{}).look&&S.gen.per[F.path].look!=='orig');
 const canStyle=F=>{const fr=frames(F);if(fr<2)return false;const r=F.w/fr/F.h;return r>.6&&r<4.6&&F.h>=40};
 // Uno a uno se puede dar estilo a cualquier botón con estados (flechas altas, barras de lista…); «usar en todos» se salta esas formas raras
+// Tamaño de los iconos de dentro (todas las pantallas menos Inicio). 1 = como el original
+const ISIN=[[1,'Como el original'],[1.15,'Algo mayor'],[1.35,'Grande'],[1.6,'Muy grande']];
+const isInHTML=id=>{const v=(S.gen&&S.gen.isIn)||1.15;return `<p class="lbl">Tamaño de los iconos <small>· en todas las pantallas de dentro</small></p><div class="chips" id="${id}">${ISIN.map(([k,l])=>`<button class="chip" data-v="${k}" aria-pressed="${Math.abs(v-k)<.01}">${l}</button>`).join('')}</div>`};
+const touchedIn=()=>{const g=S.gen||{},T=genTargets();return S.files.filter(F=>{const p=(g.per||{})[F.path];return p&&!T.includes(F)&&(p.icon||p.ihue!=null||p.rs||(p.look&&p.look!=='orig'))})};
+// marca para redibujar a la medida elegida los botones de estas imágenes que aún están como el original
+function markResize(L){const g=S.gen||(S.gen=defGen());for(const F of L){if(genTargets().includes(F)||frames(F)<2||!extractIcon(F))continue;const p=g.per[F.path]||(g.per[F.path]={});
+  if(Math.abs((g.isIn||1.15)-1)<.01){delete p.rs;if(!Object.keys(p).length)delete g.per[F.path]}else if(!p.icon&&p.ihue==null&&(!p.look||p.look==='orig'))p.rs=1}}
+async function setIsIn(v,L){before();const g=S.gen||(S.gen=defGen());g.isIn=v;if(L)markResize(L);const A=touchedIn();toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));
+  // los que ya no tienen nada que redibujar vuelven al original
+  for(const F of S.files)if(F.rep&&F.rep.by==='btn'&&!g.per[F.path]){F.rep=null;if(S.icx)delete S.icx[F.path]}
+  applyButtons(A);toast(`Iconos ${(ISIN.find(x=>x[0]===v)||['',''])[1].toLowerCase()} en ${A.length} botones`,{label:'Deshacer',fn:undo});return A.length}
 const canStyleOne=F=>frames(F)>=2&&F.h>=24&&F.w/frames(F)>=24;
 const secBtns=F=>S.files.filter(G=>G.sec===F.sec&&kindOf(G)==='btn'&&canStyle(G)&&!genTargets().includes(G));
 // Al cambiar la forma o el estilo del icono se redibujan todos los botones con estilo
@@ -77,6 +88,7 @@ function btnSheet(F,after,el){
     ${home||canStyleOne(F)?`<p class="lbl">Estilo <small>· ${home?'común a los '+T.length+' botones de Inicio':'de este botón'}</small></p><div class="hs" id="bt-lk">${LOOKS().map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${look===k}"><canvas data-lk="${k}"></canvas><span>${l}</span></button>`).join('')}</div>
     ${home?'':`${canStyle(F)?'':'<p class="note">Este botón tiene una forma poco habitual: el estilo se le aplica solo a él.</p>'}<button class="btn o sm wide" id="bt-all">Usar este estilo y colores en los ${secBtns(F).length} botones de ${esc(SECL.get(F.sec)||F.sec)}</button>`}
     <p class="lbl">Forma <small>· común a todos los botones con estilo</small></p><div class="chips" id="bt-sh">${GSHAPES.map(([k,l])=>`<button class="chip" data-v="${k}" aria-pressed="${g.shape===k}">${l}</button>`).join('')}</div>`:''}
+    ${home?'':isInHTML('bt-isz')}
     <div class="bt-more">${home?`<button class="btn o sm" data-mo="gen">Forma y trazo</button>`:''}<button class="btn o sm" data-mo="edit">Editar a fondo</button><button class="btn o sm" data-mo="reset">Volver al original</button></div>
     ${el?'':`<div class="gnav">${list?`<button class="btn o sm" data-mv="-1"${idx<=0?' disabled':''}>‹ Anterior</button>`:'<span></span>'}<button class="btn sm" data-done>Hecho</button>${list?`<button class="btn o sm" data-mv="1"${idx>=list.length-1?' disabled':''}>Siguiente ›</button>`:'<span></span>'}</div>`}`);
   if(el)el.innerHTML=html;else openBS(html);
@@ -107,6 +119,7 @@ function btnSheet(F,after,el){
     if(!await confirmBS({title:`«${nm}» en ${SECL.get(F.sec)||F.sec}`,text:`El estilo, el color del marco y el color del icono de este botón se aplicarán a los ${L.length} botones de esta pantalla (se saltan las barras alargadas). El icono de cada uno se mantiene. Podrás deshacerlo.`,ok:'Aplicar a todos'}))return again();
     before();for(const G of L){const q2=g.per[G.path]||(g.per[G.path]={});q2.look=v;for(const k of ['hue','ihue'])if(me[k]==null)delete q2[k];else q2[k]=me[k]}toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(L);toast(`${L.length} botones con «${nm}»`,{label:'Deshacer',fn:undo});again()};
   const sh=q('#bt-sh');if(sh)sh.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;before();g.shape=b.dataset.v;sh.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===b));restyleAll();done();pv();qq('#bt-lk canvas').forEach(cv=>{const k=cv.dataset.lk;if(k!=='orig')putMini(cv,miniTile(F,{...g,style:k},0))})};
+  const isz=q('#bt-isz');if(isz)isz.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;await setIsIn(+b.dataset.v,[F]);done();again()};
   qq('[data-mo]').forEach(b=>b.onclick=()=>{const m=b.dataset.mo;
     if(m==='gen'){closeBS();go({n:'gen'})}else if(m==='edit'){closeBS();go({n:'edit',p:F.path})}
     else{change(()=>{delete g.per[F.path]});toast(pretty(F)+' vuelve al original',{label:'Deshacer',fn:undo})}});

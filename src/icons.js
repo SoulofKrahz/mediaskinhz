@@ -109,6 +109,14 @@ function icAnalyze(F){if(F.icz&&F.iczF===frames(F))return F.icz;const fr=frames(
     let ok=cs.length>=20&&x1-x0<fw*.92&&y1-y0<h*.92;if(!ok){const m=Math.min(fw,h)*.5;x0=(fw-m)/2;x1=x0+m;y0=(h-m)/2;y1=y0+m}
     const med=a=>{a.sort((u,v)=>u-v);return a[a.length>>1]};const col=cs.length?[med(cs.map(c=>c[0])),med(cs.map(c=>c[1])),med(cs.map(c=>c[2]))]:[255,255,255];
     out.push({bg,x0,y0,x1,y1,col,ok})}
+  // si el icono se ha separado bien (extractIcon), su caja manda en todos los estados del grupo y el color se toma dentro de su silueta:
+  // en botones con textura de rayas (barra de abajo del teléfono) la detección por estado se confunde con las rayas
+  for(let s=0;s<fr;s++){const grp=fr>4&&fr%4===0?s>>2:0,mk=extractIcon(F,grp);if(!mk)continue;const a=out[s],ox=s*fw;a.x0=mk.bx;a.y0=mk.by;a.x1=mk.bx+mk.bw-1;a.y1=mk.by+mk.bh-1;a.ok=true;
+    const md=mk.cv.getContext('2d').getImageData(0,0,fw,h).data,cs=[];for(let y=a.y0;y<=a.y1;y++)for(let x=a.x0;x<=a.x1;x++)if(md[(y*fw+x)*4+3]>160){const i=idx[y*F.w+ox+x];if(!isK(i))cs.push([pal[i*3],pal[i*3+1],pal[i*3+2]])}
+    if(cs.length>8){const med=v=>{v.sort((p,q)=>p-q);return v[v.length>>1]};a.col=[med(cs.map(c=>c[0])),med(cs.map(c=>c[1])),med(cs.map(c=>c[2]))]}}
+  // si en un estado no se ha separado el icono, se usa la caja de otro estado del mismo grupo donde sí (si no, quedarían restos)
+  for(let s=0;s<fr;s++){const a=out[s];if(a.ok)continue;const g0=fr>4&&fr%4===0?s>>2<<2:0,gs=fr>4&&fr%4===0?4:fr;
+    const b=out.slice(g0,g0+gs).find(q=>q.ok)||out.find(q=>q.ok);if(b){a.x0=b.x0;a.y0=b.y0;a.x1=b.x1;a.y1=b.y1}}
   F.icz=out;F.iczF=fr;return out}
 function icApply(F,spec,quiet){
   const fr=frames(F),fw=F.w/fr,h=F.h,A=icAnalyze(F),c=document.createElement('canvas');c.width=F.w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});
@@ -127,7 +135,11 @@ function icApply(F,spec,quiet){
         row[k]=src>=0?o[y*F.w+ox+src]:v}
       for(let k=0;k<W;k++)o[y*F.w+ox+X0+k]=row[k]}}
   x.putImageData(im,0,0);
-  const size=spec.size||Math.max(14,Math.min(Math.min(fw,h)*.9,Math.max(bw,bh)*24/18));
+  // fuera de Inicio, el tamaño de los iconos de dentro que elijas (1 = como el original)
+  const fin=S.layout.slots.some(q=>q.p===F.path)?1:((S.gen&&S.gen.isIn)||1.15);
+  // el tope se mide por cada lado: un icono ancho (altavoz del móvil) puede crecer a lo ancho aunque el botón sea bajo
+  const mx=Math.max(bw,bh),cap=spec.k==='orig'?Math.min(fw*.88*mx/bw,h*.84*mx/bh)*24/18:Math.min(fw,h)*.9;
+  const size=spec.size||Math.max(14,Math.min(cap,mx*24/18*fin));
   for(let s=0;s<lim;s++){const a=A[s],cx=s*fw+(a.x0+a.x1)/2,cy=(a.y0+a.y1)/2+(spec.dy||0);
     const orig=`rgb(${a.col.join(',')})`,col=spec.col==null||spec.col==='orig'||(spec.keepOn&&s%2===1)?orig:spec.col==='white'?(s===2?'rgba(255,255,255,.55)':'#fff'):typeof spec.col==='number'?`hsl(${spec.col} 85% ${s===2?34:s%2?40:62}%)`:spec.col;
     // 'orig': el icono original, repintado (su silueta, sacada del estado pulsado)
