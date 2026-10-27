@@ -32,11 +32,14 @@ const CHEV=ic('M9 6l6 6-6 6','i ch');
 let DL=null;try{if(window.claude&&window.claude.use)window.claude.use('downloads').then(d=>{DL=d}).catch(()=>{})}catch(_){}
 
 /* ============ archivos ============ */
+// Estados de las imágenes que no siguen la regla de «4 estados si es un botón»: los da el programa de la radio (ancho de la imagen / ancho con que la dibuja).
+// p. ej. el botón de llamar tiene 8: llamar (4) y colgar (4). Sale de tools/vistas.py con el análisis de MediaNav-to-Evolution-Upgrade.
+const FWFR={"fm radio/fmradio_contents_list_nowplay_icon.bmp": 5, "fm radio/fmradio_pagenumber_icon.bmp": 4, "fm radio/fmradio_parting_line.bmp": 4, "fm radio/fmradio_preset_nowplay_icon.bmp": 5, "media/media_pagenumber_icon.bmp": 4, "media/media_parting_line.bmp": 4, "media/media_parting_line_like.bmp": 4, "media/media_parting_line_w82.bmp": 4, "media/media_progress_bar_bg_1.bmp": 2, "phone/phone_dial_btn_call.bmp": 8, "phone/phone_keyboard_search_results_list_down_btn.bmp": 8, "phone/phone_list_home.bmp": 5, "phone/phone_list_mobile.bmp": 5, "phone/phone_list_office.bmp": 5, "phone/phone_list_other.bmp": 5, "phone/phone_parting_line.bmp": 4, "popup/popup_list_scroll2_down.bmp": 4, "popup/popup_list_scroll2_up.bmp": 4, "popup/popup_list_scroll_down.bmp": 4, "popup/popup_list_scroll_up.bmp": 4, "setting/setting_list_icon_smartphone.bmp": 5, "setting/setting_parting_line.bmp": 4};
 function mkFile(rel,sec,buf,b){
   const segs=rel.split('/'),file=segs[segs.length-1],name=file.replace(/\.bmp$/i,'');
   let keyIdx=-1;for(let i=0;i<b.n;i++)if(isKey(b.pal[i*3],b.pal[i*3+1],b.pal[i*3+2])){keyIdx=i;break}
   let keyCount=0;if(keyIdx>=0)for(let i=0;i<b.idx.length;i++){const p=b.idx[i]*3;if(b.pal[p]===255&&b.pal[p+1]===255&&b.pal[p+2]===0)keyCount++}
-  const fdef=/(btn|press)/.test(name.toLowerCase())&&b.w%4===0&&b.w/4>=8?4:1;
+  const fdef=FWFR[rel.toLowerCase().replace(/^.*?(?=[^/]+\/[^/]+$)/,'')]||(/(btn|press)/.test(name.toLowerCase())&&b.w%4===0&&b.w/4>=8?4:1);
   return Object.assign({path:rel,lc:rel.toLowerCase(),file,name,sec,sub:segs.slice(1,-1).join('/'),buf,keyIdx,keyCount,fdef,rep:null,epv:0,ep:null,cv:null,cvv:0,cvk:null,cvo:null,st:null,stB:null},b);
 }
 const frames=F=>S.frames[F.path]||F.fdef;

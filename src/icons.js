@@ -114,7 +114,8 @@ function icApply(F,spec,quiet){
   const fr=frames(F),fw=F.w/fr,h=F.h,A=icAnalyze(F),c=document.createElement('canvas');c.width=F.w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});
   const im=x.createImageData(F.w,h),o=new Uint32Array(im.data.buffer),lut=lutOf(F.pal,false);for(let i=0;i<F.idx.length;i++)o[i]=lut[F.idx[i]];
   const M=3,u=A[0],bw=Math.max(...A.map(a=>a.x1-a.x0+1)),bh=Math.max(...A.map(a=>a.y1-a.y0+1));
-  for(let s=0;s<fr;s++){const a=A[s],ox=s*fw,X0=Math.max(0,Math.floor(a.x0-M)),X1=Math.min(fw-1,Math.ceil(a.x1+M)),Y0=Math.max(0,Math.floor(a.y0-M)),Y1=Math.min(h-1,Math.ceil(a.y1+M));
+  const lim=fgroups(F)>1?4:fr;// en botones de dos iconos (llamar/colgar) solo se cambia el primero
+  for(let s=0;s<lim;s++){const a=A[s],ox=s*fw,X0=Math.max(0,Math.floor(a.x0-M)),X1=Math.min(fw-1,Math.ceil(a.x1+M)),Y0=Math.max(0,Math.floor(a.y0-M)),Y1=Math.min(h-1,Math.ceil(a.y1+M));
     const W=X1-X0+1;
     for(let y=Y0;y<=Y1;y++){// se rellena en espejo con lo que hay justo a los lados (conserva textura, rayas y degradados); si no cabe, color medio de los lados
       const side=[];for(const xx of [X0-1,X0-2,X0-3,X1+1,X1+2,X1+3])if(xx>=0&&xx<fw)side.push(o[y*F.w+ox+xx]);
@@ -127,7 +128,7 @@ function icApply(F,spec,quiet){
       for(let k=0;k<W;k++)o[y*F.w+ox+X0+k]=row[k]}}
   x.putImageData(im,0,0);
   const size=spec.size||Math.max(14,Math.min(Math.min(fw,h)*.9,Math.max(bw,bh)*24/18));
-  for(let s=0;s<fr;s++){const a=A[s],cx=s*fw+(a.x0+a.x1)/2,cy=(a.y0+a.y1)/2+(spec.dy||0);
+  for(let s=0;s<lim;s++){const a=A[s],cx=s*fw+(a.x0+a.x1)/2,cy=(a.y0+a.y1)/2+(spec.dy||0);
     const orig=`rgb(${a.col.join(',')})`,col=spec.col==null||spec.col==='orig'||(spec.keepOn&&s%2===1)?orig:spec.col==='white'?(s===2?'rgba(255,255,255,.55)':'#fff'):typeof spec.col==='number'?`hsl(${spec.col} 85% ${s===2?34:s%2?40:62}%)`:spec.col;
     // 'orig': el icono original, repintado (su silueta, sacada del estado pulsado)
     const paint=spec.k==='orig'?(c,X,Y,sz,cc,gl)=>{const mk=extractIcon(F);if(!mk)return false;drawMask(c,mk,X,Y,sz*18/24/Math.max(mk.bw,mk.bh),cc,gl);return true}:keyPainter(spec.k);

@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-27-4';
+const VER='2026-10-27-5';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,7 +11,11 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Estilo también para los botones de forma poco habitual, uno a uno: las flechas altas de las presintonías, las barras de las listas, las barras largas del teléfono… «Usar en todos» se las sigue saltando para no deformarlas']],
+  [VER,['Corregido: el botón de llamar perdía el icono con un estilo. Tiene 8 estados (llamar y colgar): ahora cada uno conserva su icono y colgar mantiene su rojo',
+    'El número de estados de 22 imágenes (separadores, iconos de la agenda, flechas de las ventanas, puntos de página…) sale del programa de la radio, no de una suposición',
+    'Con estilo, el icono original de los botones de dentro mantiene su tamaño (antes la casita salía diminuta y otros, demasiado grandes)',
+    'Teléfono: los teclados se llaman por su juego de teclas (1, 2, 3) y si enseñan letras o símbolos, sin repetidos']],
+  ['2026-10-27-4',['Estilo también para los botones de forma poco habitual, uno a uno: las flechas altas de las presintonías, las barras de las listas, las barras largas del teléfono… «Usar en todos» se las sigue saltando para no deformarlas']],
   ['2026-10-27-3',['8 estilos de botón nuevos, pensados para que queden bien también en los botones de dentro: Futurista grande, Futurista marco, Biselado, Escáner, Luces LED, Doble línea, Barra lateral y Haz central',
     'Futurista se queda como estaba (en Inicio y dentro): «Futurista grande» da a los botones de dentro las esquinas grandes de Inicio']],
   ['2026-10-27-2',['«Usar en todos los botones» copia también el color del marco y el del icono, no solo el estilo',

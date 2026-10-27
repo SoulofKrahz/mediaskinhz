@@ -601,11 +601,14 @@ const CHEV=ic('M9 6l6 6-6 6','i ch');
 let DL=null;try{if(window.claude&&window.claude.use)window.claude.use('downloads').then(d=>{DL=d}).catch(()=>{})}catch(_){}
 
 /* ============ archivos ============ */
+// Estados de las imágenes que no siguen la regla de «4 estados si es un botón»: los da el programa de la radio (ancho de la imagen / ancho con que la dibuja).
+// p. ej. el botón de llamar tiene 8: llamar (4) y colgar (4). Sale de tools/vistas.py con el análisis de MediaNav-to-Evolution-Upgrade.
+const FWFR={"fm radio/fmradio_contents_list_nowplay_icon.bmp": 5, "fm radio/fmradio_pagenumber_icon.bmp": 4, "fm radio/fmradio_parting_line.bmp": 4, "fm radio/fmradio_preset_nowplay_icon.bmp": 5, "media/media_pagenumber_icon.bmp": 4, "media/media_parting_line.bmp": 4, "media/media_parting_line_like.bmp": 4, "media/media_parting_line_w82.bmp": 4, "media/media_progress_bar_bg_1.bmp": 2, "phone/phone_dial_btn_call.bmp": 8, "phone/phone_keyboard_search_results_list_down_btn.bmp": 8, "phone/phone_list_home.bmp": 5, "phone/phone_list_mobile.bmp": 5, "phone/phone_list_office.bmp": 5, "phone/phone_list_other.bmp": 5, "phone/phone_parting_line.bmp": 4, "popup/popup_list_scroll2_down.bmp": 4, "popup/popup_list_scroll2_up.bmp": 4, "popup/popup_list_scroll_down.bmp": 4, "popup/popup_list_scroll_up.bmp": 4, "setting/setting_list_icon_smartphone.bmp": 5, "setting/setting_parting_line.bmp": 4};
 function mkFile(rel,sec,buf,b){
   const segs=rel.split('/'),file=segs[segs.length-1],name=file.replace(/\.bmp$/i,'');
   let keyIdx=-1;for(let i=0;i<b.n;i++)if(isKey(b.pal[i*3],b.pal[i*3+1],b.pal[i*3+2])){keyIdx=i;break}
   let keyCount=0;if(keyIdx>=0)for(let i=0;i<b.idx.length;i++){const p=b.idx[i]*3;if(b.pal[p]===255&&b.pal[p+1]===255&&b.pal[p+2]===0)keyCount++}
-  const fdef=/(btn|press)/.test(name.toLowerCase())&&b.w%4===0&&b.w/4>=8?4:1;
+  const fdef=FWFR[rel.toLowerCase().replace(/^.*?(?=[^/]+\/[^/]+$)/,'')]||(/(btn|press)/.test(name.toLowerCase())&&b.w%4===0&&b.w/4>=8?4:1);
   return Object.assign({path:rel,lc:rel.toLowerCase(),file,name,sec,sub:segs.slice(1,-1).join('/'),buf,keyIdx,keyCount,fdef,rep:null,epv:0,ep:null,cv:null,cvv:0,cvk:null,cvo:null,st:null,stB:null},b);
 }
 const frames=F=>S.frames[F.path]||F.fdef;
@@ -1371,7 +1374,12 @@ function drawLib(x,k,cx,cy,size,col,glow){x.save();x.translate(cx-size/2,cy-size
   x.restore()}
 function defIcon(F){const n=F.name.toLowerCase();for(const [w,k] of ICONDEF)if(n.includes(w))return k;return 'star'}
 /* Extrae la silueta del icono original a partir del estado pulsado (fondo claro casi uniforme por filas) */
-function extractIcon(F){if(F.ico!==undefined)return F.ico;const fr=frames(F);if(fr<2){F.ico=null;return null}
+// Botones con dos iconos (p. ej. llamar y colgar: 8 estados = 2 grupos de 4)
+const fgroups=F=>{const fr=frames(F);return fr>4&&fr%4===0?fr/4:1};
+function extractIcon(F,grp){grp=grp||0;if(F.icoFr!==frames(F)){F.icoFr=frames(F);F.ico=undefined;F.icoG=[]}
+  if(grp){if(F.icoG[grp]!==undefined)return F.icoG[grp];const sv=F.ico;F.ico=undefined;const r=extractIcon1(F,grp*4);F.icoG[grp]=r;F.ico=sv;return r}
+  if(F.ico!==undefined)return F.ico;return extractIcon1(F,0)}
+function extractIcon1(F,base){const fr=frames(F);if(fr<2){F.ico=null;return null}
   const fw=F.w/fr,h=F.h,pal=F.pal,idx=F.idx,B=4;
   // máscara del icono en un estado: lo que se aparta del color típico de su fila
   const det=ox=>{const m=new Float32Array(fw*h);
@@ -1384,10 +1392,12 @@ function extractIcon(F){if(F.ico!==undefined)return F.ico;const fr=frames(F);if(
     return {m,sum,x0,y0,x1,y1,ok:sum>=30&&x1-x0<=fw*.9&&y1-y0<=h*.9}};
   // se recorta del estado pulsado, pero solo si también hay icono en reposo: los botones de solo texto (p. ej. «Principal», «Lista»)
   // tienen una textura de rayas que en el pulsado parece un dibujo
-  const r=det(fw);if(!r.ok||!det(0).ok){F.ico=null;return null}const {m,x0,y0,x1,y1}=r;
+  const r=det((base+1)*fw);if(!r.ok||det(base*fw).sum<30){F.ico=null;return null}const {m,x0,y0,x1,y1}=r;
   const c=document.createElement('canvas');c.width=fw;c.height=h;const x=c.getContext('2d'),im=x.createImageData(fw,h);
   for(let i=0;i<fw*h;i++){im.data[i*4]=im.data[i*4+1]=im.data[i*4+2]=255;im.data[i*4+3]=Math.round(m[i]*255)}x.putImageData(im,0,0);
   F.ico={cv:c,bx:x0,by:y0,bw:x1-x0+1,bh:y1-y0+1};return F.ico}
+// tono propio de un grupo (p. ej. el rojo de colgar), sacado de su estado pulsado
+function grpHue(F,grp){const fr=frames(F),fw=F.w/fr,ox=(grp*4+1)*fw;let sx=0,sy=0;for(let y=0;y<F.h;y+=2)for(let x=0;x<fw;x+=2){const p=F.idx[y*F.w+ox+x]*3,r=F.pal[p],g=F.pal[p+1],b=F.pal[p+2];if(isKey(r,g,b))continue;const C=(Math.max(r,g,b)-Math.min(r,g,b))/255;if(C<.25)continue;const [h]=rgb2hsl(r,g,b);sx+=Math.cos(h*Math.PI/180)*C;sy+=Math.sin(h*Math.PI/180)*C}return sx||sy?(Math.atan2(sy,sx)*180/Math.PI+360)%360:0}
 function drawMask(x,mk,cx,cy,k,col,glow){const t=document.createElement('canvas');t.width=mk.cv.width;t.height=mk.cv.height;const tx=t.getContext('2d');tx.fillStyle=col;tx.fillRect(0,0,t.width,t.height);tx.globalCompositeOperation='destination-in';tx.drawImage(mk.cv,0,0);
   x.save();if(glow){x.shadowColor=col;x.shadowBlur=glow}x.drawImage(t,mk.bx,mk.by,mk.bw,mk.bh,cx-mk.bw*k/2,cy-mk.bh*k/2,mk.bw*k,mk.bh*k);x.restore()}
 function pngMask(bmp){const s=96,c=document.createElement('canvas');c.width=c.height=s;const x=c.getContext('2d'),sc=Math.min(s/bmp.width,s/bmp.height);x.drawImage(bmp,(s-bmp.width*sc)/2,(s-bmp.height*sc)/2,bmp.width*sc,bmp.height*sc);
@@ -1412,6 +1422,7 @@ function rrect(x,X,Y,W,H,r){r=Math.max(0,Math.min(r,W/2,H/2));x.beginPath();x.mo
 const gRad=(g,h)=>g.shape==='rect'?0:g.shape==='pill'?(h-2*g.inset)/2:g.r;
 function genIconSrc(F,g){const p=g.per[F.path]||{};const k=p.icon||(extractIcon(F)?'orig':S.layout.slots.some(s=>s.p===F.path)?'lib:'+defIcon(F):'none');return k}  // fuera de Inicio, un botón sin dibujo (solo texto) sigue sin icono
 function drawState(x,F,w,h,s,H,g,bgc){
+  const grp=fgroups(F)>1?s>>2:0;s=s%4;if(grp)H=grpHue(F,grp);
   const on=s%2===1,dim=s===2,ins=g.inset,X=ins,Y=ins,W=w-2*ins,Hh=h-2*ins,r=gRad(g,h);
   x.drawImage(bgc,0,0);
   const lin=(a,b,c)=>{const gr=x.createLinearGradient(0,Y,0,Y+Hh);gr.addColorStop(0,a);if(c){gr.addColorStop(.62,b);gr.addColorStop(1,c)}else gr.addColorStop(1,b);return gr};
@@ -1480,9 +1491,10 @@ function drawState(x,F,w,h,s,H,g,bgc){
       x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const gl=x.createLinearGradient(0,Y,0,Y+Hh*.5);gl.addColorStop(0,'rgba(255,255,255,.25)');gl.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh*.5);x.restore();
       if(on){x.lineWidth=3;x.strokeStyle='rgba(255,255,255,.75)';rrect(x,X+2.5,Y+2.5,W-5,Hh-5,Math.max(0,r-1.5));x.stroke()}ic=dim?'rgba(255,255,255,.5)':'#ffffff';break}
     default:x.fillStyle=on?lin(`hsl(${H} 90% 62%)`,`hsl(${H} 85% 46%)`):lin('#16191e','#060708',`hsl(${H} 85% ${dim?20:44}%)`);x.fill();x.lineWidth=2;x.strokeStyle=on?`hsl(${H} 70% 40%)`:`hsl(${H} 55% ${dim?18:32}%)`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=on?`hsl(${H} 70% 20%)`:`hsl(${H} 85% ${dim?32:60}%)`}
-  const home=S.layout.slots.some(s=>s.p===F.path),isz=home?g.is:Math.max(14,Math.min(g.is*h/137*1.25,Math.min(w,h)*.62)),src=genIconSrc(F,g),p=g.per[F.path]||{},cx=w/2,cy=home?Y+Hh*(g.iy/100):h/2;
+  const home=S.layout.slots.some(s=>s.p===F.path),isz=home?g.is:Math.max(14,Math.min(g.is*h/137*1.25,Math.min(w,h)*.62)),src=grp?'orig':genIconSrc(F,g),p=grp?{}:g.per[F.path]||{},cx=w/2,cy=home?Y+Hh*(g.iy/100):h/2;
   if(p.ihue!=null&&!on)ic=p.ihue==='white'?(dim?'rgba(255,255,255,.5)':'#ffffff'):`hsl(${p.ihue} 85% ${dim?34:62}%)`;
-  if(src==='orig'){const mk=extractIcon(F);if(mk)drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,mk,X,Y,sz/56,col,gl);return true},cx,cy,isz,ic,glow)}
+  // el icono original: en Inicio a la medida elegida; dentro, a su tamaño de siempre (× el tamaño elegido) sin salirse del botón
+  if(src==='orig'){const mk=extractIcon(F,grp);if(mk){const k=home?isz/56:Math.min(g.is/56,Math.min(w,h)*.72/Math.max(mk.bw,mk.bh));drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,mk,X,Y,k*sz/isz,col,gl);return true},cx,cy,isz,ic,glow)}}
   else if(src==='png'&&p.png){drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,p.png,X,Y,sz/96*1.15,col,gl);return true},cx,cy,isz,ic,glow)}
   else if(src!=='none')drawIcon(x,keyPainter(src),cx,cy,isz,ic,glow);
 }
@@ -2011,7 +2023,8 @@ function icApply(F,spec,quiet){
   const fr=frames(F),fw=F.w/fr,h=F.h,A=icAnalyze(F),c=document.createElement('canvas');c.width=F.w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});
   const im=x.createImageData(F.w,h),o=new Uint32Array(im.data.buffer),lut=lutOf(F.pal,false);for(let i=0;i<F.idx.length;i++)o[i]=lut[F.idx[i]];
   const M=3,u=A[0],bw=Math.max(...A.map(a=>a.x1-a.x0+1)),bh=Math.max(...A.map(a=>a.y1-a.y0+1));
-  for(let s=0;s<fr;s++){const a=A[s],ox=s*fw,X0=Math.max(0,Math.floor(a.x0-M)),X1=Math.min(fw-1,Math.ceil(a.x1+M)),Y0=Math.max(0,Math.floor(a.y0-M)),Y1=Math.min(h-1,Math.ceil(a.y1+M));
+  const lim=fgroups(F)>1?4:fr;// en botones de dos iconos (llamar/colgar) solo se cambia el primero
+  for(let s=0;s<lim;s++){const a=A[s],ox=s*fw,X0=Math.max(0,Math.floor(a.x0-M)),X1=Math.min(fw-1,Math.ceil(a.x1+M)),Y0=Math.max(0,Math.floor(a.y0-M)),Y1=Math.min(h-1,Math.ceil(a.y1+M));
     const W=X1-X0+1;
     for(let y=Y0;y<=Y1;y++){// se rellena en espejo con lo que hay justo a los lados (conserva textura, rayas y degradados); si no cabe, color medio de los lados
       const side=[];for(const xx of [X0-1,X0-2,X0-3,X1+1,X1+2,X1+3])if(xx>=0&&xx<fw)side.push(o[y*F.w+ox+xx]);
@@ -2024,7 +2037,7 @@ function icApply(F,spec,quiet){
       for(let k=0;k<W;k++)o[y*F.w+ox+X0+k]=row[k]}}
   x.putImageData(im,0,0);
   const size=spec.size||Math.max(14,Math.min(Math.min(fw,h)*.9,Math.max(bw,bh)*24/18));
-  for(let s=0;s<fr;s++){const a=A[s],cx=s*fw+(a.x0+a.x1)/2,cy=(a.y0+a.y1)/2+(spec.dy||0);
+  for(let s=0;s<lim;s++){const a=A[s],cx=s*fw+(a.x0+a.x1)/2,cy=(a.y0+a.y1)/2+(spec.dy||0);
     const orig=`rgb(${a.col.join(',')})`,col=spec.col==null||spec.col==='orig'||(spec.keepOn&&s%2===1)?orig:spec.col==='white'?(s===2?'rgba(255,255,255,.55)':'#fff'):typeof spec.col==='number'?`hsl(${spec.col} 85% ${s===2?34:s%2?40:62}%)`:spec.col;
     // 'orig': el icono original, repintado (su silueta, sacada del estado pulsado)
     const paint=spec.k==='orig'?(c,X,Y,sz,cc,gl)=>{const mk=extractIcon(F);if(!mk)return false;drawMask(c,mk,X,Y,sz*18/24/Math.max(mk.bw,mk.bh),cc,gl);return true}:keyPainter(spec.k);
@@ -2369,7 +2382,7 @@ function scrScreen(v,r){
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-27-4';
+const VER='2026-10-27-5';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -2377,7 +2390,11 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Estilo también para los botones de forma poco habitual, uno a uno: las flechas altas de las presintonías, las barras de las listas, las barras largas del teléfono… «Usar en todos» se las sigue saltando para no deformarlas']],
+  [VER,['Corregido: el botón de llamar perdía el icono con un estilo. Tiene 8 estados (llamar y colgar): ahora cada uno conserva su icono y colgar mantiene su rojo',
+    'El número de estados de 22 imágenes (separadores, iconos de la agenda, flechas de las ventanas, puntos de página…) sale del programa de la radio, no de una suposición',
+    'Con estilo, el icono original de los botones de dentro mantiene su tamaño (antes la casita salía diminuta y otros, demasiado grandes)',
+    'Teléfono: los teclados se llaman por su juego de teclas (1, 2, 3) y si enseñan letras o símbolos, sin repetidos']],
+  ['2026-10-27-4',['Estilo también para los botones de forma poco habitual, uno a uno: las flechas altas de las presintonías, las barras de las listas, las barras largas del teléfono… «Usar en todos» se las sigue saltando para no deformarlas']],
   ['2026-10-27-3',['8 estilos de botón nuevos, pensados para que queden bien también en los botones de dentro: Futurista grande, Futurista marco, Biselado, Escáner, Luces LED, Doble línea, Barra lateral y Haz central',
     'Futurista se queda como estaba (en Inicio y dentro): «Futurista grande» da a los botones de dentro las esquinas grandes de Inicio']],
   ['2026-10-27-2',['«Usar en todos los botones» copia también el color del marco y el del icono, no solo el estilo',

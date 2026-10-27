@@ -29,7 +29,12 @@ function drawLib(x,k,cx,cy,size,col,glow){x.save();x.translate(cx-size/2,cy-size
   x.restore()}
 function defIcon(F){const n=F.name.toLowerCase();for(const [w,k] of ICONDEF)if(n.includes(w))return k;return 'star'}
 /* Extrae la silueta del icono original a partir del estado pulsado (fondo claro casi uniforme por filas) */
-function extractIcon(F){if(F.ico!==undefined)return F.ico;const fr=frames(F);if(fr<2){F.ico=null;return null}
+// Botones con dos iconos (p. ej. llamar y colgar: 8 estados = 2 grupos de 4)
+const fgroups=F=>{const fr=frames(F);return fr>4&&fr%4===0?fr/4:1};
+function extractIcon(F,grp){grp=grp||0;if(F.icoFr!==frames(F)){F.icoFr=frames(F);F.ico=undefined;F.icoG=[]}
+  if(grp){if(F.icoG[grp]!==undefined)return F.icoG[grp];const sv=F.ico;F.ico=undefined;const r=extractIcon1(F,grp*4);F.icoG[grp]=r;F.ico=sv;return r}
+  if(F.ico!==undefined)return F.ico;return extractIcon1(F,0)}
+function extractIcon1(F,base){const fr=frames(F);if(fr<2){F.ico=null;return null}
   const fw=F.w/fr,h=F.h,pal=F.pal,idx=F.idx,B=4;
   // máscara del icono en un estado: lo que se aparta del color típico de su fila
   const det=ox=>{const m=new Float32Array(fw*h);
@@ -42,10 +47,12 @@ function extractIcon(F){if(F.ico!==undefined)return F.ico;const fr=frames(F);if(
     return {m,sum,x0,y0,x1,y1,ok:sum>=30&&x1-x0<=fw*.9&&y1-y0<=h*.9}};
   // se recorta del estado pulsado, pero solo si también hay icono en reposo: los botones de solo texto (p. ej. «Principal», «Lista»)
   // tienen una textura de rayas que en el pulsado parece un dibujo
-  const r=det(fw);if(!r.ok||!det(0).ok){F.ico=null;return null}const {m,x0,y0,x1,y1}=r;
+  const r=det((base+1)*fw);if(!r.ok||det(base*fw).sum<30){F.ico=null;return null}const {m,x0,y0,x1,y1}=r;
   const c=document.createElement('canvas');c.width=fw;c.height=h;const x=c.getContext('2d'),im=x.createImageData(fw,h);
   for(let i=0;i<fw*h;i++){im.data[i*4]=im.data[i*4+1]=im.data[i*4+2]=255;im.data[i*4+3]=Math.round(m[i]*255)}x.putImageData(im,0,0);
   F.ico={cv:c,bx:x0,by:y0,bw:x1-x0+1,bh:y1-y0+1};return F.ico}
+// tono propio de un grupo (p. ej. el rojo de colgar), sacado de su estado pulsado
+function grpHue(F,grp){const fr=frames(F),fw=F.w/fr,ox=(grp*4+1)*fw;let sx=0,sy=0;for(let y=0;y<F.h;y+=2)for(let x=0;x<fw;x+=2){const p=F.idx[y*F.w+ox+x]*3,r=F.pal[p],g=F.pal[p+1],b=F.pal[p+2];if(isKey(r,g,b))continue;const C=(Math.max(r,g,b)-Math.min(r,g,b))/255;if(C<.25)continue;const [h]=rgb2hsl(r,g,b);sx+=Math.cos(h*Math.PI/180)*C;sy+=Math.sin(h*Math.PI/180)*C}return sx||sy?(Math.atan2(sy,sx)*180/Math.PI+360)%360:0}
 function drawMask(x,mk,cx,cy,k,col,glow){const t=document.createElement('canvas');t.width=mk.cv.width;t.height=mk.cv.height;const tx=t.getContext('2d');tx.fillStyle=col;tx.fillRect(0,0,t.width,t.height);tx.globalCompositeOperation='destination-in';tx.drawImage(mk.cv,0,0);
   x.save();if(glow){x.shadowColor=col;x.shadowBlur=glow}x.drawImage(t,mk.bx,mk.by,mk.bw,mk.bh,cx-mk.bw*k/2,cy-mk.bh*k/2,mk.bw*k,mk.bh*k);x.restore()}
 function pngMask(bmp){const s=96,c=document.createElement('canvas');c.width=c.height=s;const x=c.getContext('2d'),sc=Math.min(s/bmp.width,s/bmp.height);x.drawImage(bmp,(s-bmp.width*sc)/2,(s-bmp.height*sc)/2,bmp.width*sc,bmp.height*sc);
@@ -70,6 +77,7 @@ function rrect(x,X,Y,W,H,r){r=Math.max(0,Math.min(r,W/2,H/2));x.beginPath();x.mo
 const gRad=(g,h)=>g.shape==='rect'?0:g.shape==='pill'?(h-2*g.inset)/2:g.r;
 function genIconSrc(F,g){const p=g.per[F.path]||{};const k=p.icon||(extractIcon(F)?'orig':S.layout.slots.some(s=>s.p===F.path)?'lib:'+defIcon(F):'none');return k}  // fuera de Inicio, un botón sin dibujo (solo texto) sigue sin icono
 function drawState(x,F,w,h,s,H,g,bgc){
+  const grp=fgroups(F)>1?s>>2:0;s=s%4;if(grp)H=grpHue(F,grp);
   const on=s%2===1,dim=s===2,ins=g.inset,X=ins,Y=ins,W=w-2*ins,Hh=h-2*ins,r=gRad(g,h);
   x.drawImage(bgc,0,0);
   const lin=(a,b,c)=>{const gr=x.createLinearGradient(0,Y,0,Y+Hh);gr.addColorStop(0,a);if(c){gr.addColorStop(.62,b);gr.addColorStop(1,c)}else gr.addColorStop(1,b);return gr};
@@ -138,9 +146,10 @@ function drawState(x,F,w,h,s,H,g,bgc){
       x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const gl=x.createLinearGradient(0,Y,0,Y+Hh*.5);gl.addColorStop(0,'rgba(255,255,255,.25)');gl.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh*.5);x.restore();
       if(on){x.lineWidth=3;x.strokeStyle='rgba(255,255,255,.75)';rrect(x,X+2.5,Y+2.5,W-5,Hh-5,Math.max(0,r-1.5));x.stroke()}ic=dim?'rgba(255,255,255,.5)':'#ffffff';break}
     default:x.fillStyle=on?lin(`hsl(${H} 90% 62%)`,`hsl(${H} 85% 46%)`):lin('#16191e','#060708',`hsl(${H} 85% ${dim?20:44}%)`);x.fill();x.lineWidth=2;x.strokeStyle=on?`hsl(${H} 70% 40%)`:`hsl(${H} 55% ${dim?18:32}%)`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=on?`hsl(${H} 70% 20%)`:`hsl(${H} 85% ${dim?32:60}%)`}
-  const home=S.layout.slots.some(s=>s.p===F.path),isz=home?g.is:Math.max(14,Math.min(g.is*h/137*1.25,Math.min(w,h)*.62)),src=genIconSrc(F,g),p=g.per[F.path]||{},cx=w/2,cy=home?Y+Hh*(g.iy/100):h/2;
+  const home=S.layout.slots.some(s=>s.p===F.path),isz=home?g.is:Math.max(14,Math.min(g.is*h/137*1.25,Math.min(w,h)*.62)),src=grp?'orig':genIconSrc(F,g),p=grp?{}:g.per[F.path]||{},cx=w/2,cy=home?Y+Hh*(g.iy/100):h/2;
   if(p.ihue!=null&&!on)ic=p.ihue==='white'?(dim?'rgba(255,255,255,.5)':'#ffffff'):`hsl(${p.ihue} 85% ${dim?34:62}%)`;
-  if(src==='orig'){const mk=extractIcon(F);if(mk)drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,mk,X,Y,sz/56,col,gl);return true},cx,cy,isz,ic,glow)}
+  // el icono original: en Inicio a la medida elegida; dentro, a su tamaño de siempre (× el tamaño elegido) sin salirse del botón
+  if(src==='orig'){const mk=extractIcon(F,grp);if(mk){const k=home?isz/56:Math.min(g.is/56,Math.min(w,h)*.72/Math.max(mk.bw,mk.bh));drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,mk,X,Y,k*sz/isz,col,gl);return true},cx,cy,isz,ic,glow)}}
   else if(src==='png'&&p.png){drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,p.png,X,Y,sz/96*1.15,col,gl);return true},cx,cy,isz,ic,glow)}
   else if(src!=='none')drawIcon(x,keyPainter(src),cx,cy,isz,ic,glow);
 }

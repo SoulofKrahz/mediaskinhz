@@ -40,6 +40,11 @@ for sc in src['scenarios']:
     band = next((t for t in texts if t in SRCS), '')
     nm = name(g, files, texts)
     fk = (g, band, frozenset(files))
+    if nm == 'Teclado':   # mismo juego de teclas con otros textos: una vista por juego (1, 2, 3), letras o símbolos y con ALT
+        fam = next((k for k in ('keyboard3_', 'keyboard2_', 'keyboard_') if any(k + d in f for f in files for d in '123456789')), '')
+        kind = 'símbolos' if 'QWE' in texts else 'letras'
+        nm = 'Teclado ' + {'keyboard_': '1', 'keyboard2_': '2', 'keyboard3_': '3'}.get(fam, '') + ' · ' + kind + (' · ALT' if 'ALT' in texts else '')
+        fk = (g, nm)
     if nm == 'Otra' or fk in sets: continue   # misma vista con otros datos (p. ej. el teclado en otro idioma)
     sets.add(fk)
     key = (g, band, nm); seen[key] += 1
