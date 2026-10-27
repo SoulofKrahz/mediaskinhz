@@ -13,6 +13,22 @@ function confirmBS(o){return new Promise(res=>{
   $('#bs').onclick=e=>{const x=e.target.closest('[data-c]');if(!x)return;S.bsCancel=null;closeBS();res(x.dataset.c==='1')}})}
 const sig=()=>S.root+':'+S.files.length;
 async function getList(k){try{return (await idb.get(k))||[]}catch(_){return []}}
+/* ---- Diseños y copias: un registro por diseño ('pt:<id>') y un índice pequeño ('ptidx') con lo que se enseña en la lista.
+   Borrar quita primero el registro (libera espacio aunque el navegador esté lleno) y guardar no reescribe los demás.
+   Se guardan todos los diseños con nombre y, como mucho, las 10 últimas copias automáticas y las 10 de exportación. */
+const PT={idx:null},PTKEEP=10;
+const ptMeta=p=>({id:p.id,t:p.t,label:p.label,kind:p.kind,sig:p.sig,n:p.n,thumb:p.thumb||null});
+async function ptIndex(){if(PT.idx)return PT.idx;let ix=null;try{ix=await idb.get('ptidx')}catch(_){}
+  if(!Array.isArray(ix)){ix=[];let old=null;try{old=await idb.get('points')}catch(_){}   // de la versión anterior: todos juntos en 'points'
+    if(Array.isArray(old))for(const p of old){try{await idb.set('pt:'+p.id,p);ix.push(ptMeta(p))}catch(_){}}
+    try{await idb.set('ptidx',ix);if(old)await idb.del('points')}catch(_){}}
+  PT.idx=ix;return ix}
+const listPoints=async()=>[...await ptIndex()];
+async function getPoint(id){try{return await idb.get('pt:'+id)}catch(_){return null}}
+async function putPoint(p){await ptIndex();await idb.set('pt:'+p.id,p);const m=ptMeta(p),i=PT.idx.findIndex(x=>x.id===p.id);if(i>=0)PT.idx[i]=m;else PT.idx.unshift(m);await idb.set('ptidx',PT.idx)}
+async function delPoint(id){await ptIndex();try{await idb.del('pt:'+id)}catch(_){}PT.idx=PT.idx.filter(x=>x.id!==id);await idb.set('ptidx',PT.idx)}
+async function prunePoints(){const ix=await ptIndex();for(const k of ['auto','export']){const L=ix.filter(x=>x.kind===k).sort((a,b)=>b.t-a.t).slice(PTKEEP);for(const x of L)await delPoint(x.id).catch(()=>{})}}
+const noSpace=()=>toast('No queda espacio en el navegador. Borra copias automáticas o diseños que no uses (Ajustes e historial → Diseños).',{ms:7000});
 // Datos de los botones para guardar: todo menos la imagen PNG en memoria (p.png)
 function packGen(){if(!S.gen)return null;const gen={...S.gen,per:{}};for(const [k,p] of Object.entries(S.gen.per||{})){const {png,...r}=p;gen.per[k]={...r,icon:p.icon==='png'?undefined:p.icon}}return structuredClone(gen)}
 function packState(){const reps={};for(const F of S.files)if(F.rep)reps[F.path]={pal:F.rep.pal,idx:F.rep.idx,keyIdx:F.rep.keyIdx};
@@ -28,17 +44,17 @@ function promptBS(o){return new Promise(res=>{
 function designName(){const g=S.gen;if(g&&g.look&&g.look!=='orig'){const st=(GSTYLES.find(x=>x[0]===g.style)||GSTYLES[0])[1];return st+(g.color==='one'?' '+hueName(g.hue).toLowerCase():'')}return 'Mi diseño'}
 // Diseño del que vienes (guardado, cargado o importado): se recuerda aunque lo edites o recargues la página, para poder sobrescribirlo
 function setBase(id,name){S.base=id?{id,name}:null;try{if(id)localStorage.setItem('mediaskinhz-base',JSON.stringify({id,name,sig:sig()}));else localStorage.removeItem('mediaskinhz-base')}catch(_){}}
-async function recallBase(){try{const b=JSON.parse(localStorage.getItem('mediaskinhz-base')||'null');if(!b||b.sig!==sig())return;const p=(await getList('points')).find(x=>x.id===b.id&&x.kind==='manual');if(p)S.base={id:p.id,name:p.label}}catch(_){}}
+async function recallBase(){try{const b=JSON.parse(localStorage.getItem('mediaskinhz-base')||'null');if(!b||b.sig!==sig())return;const p=(await listPoints()).find(x=>x.id===b.id&&x.kind==='manual');if(p)S.base={id:p.id,name:p.label}}catch(_){}}
 function askSave(name,n){return new Promise(res=>{
   openBS(`<h2>Guardar el diseño</h2><p class="note">Vienes de «${esc(name)}». ¿Quieres guardar encima tus cambios (${n} ${n===1?'imagen cambiada':'imágenes cambiadas'}) o guardarlo como un diseño nuevo?</p>
     <div class="stack" style="gap:8px"><button class="btn wide" data-c="over">Sobrescribir «${esc(name)}»</button><button class="btn o wide" data-c="new">Guardar como diseño nuevo</button><button class="btn o wide" data-c="0">Cancelar</button></div>`);
   S.bsCancel=()=>res(null);$('#bs').onclick=e=>{const x=e.target.closest('[data-c]');if(!x)return;S.bsCancel=null;closeBS();res(x.dataset.c==='0'?null:x.dataset.c)}})}
-async function overwriteDesign(id){const L=await getList('points'),p=L.find(x=>x.id===id);if(!p)return false;
-  p.st=packState();p.n=S.files.filter(changed).length;p.t=Date.now();p.sig=sig();p.thumb=designThumb();
-  try{await idb.set('points',L)}catch(_){toast('No queda espacio en el navegador para guardar el diseño',{ms:5000});return false}
+async function overwriteDesign(id){const p=await getPoint(id);if(!p)return false;
+  Object.assign(p,{st:packState(),n:S.files.filter(changed).length,t:Date.now(),sig:sig(),thumb:designThumb()});
+  try{await putPoint(p)}catch(_){noSpace();return false}
   S.curDesign=id;S.curDesignName=p.label;setBase(id,p.label);toast(`«${p.label}» actualizado`,{label:'Ver',fn:()=>go({n:'settings'})});return true}
 async function saveDesign(){if(S.demo){toast('Carga tu backup para guardar diseños');return}const n=S.files.filter(changed).length;if(!n){toast('Todavía no hay cambios que guardar');return}
-  if(S.base){const p=(await getList('points')).find(x=>x.id===S.base.id&&x.kind==='manual');
+  if(S.base){const p=(await listPoints()).find(x=>x.id===S.base.id&&x.kind==='manual');
     if(!p)setBase(null);else{if(S.curDesign===p.id){toast(`«${p.label}» ya está guardado: no hay cambios nuevos`);return}
       const a=await askSave(p.label,n);if(!a)return;if(a==='over'){await overwriteDesign(p.id);return}}}
   const name=await promptBS({title:'Guardar el diseño',text:`Se guardan tus ${n} ${n===1?'imagen cambiada':'imágenes cambiadas'} con este nombre. Podrás volver a él cuando quieras.`,value:designName(),ok:'Guardar'});if(!name)return;
@@ -46,19 +62,19 @@ async function saveDesign(){if(S.demo){toast('Carga tu backup para guardar dise�
 async function addPoint(label,kind){
   if(S.demo)return null;if(kind==='auto'&&!SET.auto)return null;
   const n=S.files.filter(changed).length;if(kind==='auto'&&!n)return null;
-  const pts=await getList('points'),p={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),t:Date.now(),label,kind:kind||'manual',sig:sig(),n,st:packState()};
+  const p={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),t:Date.now(),label,kind:kind||'manual',sig:sig(),n,st:packState()};
   if(kind==='manual')p.thumb=designThumb();
-  pts.unshift(p);let a=0,e=0;const keep=pts.filter(x=>x.kind==='manual'||(x.kind==='auto'?++a<=12:++e<=15));
-  try{await idb.set('points',keep)}catch(_){toast('No queda espacio en el navegador para guardar el diseño',{ms:5000});return null}return p.id}
+  try{await putPoint(p)}catch(_){await prunePoints().catch(()=>{});if(kind==='manual')noSpace();return null}
+  await prunePoints().catch(()=>{});return p.id}
 async function restorePoint(id){
-  const p=(await getList('points')).find(x=>x.id===id);if(!p)return;
+  const p=await getPoint(id);if(!p){toast('Ese diseño ya no está guardado');return}
   if(!await confirmBS({title:'Volver a este diseño',text:`Se cargará «${esc(p.label)}» (${p.n} ${p.n===1?'imagen cambiada':'imágenes cambiadas'}). Lo que tienes ahora se guarda antes como copia automática, por si quieres volver.`,ok:'Cargar',always:true}))return;
   await addPoint('Antes de volver a «'+p.label+'»','auto');before();for(const F of S.files)F.rep=null;S.src=new Map();S.ops={global:null,sec:{},file:{}};S.ex={};S.frames={};
   applyState(p.st);if(!p.st.gen)S.gen=null;else if(!S.gen.look)migrateLook(p.st);if(p.kind==='manual'){S.curDesign=p.id;S.curDesignName=p.label;setBase(p.id,p.label)}else setBase(null);bump();render(true);toast(`«${p.label}» cargado`,{label:'Deshacer',fn:undo})}
 async function recordExport(o){
   if(S.demo)return;const pid=await addPoint('Exportación · '+o.count+' '+(o.count===1?'imagen':'imágenes'),'export');
   const xs=await getList('exports');xs.unshift({id:Date.now().toString(36),t:Date.now(),sig:sig(),mode:o.mode,boot:!!o.boot,hw:o.hw,inc:o.inc,files:o.files,name:o.name,size:o.blob.size,pid,blob:o.blob.size<=25e6?o.blob:null});
-  xs.forEach((x,i)=>{if(i>=5)x.blob=null});try{await idb.set('exports',xs.slice(0,30))}catch(_){xs.forEach(x=>x.blob=null);try{await idb.set('exports',xs.slice(0,30))}catch(_){}}}
+  xs.forEach((x,i)=>{if(i>=3)x.blob=null});try{await idb.set('exports',xs.slice(0,30))}catch(_){xs.forEach(x=>x.blob=null);try{await idb.set('exports',xs.slice(0,30))}catch(_){}}}
 async function undoZip(x){
   const fs=x.files.map(p=>S.lc.get(p.toLowerCase())).filter(Boolean);if(!fs.length){toast('Este backup no tiene esos archivos');return}
   const d=new Date(),stamp=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,R=S.root;let ents;
@@ -73,7 +89,7 @@ const fsz=n=>n>1e6?(n/1e6).toFixed(1).replace('.',',')+' MB':Math.max(1,Math.rou
 async function scrSettings(v){
   setTitle('Ajustes e historial',`<span class="lw">Mediaskin<em>hz</em></span> · ${S.demo?'ejemplo':'backup '+esc(S.root)}`);
   v.innerHTML='<p class="note">Cargando…</p>';
-  const [pts,xs]=await Promise.all([getList('points'),getList('exports')]),mine=p=>p.sig===sig(),P=pts.filter(mine),X=xs.filter(mine),D=P.filter(p=>p.kind==='manual'),A=P.filter(p=>p.kind!=='manual');
+  const [pts,xs]=await Promise.all([listPoints(),getList('exports')]),mine=p=>p.sig===sig(),P=pts.filter(mine),X=xs.filter(mine),D=P.filter(p=>p.kind==='manual'),A=P.filter(p=>p.kind!=='manual');
   let est=null;try{est=navigator.storage&&navigator.storage.estimate?await navigator.storage.estimate():null}catch(_){}
   const about=await aboutHTML();if(S.route.n!=='settings')return;
   const seg=(id,cur,opts)=>`<div class="seg" id="${id}">${opts.map(([k,l])=>`<button data-v="${k}" aria-pressed="${cur===k}">${l}</button>`).join('')}</div>`;
@@ -89,7 +105,8 @@ async function scrSettings(v){
         <div class="dst"><b>${esc(p.label)}</b><small>${fdt(p.t)} · ${p.n} ${p.n===1?'imagen':'imágenes'}</small></div>
         <div class="dsa"><button class="btn o sm" data-a="load">Cargar</button><button class="ib" data-a="exp" aria-label="Exportar a un archivo" title="Exportar a un archivo (.mskz) para llevarlo a otro aparato">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}</button><button class="ib" data-a="ren" aria-label="Cambiar el nombre" title="Cambiar el nombre">${ic('M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4')}</button><button class="ib dgi" data-a="del" aria-label="Borrar" title="Borrar">${ic('M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3')}</button></div></div>`).join('')}</div>`:'<p class="note">Guarda aquí los diseños que te gusten, con su nombre, para cambiar entre ellos o volver atrás.</p>'}
       ${A.length?`<details class="isd"><summary><span>Copias automáticas<small>Antes de cada cambio grande y en cada exportación</small></span><b>${A.length}</b></summary><div class="isb"><div class="hl">${A.map(p=>`<div class="hx"><div class="hx-h"><span class="tx"><b>${esc(p.label)}</b><small>${fdt(p.t)} · ${p.n} ${p.n===1?'imagen cambiada':'imágenes cambiadas'}</small></span></div>
-        <div class="hx-a"><button class="btn o sm" data-p="${p.id}">Volver a este</button><button class="btn dg sm" data-pd="${p.id}">Borrar</button></div></div>`).join('')}</div></div></details>`:''}</div>
+        <div class="hx-a"><button class="btn o sm" data-p="${p.id}">Volver a este</button><button class="btn dg sm" data-pd="${p.id}">Borrar</button></div></div>`).join('')}</div></div></details><button class="btn o sm" id="s-cla">Borrar las ${A.length} copias automáticas</button>`:''}
+      ${est&&est.usage?`<p class="note">Espacio usado en este navegador: <b>${fsz(est.usage)}</b>${est.quota?' de '+fsz(est.quota):''}. Las copias automáticas se borran solas a partir de 10; tus diseños, nunca.</p>`:''}</div>
   </div><div class="stack">
     <div class="card"><h3>Seguridad</h3>
       <label class="swrow" for="s-cf"><span>Pedir confirmación<small>Antes de cargar otro backup, quitar cambios, sustituir imágenes nuevas o cerrar el backup</small></span><input class="sw" type="checkbox" id="s-cf"${SET.confirm?' checked':''}></label>
@@ -119,17 +136,22 @@ async function scrSettings(v){
   $('#s-cf').onchange=e=>{SET.confirm=e.target.checked;saveSet()};$('#s-au').onchange=e=>{SET.auto=e.target.checked;saveSet()};$('#s-xo').onchange=e=>{SET.xorig=e.target.checked;saveSet()};
   const sp=$('#s-pt');if(sp)sp.onclick=async()=>{await saveDesign();render(true)};
   const si=$('#s-imp');if(si)si.onclick=pickDesignFile;
-  $$('.dsc',v).forEach(el=>el.onclick=async e=>{const b=e.target.closest('[data-a]');if(!b)return;const id=el.dataset.d,a=b.dataset.a,L=await getList('points'),p=L.find(x=>x.id===id);if(!p)return;
+  $$('.dsc',v).forEach(el=>el.onclick=async e=>{const b=e.target.closest('[data-a]');if(!b)return;const id=el.dataset.d,a=b.dataset.a,m=(await listPoints()).find(x=>x.id===id);if(!m)return render(true);
     if(a==='load')return restorePoint(id);
-    if(a==='exp')return exportDesign(p);
-    if(a==='ren'){const nm=await promptBS({title:'Cambiar el nombre',value:p.label,ok:'Guardar'});if(!nm)return;p.label=nm;try{await idb.set('points',L)}catch(_){}if(S.base&&S.base.id===id)setBase(id,nm);render(true);return}
-    if(a==='del'){if(!await confirmBS({title:'Borrar «'+esc(p.label)+'»',text:'El diseño guardado se borrará. Lo que tienes ahora en pantalla no cambia.',ok:'Borrar',danger:true}))return;try{await idb.set('points',L.filter(x=>x.id!==id))}catch(_){}if(S.curDesign===id)S.curDesign=null;if(S.base&&S.base.id===id)setBase(null);render(true);toast('Diseño borrado')}});
+    if(a==='exp'){const p=await getPoint(id);return p?exportDesign(p):toast('Ese diseño ya no está guardado')}
+    if(a==='ren'){const nm=await promptBS({title:'Cambiar el nombre',value:m.label,ok:'Guardar'});if(!nm)return;const p=await getPoint(id);if(!p)return;p.label=nm;
+      try{await putPoint(p)}catch(_){noSpace();return}if(S.base&&S.base.id===id)setBase(id,nm);render(true);return}
+    if(a==='del'){if(!await confirmBS({title:'Borrar «'+esc(m.label)+'»',text:'El diseño guardado se borrará. Lo que tienes ahora en pantalla no cambia.',ok:'Borrar',danger:true}))return;
+      try{await delPoint(id)}catch(_){toast('No se ha podido borrar. Cierra otras pestañas de Mediaskinhz y vuelve a probar.',{ms:6000});return}
+      if(S.curDesign===id)S.curDesign=null;if(S.base&&S.base.id===id)setBase(null);render(true);toast('Diseño borrado')}});
   $$('[data-p]',v).forEach(b=>b.onclick=()=>restorePoint(b.dataset.p));
-  $$('[data-pd]',v).forEach(b=>b.onclick=async()=>{if(!await confirmBS({title:'Borrar la copia',text:'Esta copia automática se borrará y no se podrá recuperar.',ok:'Borrar',danger:true}))return;const l=(await getList('points')).filter(x=>x.id!==b.dataset.pd);try{await idb.set('points',l)}catch(_){}render(true)});
+  $$('[data-pd]',v).forEach(b=>b.onclick=async()=>{if(!await confirmBS({title:'Borrar la copia',text:'Esta copia automática se borrará y no se podrá recuperar.',ok:'Borrar',danger:true}))return;try{await delPoint(b.dataset.pd)}catch(_){toast('No se ha podido borrar');return}render(true)});
+  const ca=$('#s-cla');if(ca)ca.onclick=async()=>{if(!await confirmBS({title:'Borrar las copias automáticas',text:`Se borrarán las ${A.length} copias automáticas de este backup. Tus diseños con nombre y lo que tienes en pantalla no cambian.`,ok:'Borrar copias',danger:true}))return;
+    for(const p of A)await delPoint(p.id).catch(()=>{});render(true);toast('Copias automáticas borradas')};
   $$('.hx[data-x]',v).forEach(el=>el.onclick=async e=>{const b=e.target.closest('[data-a]');if(!b)return;const x=X.find(y=>y.id===el.dataset.x);if(!x)return;
     if(b.dataset.a==='undo')undoZip(x);else if(b.dataset.a==='again')saveBlob(x.blob,x.name);else if(b.dataset.a==='back')restorePoint(x.pid)});
   const cl=$('#s-clr');if(cl)cl.onclick=async()=>{if(!await confirmBS({title:'Borrar historial, diseños y copias',text:'Se borrarán todas las exportaciones guardadas, tus diseños y las copias automáticas de este backup. Tu diseño actual no cambia.',ok:'Borrar todo',danger:true}))return;
-    try{await idb.set('points',pts.filter(p=>!mine(p)));await idb.set('exports',xs.filter(x=>!mine(x)))}catch(_){}render(true);toast('Historial borrado')};
+    for(const p of P)await delPoint(p.id).catch(()=>{});try{await idb.set('exports',xs.filter(x=>!mine(x)))}catch(_){}render(true);toast('Historial borrado')};
 }
 
 /* ---- Color de la app (como Noticiahz) ---- */

@@ -175,6 +175,8 @@ async function run(browser, label, viewport, mobile) {
     const d = x.getImageData(0, 0, 800, 480).data; let inClock = 0, below = 0; for (let y = 0; y < 480; y++) for (let X = 0; X < 800; X++) { if (d[(y * 800 + X) * 4 + 3] > 200) { if (y > 200 && y < 282) inClock++; if (y > 300) below++ } } return below > 200 && inClock === 0; }), 'el texto de la pantalla de reposo no pisa el reloj');
   ok(await p.evaluate(() => loadVistas().then(() => vwList('setting').some(o => o.v === 'Audio') && vwList('eco').length > 0)), 'Ajustes y Driving eco tienen vistas');
   ok(await p.evaluate(() => typeof overwriteDesign === 'function' && typeof setBase === 'function'), 'guardar puede sobrescribir el diseño del que vienes');
+  ok(await p.evaluate(async () => { const id = 'prueba' + Date.now(); await putPoint({ id, t: Date.now(), label: 'x', kind: 'manual', sig: sig(), n: 0, st: {} }); const a = !!(await getPoint(id)) && (await listPoints()).some(x => x.id === id);
+    await delPoint(id); return a && !(await getPoint(id)) && !(await listPoints()).some(x => x.id === id); }), 'los diseños se guardan y se borran uno a uno');
   // Ventana de cada pantalla y «Común»: abren y enseñan sus bloques
   for (const sc of ['radio', 'media', 'phone', 'eco', 'setting', 'common']) {
     await p.evaluate(s => go({ n: 'scr', s }), sc); await p.waitForTimeout(400);
