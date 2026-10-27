@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-26-11.1';
+const VER='2026-10-27-0';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,7 +11,11 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Corregido: en «Estilo de los botones», al desplazarte las pestañas se montaban encima de la vista previa']],
+  [VER,['Cada pantalla tiene su ventana: toca Radio, Multimedia, Teléfono, Driving eco o Ajustes en la vista previa de Inicio y tienes junto todo lo suyo (su botón, el color de la pantalla, el negro del fondo, sus botones y el resto de piezas). «Común» reúne lo que comparten todas',
+    'Vistas de dentro: en Radio, Multimedia y Teléfono ves la pantalla principal, la lista, las presintonías, las opciones… con tus imágenes en su sitio real, y tocando un botón lo cambias. FM, AM, DAB, USB, iPod y Bluetooth por separado',
+    'Estilos y formas también para los botones de dentro (radio, multimedia, teléfono…), uno a uno o «el mismo estilo para todos los de esta pantalla»',
+    'Puedes poner nombre a tus iconos y cambiarlo cuando quieras']],
+  ['2026-10-26-11.1',['Corregido: en «Estilo de los botones», al desplazarte las pestañas se montaban encima de la vista previa']],
   ['2026-10-26-11',['La hoja de cada botón, en una sola pantalla: icono, color del marco, color del icono, estilo y más, sin pestañas',
     'Color del icono por separado: con un estilo, el icono toma ese color en reposo; con el original, el icono se repinta conservando su forma',
     'Ahora vale para toda la app: tocar cualquier botón o icono de cualquier pantalla (Multimedia, Teléfono, Radio…) abre la misma hoja',
@@ -97,6 +101,7 @@ function bindAbout(){const i=$('#w-ins');if(i)i.onclick=doInstall;const c=$('#w-
 function openChanges(){openBS(`<h2>Novedades</h2><div class="chgl">${CHANGES.map(([v,t],i)=>`<section><h4>${esc(v)}${i===0?' <small>· la que tienes</small>':''}</h4><ul>${t.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`).join('')}</div><button class="btn wide" data-x>Cerrar</button>`);$('#bs [data-x]').onclick=closeBS}
 function openCredits(){openBS(`<h2>Créditos y licencia</h2><div class="chgl">
   <section><h4>Mediaskinhz</h4><p class="note">Diseñado y creado por <b>Krahz</b>. Herramienta personal para cambiar la apariencia de la radio MediaNav del Renault Clio 4.</p></section>
+  <section><h4>Vistas de dentro</h4><p class="note">Las posiciones de las imágenes de Radio, Multimedia y Teléfono salen del análisis del programa de la radio del proyecto <a href="https://github.com/m-a-x-s-e-e-l-i-g/MediaNav-to-Evolution-Upgrade" target="_blank" rel="noopener">MediaNav-to-Evolution-Upgrade</a> de m-a-x-s-e-e-l-i-g (licencia GPL-3.0).</p></section>
   <section><h4>Formato de actualización</h4><p class="note">El archivo upgrade.lgu se genera siguiendo <b>dir2lgu</b>, del proyecto <a href="https://github.com/yosicovich/MediaNavMods" target="_blank" rel="noopener">MediaNavMods</a> de yosicovich (licencia GPL-3.0).</p></section>
   <section><h4>Licencia</h4><p class="note">Por usar ese trabajo, Mediaskinhz se publica con licencia <b>GPL-3.0</b>: puedes usarla, estudiarla y modificarla, y quien distribuya una versión modificada debe compartir también su código con la misma licencia.</p></section>
   <section><h4>Tipografías e iconos</h4><p class="note">Inter y Newsreader (SIL Open Font License), servidas por Google Fonts. La biblioteca de iconos es <a href="https://tabler.io/icons" target="_blank" rel="noopener">Tabler Icons</a>, de Paweł Kuna (licencia MIT, ver iconos-LICENCIA.txt).</p></section>

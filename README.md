@@ -32,7 +32,9 @@ La web está en `site/` y se publica sola en Cloudflare Pages al subir cambios a
 
 ## Créditos y licencia
 El formato `upgrade.lgu` sigue `dir2lgu`, del proyecto [MediaNavMods](https://github.com/yosicovich/MediaNavMods)
-de yosicovich (GPL-3.0). Por eso Mediaskinhz se publica con licencia GPL-3.0 (ver `LICENSE`).
+de yosicovich (GPL-3.0). Las posiciones de las vistas de dentro (`site/vistas.json`, generado con `tools/vistas.py`) salen del
+análisis del programa de la radio de [MediaNav-to-Evolution-Upgrade](https://github.com/m-a-x-s-e-e-l-i-g/MediaNav-to-Evolution-Upgrade)
+de m-a-x-s-e-e-l-i-g (GPL-3.0). Por eso Mediaskinhz se publica con licencia GPL-3.0 (ver `LICENSE`).
 Sin relación con Renault ni LG; MediaNav es una marca de Renault. Modificar la radio es bajo tu responsabilidad.
 
 **Nunca subas tu backup (`M1`, `.bmp`, `.zip`) a este repositorio: es público.**

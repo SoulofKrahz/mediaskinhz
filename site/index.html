@@ -250,6 +250,7 @@ input[type=range].hue{--trk:linear-gradient(90deg,hsl(0 80% 50%),hsl(60 80% 50%)
 .icrow{display:flex;align-items:center;gap:14px}.icrow canvas{width:56px;height:56px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);flex:none}
 .bts~*,.bs>.lbl,.bs>.hs,.bs>.hsw,.bs>.bt-more,.bs>.gnav{flex-shrink:0}
 .bts.inl{position:static;margin:0;padding:0;border:0;background:none}.cnt{font-size:13px;color:var(--mu);font-weight:600;margin-left:4px}
+.vwbar{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}.vwbar .chips{margin:0}.vwbar .vwb .chip{font-weight:700}
 .sc-grid{grid-template-columns:repeat(auto-fill,minmax(min(130px,100%),1fr))}
 .hs{flex:none;display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;margin:0 -2px;scroll-snap-type:x proximity;scrollbar-width:none}.hs::-webkit-scrollbar{display:none}
 .hs .icb{flex:0 0 78px;scroll-snap-align:start}.hs .icb canvas{width:44px;height:44px}.hs .ocd{flex:0 0 112px;scroll-snap-align:start}
@@ -759,6 +760,7 @@ function drawPreview(c,o){
   o=o||{};const x=c.getContext('2d'),scr=o.scr||'home';x.fillStyle='#000';x.fillRect(0,0,800,480);
   const rc=F=>o.orig?renderOrig(F,false):renderCanvas(F,false);
   const bg=byName(SCRBG.get(scr));if(bg)x.drawImage(rc(bg),0,0,bg.w/frames(bg),bg.h,0,0,800,480);
+  if(o.view)drawView(x,o.view,rc,o.press);
   if(scr==='home')S.layout.slots.forEach((s,i)=>{const F=slotF(s);if(!F)return;const fr=frames(F),fw=F.w/fr,f=(i===S.press&&fr>1)?1:Math.min(o.state||0,fr-1);
     const src=(o.gen&&S.genCv&&S.genCv.get(F.path))||rc(F);x.drawImage(src,f*fw,0,fw,F.h,s.x,s.y,fw,F.h);
     const lb=LABELS[F.name.toLowerCase()];if(lb&&!o.nolabels&&fw===210&&F.h===137){x.save();x.font='600 21px Tahoma,Inter,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillStyle=f%2===1?'#000':'#fff';x.fillText(lb,s.x+105,s.y+88+17.5,176);x.restore()}});
@@ -2247,13 +2249,44 @@ const scrHomeBtn=s=>genTargets().find(F=>slotScr(F)===s);
 const scrSecs=s=>s==='common'?COMMON_SECS:[SCRSEC[s]];
 function scrFiles(s){const bgs=new Set(SCREENS.map(x=>x[2]));
   if(s==='common')return S.files.filter(F=>COMMON_SECS.includes(F.sec)&&!bgs.has(F.lc));return S.files.filter(F=>F.sec===SCRSEC[s])}
+/* ---- vistas interiores (Radio, Multimedia, Teléfono) ----
+   site/vistas.json trae, para cada vista del programa de la radio (principal, lista, presintonías, opciones…), qué imagen va en cada sitio
+   y los textos fijos. Sale del análisis del programa de la radio (AppMain 7.0.5) del proyecto MediaNav-to-Evolution-Upgrade (GPL-3.0).
+   Es una foto de cuando se construye la pantalla: faltan los datos que la radio pone en marcha (emisora, canción, listas) y la letra es aproximada. */
+const VW={st:0,data:null,p:null},VWS=new Set(['radio','media','phone']),VMAIN=/^(Principal|Reproductor|Marcador)$/;
+function loadVistas(){if(VW.p)return VW.p;VW.st=1;VW.p=fetch('vistas.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(j=>{VW.data=j.views;VW.st=2}).catch(()=>{VW.st=3;VW.p=null});return VW.p}
+// ancho de un estado: el del sitio que le da la radio si la tira es un múltiplo exacto; si no, el que se deduce de la imagen
+const vwFw=(F,w,h)=>F.w>w&&w>0&&F.w%w===0&&F.h===h?w:F.w/frames(F);
+const vwList=s=>(VW.data||[]).filter(o=>o.s===s);
+const vwBand=s=>{const L=vwList(s),k=(S.vw||(S.vw={}))[s]||{};return k.band??(L[0]||{}).band??''};
+function vwCur(s){const L=vwList(s);if(!L.length)return null;const k=(S.vw||(S.vw={}))[s]||{},b0=vwBand(s),inB=L.filter(o=>o.band===b0||!o.band);
+  return inB.find(o=>o.v===k.v)||inB.find(o=>VMAIN.test(o.v))||inB[0]||L[0]}
+function drawView(x,V,rc,press){
+  for(let i=0;i<V.c.length;i++){const [f,cx,cy,w,h,,t,lr,col]=V.c[i],F=f&&byName(f);
+    if(F){const fw=vwFw(F,w,h),fr=Math.round(F.w/fw),st=i===press&&fr>1?1:0;x.drawImage(rc(F),st*fw,0,fw,F.h,cx,cy,fw,F.h)}
+    else if(!t&&w<800){x.save();x.setLineDash([5,5]);x.strokeStyle='rgba(255,255,255,.16)';x.lineWidth=1;x.strokeRect(cx+.5,cy+.5,w-1,h-1);x.restore()}
+    if(t){const [lx,ly,lw,lh]=lr;x.save();x.font=`600 ${Math.round(Math.max(13,Math.min(24,lh*.6)))}px Tahoma,Inter,sans-serif`;x.textAlign='center';x.textBaseline='middle';
+      x.fillStyle=i===press&&F&&frames(F)>1?'#000':col;x.fillText(t,lx+lw/2,ly+lh/2,Math.max(10,lw-8));x.restore()}}}
+function vwHit(V,c,e){const r=c.getBoundingClientRect(),px=(e.clientX-r.left)*800/r.width,py=(e.clientY-r.top)*480/r.height;
+  for(let i=V.c.length-1;i>=0;i--){const [f,cx,cy,w,h]=V.c[i],F=f&&byName(f);if(!F||w>=800)continue;const fw=vwFw(F,w,h);if(px>=cx&&px<cx+Math.max(w,fw)&&py>=cy&&py<cy+Math.max(h,F.h))return {i,F}}
+  // las barras de arriba ocupan todo el ancho: solo si no hay nada encima
+  for(let i=V.c.length-1;i>=0;i--){const [f,cx,cy,w,h]=V.c[i],F=f&&byName(f);if(F&&px>=cx&&px<cx+w&&py>=cy&&py<cy+h)return {i,F}}return {i:-1}}
+function vwBar(s){const el=$('#sc-vw');if(!el)return;
+  if(VW.st!==2){el.innerHTML=`<p class="hint" style="padding:0">${VW.st===3?'No se han podido cargar las vistas de dentro (hace falta conexión la primera vez). <button class="btn o sm" data-rt>Reintentar</button>':'Cargando las vistas de dentro…'}</p>`;
+    const rt=el.querySelector('[data-rt]');if(rt)rt.onclick=()=>{loadVistas().then(()=>{vwBar(s);schedule()});vwBar(s)};return}
+  const L=vwList(s),cur=vwCur(s);if(!cur){el.innerHTML='';return}
+  const bands=[...new Set(L.map(o=>o.band))].filter(Boolean),b0=vwBand(s),inB=L.filter(o=>o.band===b0||!o.band);
+  el.innerHTML=`${bands.length>1?`<div class="chips scroll vwb" role="group" aria-label="Fuente">${bands.map(b=>`<button class="chip" data-b="${esc(b)}" aria-pressed="${b===b0}">${esc(b)}</button>`).join('')}</div>`:''}
+    <div class="chips scroll vwv" role="group" aria-label="Vista">${inB.map(o=>`<button class="chip" data-w="${esc(o.v)}" aria-pressed="${o===cur}">${esc(o.v)}</button>`).join('')}</div>`;
+  el.onclick=e=>{const b=e.target.closest('[data-b],[data-w]');if(!b)return;const k=(S.vw||(S.vw={}))[s]||(S.vw[s]={});
+    if(b.dataset.b!=null){k.band=b.dataset.b;delete k.v}else{k.v=b.dataset.w}vwBar(s);schedule()}}
 function scrScreen(v,r){
   const s=r.s,secs=scrSecs(s),files=scrFiles(s),bg=s==='common'?null:byName(SCRBG.get(s)),hb=s==='common'?null:scrHomeBtn(s);
   setTitle(scrName(s),`${files.length+(bg?1:0)} imágenes de esta pantalla`);
   const btns=files.filter(isBtnLike),rest=files.filter(F=>!isBtnLike(F)),sty=btns.filter(F=>kindOf(F)==='btn'&&canStyle(F));
   const g=S.gen||(S.gen=defGen()),looks=new Set(sty.map(F=>(g.per[F.path]||{}).look||'orig')),curLook=looks.size===1?[...looks][0]:null;
   v.innerHTML=`<div class="two">
-    ${bg?`<div class="stick sticky-pv">${pvBlock('pv')}<div class="e-bar"><div class="seg" id="sc-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="${S.hcmp!=='orig'}">Ahora</button><button data-v="orig" aria-pressed="${S.hcmp==='orig'}">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">Fondo de ${esc(scrName(s))} con tus cambios</span></div></div>`:''}
+    ${bg?`<div class="stick sticky-pv">${VWS.has(s)?'<div id="sc-vw" class="vwbar"></div>':''}${pvBlock('pv')}<div class="e-bar"><div class="seg" id="sc-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="${S.hcmp!=='orig'}">Ahora</button><button data-v="orig" aria-pressed="${S.hcmp==='orig'}">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">${VWS.has(s)?'Toca un botón de la pantalla para cambiarlo':'Fondo de '+esc(scrName(s))+' con tus cambios'}</span></div></div>`:''}
     <div class="stack">
     ${hb?`<div class="card"><h3>Su botón en Inicio</h3><div id="sc-btn"></div></div>`:''}
     <div class="card"><h3>Color de toda la pantalla</h3><p class="note">Tiñe todas las imágenes de ${esc(scrName(s))} a la vez. Lo que cambies después en una imagen concreta manda sobre esto.</p><div id="sc-tint"></div>
@@ -2266,7 +2299,13 @@ function scrScreen(v,r){
       <div class="grid sc-grid">${btns.map(tile).join('')}</div></div>`:''}
     ${rest.length?`<div class="card"><h3>Otras piezas <small class="cnt">${rest.length}</small></h3><p class="note">Barras, listas, fondos de ventanas… Tócalas para cambiar sus colores o sustituirlas.</p><div class="list">${rest.map(F=>fileRow(F,KINDL.get(kindOf(F)))).join('')}</div></div>`:''}
     </div></div>`;
-  if(bg){const c=$('#pv');mountPreview(c,()=>({scr:s,orig:S.hcmp==='orig'}));$('#sc-cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.hcmp=b.dataset.v;$$('#sc-cmp button').forEach(x=>x.setAttribute('aria-pressed',x===b));schedule()}}
+  if(bg){const c=$('#pv'),vw=VWS.has(s);let press=-1,down=-1;mountPreview(c,()=>({scr:s,orig:S.hcmp==='orig',view:vw?vwCur(s):null,press}));
+    if(vw){vwBar(s);if(VW.st!==2)loadVistas().then(()=>{vwBar(s);schedule()});
+      c.onpointerdown=e=>{const V=vwCur(s);if(!V)return;down=vwHit(V,c,e).i;press=down;schedule()};
+      c.onpointermove=e=>{if(e.pointerType!=='mouse')return;const V=vwCur(s);if(!V)return;const h=vwHit(V,c,e);c.style.cursor=h.i>=0?'pointer':'default'};
+      c.onpointerleave=c.onpointercancel=()=>{down=press=-1;schedule()};
+      c.onpointerup=e=>{const V=vwCur(s),i=down;down=press=-1;schedule();if(!V||i<0)return;const h=vwHit(V,c,e);if(h.i!==i)return;
+        if(isBtnLike(h.F))btnSheet(h.F,()=>{mountThumbs(v);schedule()});else go({n:'edit',p:h.F.path})}}$('#sc-cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.hcmp=b.dataset.v;$$('#sc-cmp button').forEach(x=>x.setAttribute('aria-pressed',x===b));schedule()}}
   if(hb)btnSheet(hb,()=>mountThumbs(v),$('#sc-btn'));
   const sec0=secs[0],get=()=>S.ops.sec[sec0],set=o=>{for(const k of secs)setScopeOps(k,o?structuredClone(o):o)};
   tintUI($('#sc-tint'),'sc',get,set,()=>{schedule();mountThumbs(v)});
@@ -2284,7 +2323,7 @@ function scrScreen(v,r){
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-26-11.1';
+const VER='2026-10-27-0';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -2292,7 +2331,11 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Corregido: en «Estilo de los botones», al desplazarte las pestañas se montaban encima de la vista previa']],
+  [VER,['Cada pantalla tiene su ventana: toca Radio, Multimedia, Teléfono, Driving eco o Ajustes en la vista previa de Inicio y tienes junto todo lo suyo (su botón, el color de la pantalla, el negro del fondo, sus botones y el resto de piezas). «Común» reúne lo que comparten todas',
+    'Vistas de dentro: en Radio, Multimedia y Teléfono ves la pantalla principal, la lista, las presintonías, las opciones… con tus imágenes en su sitio real, y tocando un botón lo cambias. FM, AM, DAB, USB, iPod y Bluetooth por separado',
+    'Estilos y formas también para los botones de dentro (radio, multimedia, teléfono…), uno a uno o «el mismo estilo para todos los de esta pantalla»',
+    'Puedes poner nombre a tus iconos y cambiarlo cuando quieras']],
+  ['2026-10-26-11.1',['Corregido: en «Estilo de los botones», al desplazarte las pestañas se montaban encima de la vista previa']],
   ['2026-10-26-11',['La hoja de cada botón, en una sola pantalla: icono, color del marco, color del icono, estilo y más, sin pestañas',
     'Color del icono por separado: con un estilo, el icono toma ese color en reposo; con el original, el icono se repinta conservando su forma',
     'Ahora vale para toda la app: tocar cualquier botón o icono de cualquier pantalla (Multimedia, Teléfono, Radio…) abre la misma hoja',
@@ -2378,6 +2421,7 @@ function bindAbout(){const i=$('#w-ins');if(i)i.onclick=doInstall;const c=$('#w-
 function openChanges(){openBS(`<h2>Novedades</h2><div class="chgl">${CHANGES.map(([v,t],i)=>`<section><h4>${esc(v)}${i===0?' <small>· la que tienes</small>':''}</h4><ul>${t.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`).join('')}</div><button class="btn wide" data-x>Cerrar</button>`);$('#bs [data-x]').onclick=closeBS}
 function openCredits(){openBS(`<h2>Créditos y licencia</h2><div class="chgl">
   <section><h4>Mediaskinhz</h4><p class="note">Diseñado y creado por <b>Krahz</b>. Herramienta personal para cambiar la apariencia de la radio MediaNav del Renault Clio 4.</p></section>
+  <section><h4>Vistas de dentro</h4><p class="note">Las posiciones de las imágenes de Radio, Multimedia y Teléfono salen del análisis del programa de la radio del proyecto <a href="https://github.com/m-a-x-s-e-e-l-i-g/MediaNav-to-Evolution-Upgrade" target="_blank" rel="noopener">MediaNav-to-Evolution-Upgrade</a> de m-a-x-s-e-e-l-i-g (licencia GPL-3.0).</p></section>
   <section><h4>Formato de actualización</h4><p class="note">El archivo upgrade.lgu se genera siguiendo <b>dir2lgu</b>, del proyecto <a href="https://github.com/yosicovich/MediaNavMods" target="_blank" rel="noopener">MediaNavMods</a> de yosicovich (licencia GPL-3.0).</p></section>
   <section><h4>Licencia</h4><p class="note">Por usar ese trabajo, Mediaskinhz se publica con licencia <b>GPL-3.0</b>: puedes usarla, estudiarla y modificarla, y quien distribuya una versión modificada debe compartir también su código con la misma licencia.</p></section>
   <section><h4>Tipografías e iconos</h4><p class="note">Inter y Newsreader (SIL Open Font License), servidas por Google Fonts. La biblioteca de iconos es <a href="https://tabler.io/icons" target="_blank" rel="noopener">Tabler Icons</a>, de Paweł Kuna (licencia MIT, ver iconos-LICENCIA.txt).</p></section>

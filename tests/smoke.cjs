@@ -151,6 +151,20 @@ async function run(browser, label, viewport, mobile) {
     await p.evaluate(s => go({ n: 'scr', s }), sc); await p.waitForTimeout(400);
     ok(await p.locator('#sc-tint').count() === 1 && (await p.evaluate(() => document.querySelector('#ab-t .t1').textContent)).length > 0, 'la ventana «' + sc + '» se abre con sus colores y piezas');
   }
+  // Vistas de dentro: se cargan, se eligen y tocar un botón de la vista abre su hoja
+  await p.evaluate(() => go({ n: 'scr', s: 'radio' }));
+  const hasVw = await p.waitForFunction(() => document.querySelector('#sc-vw .vwv') || !document.querySelector('#sc-vw'), null, { timeout: 10000 }).then(() => p.evaluate(() => !!document.querySelector('#sc-vw .vwv'))).catch(() => false);
+  ok(await p.evaluate(() => loadVistas().then(() => VW.st === 2 && ['radio', 'media', 'phone'].every(s => vwCur(s)))), 'vistas.json se carga y hay vistas de Radio, Multimedia y Teléfono');
+  if (await p.locator('#sc-vw').count()) {
+    ok(hasVw, 'las vistas de dentro de Radio se cargan');
+    await tap('#sc-vw [data-w="Presintonías"]'); await p.waitForTimeout(300);
+    ok(await p.evaluate(() => vwCur('radio').v === 'Presintonías' && S.vw.radio.v === 'Presintonías'), 'se puede elegir la vista (Presintonías)');
+    await tap('#sc-vw [data-b="AM"]'); await p.waitForTimeout(200);
+    ok(await p.evaluate(() => vwCur('radio').band === 'AM'), 'se puede elegir la banda (AM)');
+    const hit = await p.evaluate(() => { const V = vwCur('radio'); const i = V.c.findIndex(c => c[0] && byName(c[0]) && c[3] < 800); if (i < 0) return null; const c = V.c[i]; return [c[1] + c[3] / 2, c[2] + c[4] / 2]; });
+    if (hit) { const bx = await p.locator('#pv').boundingBox(); await p.mouse.click(bx.x + hit[0] * bx.width / 800, bx.y + hit[1] * bx.height / 480); await p.waitForTimeout(500);
+      ok(await p.evaluate(() => !document.querySelector('#bs').hidden || S.route.n === 'edit'), 'tocar un botón de la vista abre su hoja'); await p.evaluate(() => closeBS()); }
+  }
   await p.evaluate(() => go({ n: 'home' })); await p.waitForTimeout(300);
   // Familia «Negros y fondo»
   ok(await p.evaluate(() => { const F = S.files.find(f => /HOME_BG/i.test(f.path)); return famsOfFiles([F]).some(f => f.k === 13); }), 'el fondo de Inicio ofrece la familia «Negros y fondo»');

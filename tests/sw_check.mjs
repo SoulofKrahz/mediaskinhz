@@ -29,6 +29,9 @@ for (const k of ['', 'xx', ...slugs]) {
 }
 if (!fails.length) console.log(`ok manifest por color: ${slugs.length} colores + el de partida`);
 // Biblioteca de iconos: existe, se lee y lleva su licencia
+try { const vw = JSON.parse(fs.readFileSync(path.join(root, 'vistas.json'), 'utf8'));
+  for (const g of ['radio', 'media', 'phone']) if (!vw.views.some(o => o.s === g)) fails.push('vistas.json sin vistas de ' + g);
+} catch (e) { fails.push('vistas.json no se puede leer: ' + e.message); }
 try { const ic = JSON.parse(fs.readFileSync(path.join(root, 'iconos.json'), 'utf8'));
   if (!ic.i || ic.i.length < 1000) fails.push('iconos.json tiene muy pocos iconos');
   if (!/MIT/.test(ic.lic || '') || !fs.existsSync(path.join(root, 'iconos-LICENCIA.txt'))) fails.push('falta la licencia de Tabler Icons');
