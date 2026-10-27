@@ -151,7 +151,7 @@ async function fromFileList(fl){
   try{let list,png=0;
     if(z&&arr.length===1){list=await readZip(await z.arrayBuffer(),n=>{if(/\.png$/i.test(n)){png++;return false}return /\.bmp$/i.test(n)})}
     else{list=[];for(const f of arr){const p=f._path||f.webkitRelativePath||f.name;if(/\.png$/i.test(p)){png++;continue}if(!/\.bmp$/i.test(p))continue;list.push({path:p,buf:await f.arrayBuffer()})}}
-    if(await ingest(list,{png})){S.stack=[];S.route={n:'home'};render();toast(`Backup cargado: ${S.files.length} imágenes`)}
+    if(await ingest(list,{png})){setBase(null);S.stack=[];S.route={n:'home'};render();toast(`Backup cargado: ${S.files.length} imágenes`)}
   }catch(err){toast(err.message||'No se pudo leer el backup',{ms:6000})}
 }
 async function walkEntry(en,out){
@@ -683,10 +683,10 @@ function scrExport(v){
   $('#x-go').onclick=async e=>{const btn=e.currentTarget,rs=sel();if(!rs.length)return;btn.disabled=true;btn.textContent='Preparando el ZIP…';
     try{const inc=$('#x-orig').checked,lgu=S.xmode==='lgu',ulc2=S.xhw!==1;let ents;
       if(lgu){ents=[{name:'upgrade.lgu',data:await makeLGU(lguEntries(rs,false),ulc2,'Mediaskinhz')}];if(inc)ents.push({name:'RESTAURAR/upgrade.lgu',data:await makeLGU(lguEntries(rs,true),ulc2,'Skinhz restaurar')})}
-      else if(S.xmode==='auto'){ents=autoEntries(rs,inc,{boot:SET.xboot!==false,name:S.curDesignName||designName()}).ents}
+      else if(S.xmode==='auto'){ents=autoEntries(rs,inc,{boot:SET.xboot!==false,name:(S.base&&S.base.name)||designName()}).ents}
       else{ents=rs.map(r=>({name:S.root+'/'+r.F.path,data:r.u}));if(inc)for(const r of rs)ents.push({name:'ORIGINALES/'+S.root+'/'+r.F.path,data:new Uint8Array(r.F.buf)})}
       const d=new Date(),stamp=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-      if(!S.demo){try{const dn=S.curDesignName||designName();ents.push({name:'Mediaskinhz/diseno.mskz',data:new Uint8Array(await (await designFile({label:dn,t:Date.now(),n:S.files.filter(changed).length,st:packState(),thumb:designThumb()})).arrayBuffer())})}catch(_){}}
+      if(!S.demo){try{const dn=(S.base&&S.base.name)||designName();ents.push({name:'Mediaskinhz/diseno.mskz',data:new Uint8Array(await (await designFile({label:dn,t:Date.now(),n:S.files.filter(changed).length,st:packState(),thumb:designThumb()})).arrayBuffer())})}catch(_){}}
       ents.push({name:'LEEME.txt',data:new TextEncoder().encode(readme(rs,inc,stamp,lgu?'lgu':S.xmode==='auto'?'auto':'tc'))});const zb=await makeZip(ents),zn=`skin-medianav-${stamp}${lgu?'-actualizacion':S.xmode==='auto'?'-automatico':''}${rs.length<fs.length?'-'+rs.length+'-imagenes':''}.zip`;
       if(await saveBlob(zb,zn)){await recordExport({mode:lgu?'lgu':S.xmode==='auto'?'auto':'tc',boot:S.xmode==='auto'&&SET.xboot!==false,hw:ulc2?2:1,inc,files:rs.map(r=>r.F.path),name:zn,blob:zb,count:rs.length});if(!S.demo)setTimeout(()=>toast('Exportación guardada en el historial',{label:'Ver',fn:()=>go({n:'settings'})}),2700)}}
     catch(err){toast(err.message||'No se pudo crear el ZIP',{ms:6000})}finally{upd()}};
@@ -770,6 +770,6 @@ function bind(){
   let rz=0;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(S.route.n==='edit'&&S.eview==='img')drawEdit(S.curF)},150)});
 }
 async function boot(){themePref();bind();recall();loadSet();webInit();await myLoad().catch(()=>{});let ok=false;
-  try{const fl=await idb.get('files');if(fl&&fl.list&&fl.list.length&&await ingest(fl.list,{restore:true,png:fl.png})){applyState(await idb.get('state'));ok=true}}catch(_){}
+  try{const fl=await idb.get('files');if(fl&&fl.list&&fl.list.length&&await ingest(fl.list,{restore:true,png:fl.png})){applyState(await idb.get('state'));await recallBase();ok=true}}catch(_){}
   if(!ok)await demo();render()}
 boot();

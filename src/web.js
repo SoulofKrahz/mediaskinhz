@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-27-11';
+const VER='2026-10-27-12';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,7 +11,9 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Pantalla de reposo (la negra con el reloj): Pantalla → «Reposo». Escribe tu nombre y el coche en el fondo, con letra, tamaño, color, brillo y sitio (arriba, sobre o bajo el reloj, abajo). Deja libre el sitio del reloj',
+  [VER,['Guardar el diseño cuando vienes de uno guardado o importado: te ofrece sobrescribirlo o guardarlo como nuevo, para no llenar la lista. Lo recuerda aunque lo edites o recargues la página',
+    'En Mis diseños, el diseño del que vienes se marca «Con cambios sin guardar» mientras lo editas; si no hay cambios, Guardar te lo dice en vez de duplicarlo']],
+  ['2026-10-27-11',['Pantalla de reposo (la negra con el reloj): Pantalla → «Reposo». Escribe tu nombre y el coche en el fondo, con letra, tamaño, color, brillo y sitio (arriba, sobre o bajo el reloj, abajo). Deja libre el sitio del reloj',
     'Vistas de Ajustes (Audio, Pantalla, Bluetooth, Sistema) y de Driving eco, dibujadas a partir de fotos de la radio',
     'Textos como los de la radio, sacados de las fotos: «Desc/Conex», «AT», «Región», «Presintonía», «Marcar», «Agenda», «Lista de llamadas»; los nombres de opción van alineados a la izquierda',
     'Teléfono → Marcador: los botones de micro y altavoz salen tenues (solo aparecen durante una llamada)']],

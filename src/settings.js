@@ -26,9 +26,23 @@ function promptBS(o){return new Promise(res=>{
   const done=v=>{S.bsCancel=null;closeBS();res(v)};const val=()=>inp.value.trim()||o.value||'Mi diseño';
   $('#bs').onclick=e=>{const x=e.target.closest('[data-c]');if(!x)return;done(x.dataset.c==='1'?val():null)};inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();done(val())}}})}
 function designName(){const g=S.gen;if(g&&g.look&&g.look!=='orig'){const st=(GSTYLES.find(x=>x[0]===g.style)||GSTYLES[0])[1];return st+(g.color==='one'?' '+hueName(g.hue).toLowerCase():'')}return 'Mi diseño'}
+// Diseño del que vienes (guardado, cargado o importado): se recuerda aunque lo edites o recargues la página, para poder sobrescribirlo
+function setBase(id,name){S.base=id?{id,name}:null;try{if(id)localStorage.setItem('mediaskinhz-base',JSON.stringify({id,name,sig:sig()}));else localStorage.removeItem('mediaskinhz-base')}catch(_){}}
+async function recallBase(){try{const b=JSON.parse(localStorage.getItem('mediaskinhz-base')||'null');if(!b||b.sig!==sig())return;const p=(await getList('points')).find(x=>x.id===b.id&&x.kind==='manual');if(p)S.base={id:p.id,name:p.label}}catch(_){}}
+function askSave(name,n){return new Promise(res=>{
+  openBS(`<h2>Guardar el diseño</h2><p class="note">Vienes de «${esc(name)}». ¿Quieres guardar encima tus cambios (${n} ${n===1?'imagen cambiada':'imágenes cambiadas'}) o guardarlo como un diseño nuevo?</p>
+    <div class="stack" style="gap:8px"><button class="btn wide" data-c="over">Sobrescribir «${esc(name)}»</button><button class="btn o wide" data-c="new">Guardar como diseño nuevo</button><button class="btn o wide" data-c="0">Cancelar</button></div>`);
+  S.bsCancel=()=>res(null);$('#bs').onclick=e=>{const x=e.target.closest('[data-c]');if(!x)return;S.bsCancel=null;closeBS();res(x.dataset.c==='0'?null:x.dataset.c)}})}
+async function overwriteDesign(id){const L=await getList('points'),p=L.find(x=>x.id===id);if(!p)return false;
+  p.st=packState();p.n=S.files.filter(changed).length;p.t=Date.now();p.sig=sig();p.thumb=designThumb();
+  try{await idb.set('points',L)}catch(_){toast('No queda espacio en el navegador para guardar el diseño',{ms:5000});return false}
+  S.curDesign=id;S.curDesignName=p.label;setBase(id,p.label);toast(`«${p.label}» actualizado`,{label:'Ver',fn:()=>go({n:'settings'})});return true}
 async function saveDesign(){if(S.demo){toast('Carga tu backup para guardar diseños');return}const n=S.files.filter(changed).length;if(!n){toast('Todavía no hay cambios que guardar');return}
+  if(S.base){const p=(await getList('points')).find(x=>x.id===S.base.id&&x.kind==='manual');
+    if(!p)setBase(null);else{if(S.curDesign===p.id){toast(`«${p.label}» ya está guardado: no hay cambios nuevos`);return}
+      const a=await askSave(p.label,n);if(!a)return;if(a==='over'){await overwriteDesign(p.id);return}}}
   const name=await promptBS({title:'Guardar el diseño',text:`Se guardan tus ${n} ${n===1?'imagen cambiada':'imágenes cambiadas'} con este nombre. Podrás volver a él cuando quieras.`,value:designName(),ok:'Guardar'});if(!name)return;
-  const id=await addPoint(name,'manual');if(id){S.curDesign=id;S.curDesignName=name;toast(`«${name}» guardado`,{label:'Ver',fn:()=>go({n:'settings'})})}}
+  const id=await addPoint(name,'manual');if(id){S.curDesign=id;S.curDesignName=name;setBase(id,name);toast(`«${name}» guardado`,{label:'Ver',fn:()=>go({n:'settings'})})}}
 async function addPoint(label,kind){
   if(S.demo)return null;if(kind==='auto'&&!SET.auto)return null;
   const n=S.files.filter(changed).length;if(kind==='auto'&&!n)return null;
@@ -40,7 +54,7 @@ async function restorePoint(id){
   const p=(await getList('points')).find(x=>x.id===id);if(!p)return;
   if(!await confirmBS({title:'Volver a este diseño',text:`Se cargará «${esc(p.label)}» (${p.n} ${p.n===1?'imagen cambiada':'imágenes cambiadas'}). Lo que tienes ahora se guarda antes como copia automática, por si quieres volver.`,ok:'Cargar',always:true}))return;
   await addPoint('Antes de volver a «'+p.label+'»','auto');before();for(const F of S.files)F.rep=null;S.src=new Map();S.ops={global:null,sec:{},file:{}};S.ex={};S.frames={};
-  applyState(p.st);if(!p.st.gen)S.gen=null;else if(!S.gen.look)migrateLook(p.st);if(p.kind==='manual'){S.curDesign=p.id;S.curDesignName=p.label}bump();render(true);toast(`«${p.label}» cargado`,{label:'Deshacer',fn:undo})}
+  applyState(p.st);if(!p.st.gen)S.gen=null;else if(!S.gen.look)migrateLook(p.st);if(p.kind==='manual'){S.curDesign=p.id;S.curDesignName=p.label;setBase(p.id,p.label)}else setBase(null);bump();render(true);toast(`«${p.label}» cargado`,{label:'Deshacer',fn:undo})}
 async function recordExport(o){
   if(S.demo)return;const pid=await addPoint('Exportación · '+o.count+' '+(o.count===1?'imagen':'imágenes'),'export');
   const xs=await getList('exports');xs.unshift({id:Date.now().toString(36),t:Date.now(),sig:sig(),mode:o.mode,boot:!!o.boot,hw:o.hw,inc:o.inc,files:o.files,name:o.name,size:o.blob.size,pid,blob:o.blob.size<=25e6?o.blob:null});
@@ -71,7 +85,7 @@ async function scrSettings(v){
       <p class="note">«Deshacer en el coche» baja un ZIP con solo los originales de esa exportación, listo para copiar igual que la exportación.</p>`:'<p class="note">Aún no has exportado nada. Cada exportación quedará aquí, con un botón para deshacerla en el coche.</p>'}</div>
     <div class="card" id="s-des"><h3>Mis diseños</h3>
       ${S.demo?'<p class="note">Carga tu backup para guardar diseños.</p>':`<button class="btn wide" id="s-pt">Guardar el diseño actual</button><button class="btn o wide" id="s-imp">Importar un diseño</button><p class="note">Vale un archivo <b>.mskz</b> (botón ${ic('M12 3v12M7 10l5 5 5-5M5 21h14')} de cada diseño) o el <b>ZIP que exportaste para la radio</b>: lleva su diseño dentro. También puedes arrastrarlo a la ventana.</p>`}
-      ${D.length?`<div class="dsg">${D.map(p=>`<div class="dsc${S.curDesign===p.id?' on':''}" data-d="${p.id}"><button class="dsi" data-a="load" aria-label="Cargar ${esc(p.label)}">${p.thumb?`<img src="${p.thumb}" alt="">`:'<span class="dsn">Sin vista previa</span>'}${S.curDesign===p.id?'<span class="pill p-col">Cargado</span>':''}</button>
+      ${D.length?`<div class="dsg">${D.map(p=>`<div class="dsc${S.curDesign===p.id||(S.base&&S.base.id===p.id)?' on':''}" data-d="${p.id}"><button class="dsi" data-a="load" aria-label="Cargar ${esc(p.label)}">${p.thumb?`<img src="${p.thumb}" alt="">`:'<span class="dsn">Sin vista previa</span>'}${S.curDesign===p.id?'<span class="pill p-col">Cargado</span>':S.base&&S.base.id===p.id?'<span class="pill p-img">Con cambios sin guardar</span>':''}</button>
         <div class="dst"><b>${esc(p.label)}</b><small>${fdt(p.t)} · ${p.n} ${p.n===1?'imagen':'imágenes'}</small></div>
         <div class="dsa"><button class="btn o sm" data-a="load">Cargar</button><button class="ib" data-a="exp" aria-label="Exportar a un archivo" title="Exportar a un archivo (.mskz) para llevarlo a otro aparato">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}</button><button class="ib" data-a="ren" aria-label="Cambiar el nombre" title="Cambiar el nombre">${ic('M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4')}</button><button class="ib dgi" data-a="del" aria-label="Borrar" title="Borrar">${ic('M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3')}</button></div></div>`).join('')}</div>`:'<p class="note">Guarda aquí los diseños que te gusten, con su nombre, para cambiar entre ellos o volver atrás.</p>'}
       ${A.length?`<details class="isd"><summary><span>Copias automáticas<small>Antes de cada cambio grande y en cada exportación</small></span><b>${A.length}</b></summary><div class="isb"><div class="hl">${A.map(p=>`<div class="hx"><div class="hx-h"><span class="tx"><b>${esc(p.label)}</b><small>${fdt(p.t)} · ${p.n} ${p.n===1?'imagen cambiada':'imágenes cambiadas'}</small></span></div>
@@ -108,8 +122,8 @@ async function scrSettings(v){
   $$('.dsc',v).forEach(el=>el.onclick=async e=>{const b=e.target.closest('[data-a]');if(!b)return;const id=el.dataset.d,a=b.dataset.a,L=await getList('points'),p=L.find(x=>x.id===id);if(!p)return;
     if(a==='load')return restorePoint(id);
     if(a==='exp')return exportDesign(p);
-    if(a==='ren'){const nm=await promptBS({title:'Cambiar el nombre',value:p.label,ok:'Guardar'});if(!nm)return;p.label=nm;try{await idb.set('points',L)}catch(_){}render(true);return}
-    if(a==='del'){if(!await confirmBS({title:'Borrar «'+esc(p.label)+'»',text:'El diseño guardado se borrará. Lo que tienes ahora en pantalla no cambia.',ok:'Borrar',danger:true}))return;try{await idb.set('points',L.filter(x=>x.id!==id))}catch(_){}if(S.curDesign===id)S.curDesign=null;render(true);toast('Diseño borrado')}});
+    if(a==='ren'){const nm=await promptBS({title:'Cambiar el nombre',value:p.label,ok:'Guardar'});if(!nm)return;p.label=nm;try{await idb.set('points',L)}catch(_){}if(S.base&&S.base.id===id)setBase(id,nm);render(true);return}
+    if(a==='del'){if(!await confirmBS({title:'Borrar «'+esc(p.label)+'»',text:'El diseño guardado se borrará. Lo que tienes ahora en pantalla no cambia.',ok:'Borrar',danger:true}))return;try{await idb.set('points',L.filter(x=>x.id!==id))}catch(_){}if(S.curDesign===id)S.curDesign=null;if(S.base&&S.base.id===id)setBase(null);render(true);toast('Diseño borrado')}});
   $$('[data-p]',v).forEach(b=>b.onclick=()=>restorePoint(b.dataset.p));
   $$('[data-pd]',v).forEach(b=>b.onclick=async()=>{if(!await confirmBS({title:'Borrar la copia',text:'Esta copia automática se borrará y no se podrá recuperar.',ok:'Borrar',danger:true}))return;const l=(await getList('points')).filter(x=>x.id!==b.dataset.pd);try{await idb.set('points',l)}catch(_){}render(true)});
   $$('.hx[data-x]',v).forEach(el=>el.onclick=async e=>{const b=e.target.closest('[data-a]');if(!b)return;const x=X.find(y=>y.id===el.dataset.x);if(!x)return;
@@ -168,5 +182,5 @@ async function importDesign(blob,fname){
   let addI=0;for(const m of meta.my||[])if(m&&m.id&&!MY.by.has(m.id)){MY.list.push(m);addI++}if(addI){myIndex();await mySave()}
   await addPoint('Antes de importar «'+nm+'»','auto');before();for(const F of S.files){F.rep=null;F.ico=undefined;F.icz=null}S.src=new Map();S.ops={global:null,sec:{},file:{}};S.ex={};S.frames={};S.gen=null;S.icx={};
   applyState({...meta.st,reps});if(S.gen&&!S.gen.look)migrateLook(meta.st);bump();
-  const id=await addPoint(nm,'manual');if(id){S.curDesign=id;S.curDesignName=nm}render(true);toast(`«${nm}» importado`+(addI?` con ${addI} ${addI===1?'icono tuyo':'iconos tuyos'}`:''),{label:'Deshacer',fn:undo})}
+  const id=await addPoint(nm,'manual');if(id){S.curDesign=id;S.curDesignName=nm;setBase(id,nm)}render(true);toast(`«${nm}» importado`+(addI?` con ${addI} ${addI===1?'icono tuyo':'iconos tuyos'}`:''),{label:'Deshacer',fn:undo})}
 function pickDesignFile(){const i=document.createElement('input');i.type='file';i.accept='.mskz,.zip,application/zip';i.onchange=()=>{const f=i.files[0];if(f)importDesign(f,f.name)};i.click()}
