@@ -15,7 +15,7 @@ function scrFiles(s){const bgs=new Set(SCREENS.map(x=>x[2]));
    site/vistas.json trae, para cada vista del programa de la radio (principal, lista, presintonías, opciones…), qué imagen va en cada sitio
    y los textos fijos. Sale del análisis del programa de la radio (AppMain 7.0.5) del proyecto MediaNav-to-Evolution-Upgrade (GPL-3.0).
    Es una foto de cuando se construye la pantalla: faltan los datos que la radio pone en marcha (emisora, canción, listas) y la letra es aproximada. */
-const VW={st:0,data:null,p:null},VWS=new Set(['radio','media','phone','setting','eco']),VMAIN=/^(Principal|Reproductor|Marcador|Audio|Clasificación)$/;
+const VW={st:0,data:null,p:null},VWS=new Set(['radio','media','phone','setting','eco','common']),VMAIN=/^(Principal|Reproductor|Marcador|Audio|Clasificación|Barra de arriba)$/;
 function loadVistas(){if(VW.p)return VW.p;VW.st=1;VW.p=fetch('vistas.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(j=>{VW.data=j.views;VW.st=2}).catch(()=>{VW.st=3;VW.p=null});return VW.p}
 // ancho de un estado: el del sitio que le da la radio si la tira es un múltiplo exacto; si no, el que se deduce de la imagen
 const vwFw=(F,w,h)=>F.w>w&&w>0&&F.w%w===0&&F.h===h?w:F.w/frames(F);
@@ -54,7 +54,7 @@ function vwBar(s){const el=$('#sc-vw');if(!el)return;
   el.onclick=e=>{const b=e.target.closest('[data-b],[data-w]');if(!b)return;const k=(S.vw||(S.vw={}))[s]||(S.vw[s]={});
     if(b.dataset.b!=null){k.band=b.dataset.b;delete k.v}else{k.v=b.dataset.w}vwBar(s);schedule()}}
 function scrScreen(v,r){
-  const s=r.s,secs=scrSecs(s),files=scrFiles(s),bg=s==='common'?null:byName(SCRBG.get(s)),hb=s==='common'?null:scrHomeBtn(s);
+  const s=r.s,secs=scrSecs(s),files=scrFiles(s),pscr=s==='common'?'radio':s,bg=byName(SCRBG.get(pscr)),hb=s==='common'?null:scrHomeBtn(s);
   setTitle(scrName(s),`${files.length+(bg?1:0)} imágenes de esta pantalla`);
   const btns=files.filter(isBtnLike),rest=files.filter(F=>!isBtnLike(F)),sty=btns.filter(F=>kindOf(F)==='btn'&&canStyle(F));
   const g=S.gen||(S.gen=defGen()),looks=new Set(sty.map(F=>(g.per[F.path]||{}).look||'orig')),curLook=looks.size===1?[...looks][0]:null;
@@ -65,7 +65,7 @@ function scrScreen(v,r){
     ${hb?`<div class="card"><h3>Su botón en Inicio</h3><div id="sc-btn"></div></div>`:''}
     <div class="card"><h3>Color de toda la pantalla</h3><p class="note">Tiñe todas las imágenes de ${esc(scrName(s))} a la vez. Lo que cambies después en una imagen concreta manda sobre esto.</p><div id="sc-tint"></div>
       <button class="btn o sm" id="sc-more">Más colores de esta pantalla</button></div>
-    ${bg?`<div class="card"><h3>Fondo</h3><div class="list">${fileRow(bg,'Fondo · 800×480')}</div>
+    ${bg&&s!=='common'?`<div class="card"><h3>Fondo</h3><div class="list">${fileRow(bg,'Fondo · 800×480')}</div>
       <p class="lbl">Color del negro del fondo</p><div class="hsw" id="sc-bk">${swatches(((S.ops.file[bg.path]||{}).map||{})[13]?((S.ops.file[bg.path].map[13].to)):'none',{none:'Negro original',label:'Color del negro del fondo'})}</div>
       <p class="note">Conserva el degradado. Para un fondo claro o una foto: toca el fondo → Sustituir.</p></div>`:''}
     ${btns.length?`<div class="card"><h3>Botones e iconos <small class="cnt">${btns.length}</small></h3><p class="note">Toca uno para cambiar su icono, colores y estilo.</p>
@@ -76,7 +76,7 @@ function scrScreen(v,r){
       <div class="grid sc-grid">${btns.map(tile).join('')}</div></div>`:''}
     ${rest.length?`<div class="card"><h3>Otras piezas <small class="cnt">${rest.length}</small></h3><p class="note">Barras, listas, fondos de ventanas… Tócalas para cambiar sus colores o sustituirlas.</p><div class="list">${rest.map(F=>fileRow(F,KINDL.get(kindOf(F)))).join('')}</div></div>`:''}
     </div></div>`;
-  if(bg){const c=$('#pv'),vw=VWS.has(s);let press=-1,down=-1,hov=-1;mountPreview(c,()=>({scr:s,orig:S.hcmp==='orig',view:vw?vwCur(s):null,press,hov}));
+  if(bg){const c=$('#pv'),vw=VWS.has(s);let press=-1,down=-1,hov=-1;mountPreview(c,()=>({scr:pscr,orig:S.hcmp==='orig',view:vw?vwCur(s):null,press,hov}));
     if(vw){vwBar(s);if(VW.st!==2)loadVistas().then(()=>{vwBar(s);schedule()});
       c.onpointerdown=e=>{const V=vwCur(s);if(!V)return;down=vwHit(V,c,e).i;press=down;schedule()};
       c.onpointermove=e=>{if(e.pointerType!=='mouse')return;const V=vwCur(s);if(!V)return;const h=vwHit(V,c,e);c.style.cursor=h.i>=0?'pointer':'default';if(h.i!==hov){hov=h.i;schedule()}};

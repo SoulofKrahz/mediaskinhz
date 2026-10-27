@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-27-13';
+const VER='2026-10-27-14';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,7 +11,8 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Corregido: a veces no se podían borrar diseños. Si el navegador estaba lleno, la escritura se cancelaba sin avisar y la app se quedaba esperando. Ahora cada diseño se guarda por separado: borrar libera espacio al momento, y si algo falla te lo dice',
+  [VER,['Común → vista «Barra de arriba»: la señal, la batería del móvil, la temperatura y el reloj en su sitio (medido en fotos de la radio), con su versión para fondo claro. Tócalos para cambiarlos']],
+  ['2026-10-27-13',['Corregido: a veces no se podían borrar diseños. Si el navegador estaba lleno, la escritura se cancelaba sin avisar y la app se quedaba esperando. Ahora cada diseño se guarda por separado: borrar libera espacio al momento, y si algo falla te lo dice',
     'Mis diseños: espacio usado en el navegador y botón para borrar de una vez las copias automáticas',
     'Se guardan como mucho 10 copias automáticas y 10 de exportación (las más antiguas se borran solas); tus diseños con nombre nunca. El historial guarda el ZIP de las 3 últimas exportaciones']],
   ['2026-10-27-12',['Guardar el diseño cuando vienes de uno guardado o importado: te ofrece sobrescribirlo o guardarlo como nuevo, para no llenar la lista. Lo recuerda aunque lo edites o recargues la página',

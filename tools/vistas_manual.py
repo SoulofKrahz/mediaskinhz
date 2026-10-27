@@ -49,4 +49,17 @@ def views():
     c.append(I('eco/eco_scoring_img.bmp', 540, 100, 226, 184) + [0, 6]); c.append(T(540, 280, 226, 60, '62/100'))
     out.append({'s': 'eco', 'band': '', 'v': 'Clasificación', 'c': c, 'aprox': 1})
     for o in out: o['aprox'] = 1; o['noline'] = 1   # sin la pestaña de la barra de arriba (estas pantallas no la tienen)
+    # Común · barra de arriba: señal, batería del móvil, temperatura y reloj (medidos en las fotos de Ajustes y de FM; coinciden en ±3 px)
+    for dark, nm in ((False, 'Barra de arriba'), (True, 'Barra de arriba · fondo claro')):
+        d = '_dark' if dark else ''
+        c = [I('common/common_indi_line.bmp', 0, 0, 800, 78)]
+        c.append(I(f'common/common_indi_antenna_icon{d}.bmp', 508, 26, 24, 24) + [0, 5])
+        c.append(I(f'common/common_indi_battery_icon{d}.bmp', 547, 26, 28, 24) + [0, 3])
+        for k, ch in enumerate('16'): c.append(I(f'common/common_indi_temp_number_img{d}.bmp', 600 + k * 13, 27, 13, 25) + [0, int(ch)])
+        c.append(I(f'common/common_indi_temp_c_icon{d}.bmp', 627, 28, 17, 15))
+        x = 688
+        for ch in '21:52':
+            if ch == ':': c.append(I(f'common/common_indi_semicolon_img{d}.bmp', x, 22, 10, 33)); x += 10
+            else: c.append(I(f'common/common_indi_clock_number_img{d}.bmp', x, 22, 20, 33) + [0, int(ch)]); x += 20
+        out.append({'s': 'common', 'band': '', 'v': nm, 'c': c, 'aprox': 1})
     return out

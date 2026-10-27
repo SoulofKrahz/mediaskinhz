@@ -79,7 +79,7 @@ out += vistas_manual.views()
 BO = {b: i for i, b in enumerate(['FM', 'AM', 'DAB', 'USB', 'BT', 'iPod', 'aha', 'AUX', ''])}
 VO = ['Principal', 'Reproductor', 'Marcador', 'Audio', 'Pantalla', 'Bluetooth', 'Sistema', 'Clasificación', 'Lista', 'Agenda', 'Presintonías', 'Opciones', 'Avisos', 'Selector', 'Ventana', 'Asistente', 'Teclado']
 vo = lambda v: next((i for i, k in enumerate(VO) if v.startswith(k)), 99)
-out.sort(key=lambda o: (['radio', 'media', 'phone', 'setting', 'eco'].index(o['s']), BO.get(o['band'], 50), vo(o['v']), o['v']))
+out.sort(key=lambda o: (['radio', 'media', 'phone', 'setting', 'eco', 'common'].index(o['s']), BO.get(o['band'], 50), vo(o['v']), o['v']))
 lic = 'Posiciones de las vistas: análisis del programa de la radio (AppMain 7.0.5) del proyecto MediaNav-to-Evolution-Upgrade (GPL-3.0).'
 dst = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'site', 'vistas.json')
 json.dump({'v': 1, 'lic': lic, 'views': out}, open(dst, 'w'), ensure_ascii=False, separators=(',', ':'))
