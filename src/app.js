@@ -47,7 +47,11 @@ const baseOf=F=>F.rep?F.rep:F;
 const catOf=F=>CATOF.get(F.sec)||'sis';
 function kindOf(F){const fr=frames(F),fw=F.w/fr;if(fw>=700&&F.h>=400)return 'bg';if(fr>1)return 'btn';if(Math.max(fw,F.h)<=96)return 'ico';return 'part'}
 const KINDW={btn:'Botón',icon:'Icono',bg:'Fondo',img:'Imagen',ani:'Animación',line:'Línea',press:'Fondo pulsado'};
-function pretty(F){const n=F.name.toLowerCase();if(PRETTY[n])return PRETTY[n];
+// nombres de las piezas del teclado del teléfono y de las listas (los nombres de archivo no dicen nada)
+const PRETTYRX=[[/^phone_keyboard(\d?)_(\d+)(?:_(\d+))?_btn$/,m=>`Tecla ${m[2]}${m[3]?'.'+m[3]:''} del teclado ${m[1]||1}`],[/^phone_keyboard_space(\d)_btn$/,m=>`Tecla de espacio ${m[1]}`],
+  [/^phone_keyboard_softkey_1_btn$/,()=>'Barra de abajo del teclado'],[/_list_press$/,()=>'Barra de la fila pulsada (listas)'],[/^phone_keyboard_search_results_btn$/,()=>'Barra de resultados de búsqueda'],
+  [/^phone_keyboard_search_back_btn$/,()=>'Borrar (búsqueda)'],[/^phone_keyboard_search_results_list_down_btn$/,()=>'Ver resultados (búsqueda)'],[/^phone_keyboard_search_type_bg$/,()=>'Fondo del cuadro de búsqueda']];
+function pretty(F){const n=F.name.toLowerCase();if(PRETTY[n])return PRETTY[n];for(const [rx,f] of PRETTYRX){const m=n.match(rx);if(m)return f(m)}
   let w=n.replace(/^(home|media|phone|fmradio|setting|eco|etc|common|popup|adas|rvc|4wd)_/,'').split(/[_\s]+/).filter(Boolean);let head='';
   if(w.length>1&&KINDW[w[w.length-1]]){head=KINDW[w.pop()]}
   const t=w.map(x=>WORDS[x]||x).join(' ').replace(/\s+/g,' ').trim();const out=head?(head+(t?' de '+t:'')):t;
@@ -194,7 +198,9 @@ function drawPreview(c,o){
   o=o||{};const x=c.getContext('2d'),scr=o.scr||'home';x.fillStyle='#000';x.fillRect(0,0,800,480);
   const rc=F=>o.orig?renderOrig(F,false):renderCanvas(F,false);
   const bg=byName(SCRBG.get(scr));if(bg)x.drawImage(rc(bg),0,0,bg.w/frames(bg),bg.h,0,0,800,480);
-  if(o.view)drawView(x,o.view,rc,o.press);
+  if(o.view)drawView(x,o.view,rc,o.press,null,o.hov==null?-1:o.hov);
+  // editor: si la imagen sale en una vista conocida, se dibuja en su sitio real dentro de esa vista
+  const pv=o.place&&typeof vwFor==='function'?vwFor(o.place,scr):null;if(pv){drawView(x,pv,rc,-1,{lc:o.place.lc,st:o.state||0},-1);o={...o,place:null,vlabel:(pv.band?pv.band+' · ':'')+pv.v}}
   if(scr==='home')S.layout.slots.forEach((s,i)=>{const F=slotF(s);if(!F)return;const fr=frames(F),fw=F.w/fr,f=(i===S.press&&fr>1)?1:Math.min(o.state||0,fr-1);
     const src=(o.gen&&S.genCv&&S.genCv.get(F.path))||rc(F);x.drawImage(src,f*fw,0,fw,F.h,s.x,s.y,fw,F.h);
     const lb=LABELS[F.name.toLowerCase()];if(lb&&!o.nolabels&&fw===210&&F.h===137){x.save();x.font='600 21px Tahoma,Inter,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillStyle=f%2===1?'#000':'#fff';x.fillText(lb,s.x+105,s.y+88+17.5,176);x.restore()}});
@@ -205,6 +211,7 @@ function drawPreview(c,o){
     x.save();x.imageSmoothingEnabled=sc<2;x.drawImage(src,st*fw,0,fw,F.h,px,py,w,h);x.restore();x.save();x.setLineDash([8,6]);x.strokeStyle='#3ddc9a';x.lineWidth=2;x.strokeRect(px-4,py-4,w+8,h+8);x.restore();
     if(!kp){x.fillStyle='rgba(0,0,0,.65)';x.fillRect(0,448,800,32);x.fillStyle='#e8eef7';x.font='600 17px Inter,sans-serif';x.textAlign='center';x.fillText((sc>1?'Ampliado ×3 · ':'')+'posición aproximada: el MediaNav decide dónde se dibuja',400,470);x.textAlign='start'}}
   if(o.selP&&scr==='home')S.layout.slots.forEach(s=>{const F=slotF(s);if(!F||F.path!==o.selP)return;const fw=F.w/frames(F);x.save();x.strokeStyle='#3ddc9a';x.lineWidth=5;x.shadowColor='#3ddc9a';x.shadowBlur=12;x.strokeRect(s.x-3,s.y-3,fw+6,F.h+6);x.restore()});
+  if(o.vlabel){x.save();x.font='600 16px Inter,sans-serif';const t='Posición real · vista '+o.vlabel,tw=x.measureText(t).width+18;x.fillStyle='rgba(5,20,14,.85)';x.fillRect(800-tw-8,6,tw,26);x.fillStyle='#3ddc9a';x.fillText(t,800-tw+1,24);x.restore()}
   if(!bg){x.fillStyle='#98a8bd';x.font='600 22px Inter,sans-serif';x.textAlign='center';x.fillText('Este backup no tiene el fondo de esta pantalla',400,250);x.textAlign='start'}
   if(o.grid&&S.gridOn){const g=S.gridSize;x.save();x.lineWidth=1;x.strokeStyle='rgba(61,220,154,.22)';x.beginPath();
     for(let gx=g;gx<800;gx+=g){x.moveTo(gx+.5,0);x.lineTo(gx+.5,480)}for(let gy=g;gy<480;gy+=g){x.moveTo(0,gy+.5);x.lineTo(800,gy+.5)}x.stroke();
@@ -735,7 +742,12 @@ function bind(){
   $('#bnav').innerHTML=navHTML();$('#tnav').innerHTML=navHTML();
   const nav=e=>{const b=e.target.closest('[data-r]');if(b)go({n:b.dataset.r})};$('#bnav').onclick=nav;$('#tnav').onclick=nav;
   $('#ab-back').onclick=back;$('#ab-undo').onclick=undo;$('#ab-more').onclick=openMenu;$('#scrim').onclick=closeBS;
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#bs').hidden)closeBS();else if(!ROOTN.has(S.route.n))back()}if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!/INPUT|SELECT/.test(document.activeElement.tagName)){e.preventDefault();undo()}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#bs').hidden)closeBS();else if(!ROOTN.has(S.route.n))back()}if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!/INPUT|SELECT/.test(document.activeElement.tagName)){e.preventDefault();undo()}
+    // Ctrl+S: guardar el diseño con nombre (en vez de guardar la página)
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();if(!S.demo&&$('#bs').hidden)saveDesign()}});
+  // Con ratón o panel táctil, la rueda mueve también las filas que se desplazan de lado
+  document.addEventListener('wheel',e=>{if(e.ctrlKey||Math.abs(e.deltaX)>Math.abs(e.deltaY))return;const el=e.target.closest&&e.target.closest('.hs,.strip,.hsw .swg,.chips.scroll');
+    if(!el||el.scrollWidth<=el.clientWidth+2)return;const before=el.scrollLeft;el.scrollLeft+=e.deltaY;if(el.scrollLeft!==before)e.preventDefault()},{passive:false});
   $('#view').addEventListener('click',e=>{const t=e.target;
     const ed=t.closest('[data-edit]');if(ed){const F=S.files[+ed.dataset.f];if(F){if(isBtnLike(F))btnSheet(F);else go({n:'edit',p:F.path})}return}
     const g=t.closest('[data-go]');if(g){go({n:g.dataset.go});return}

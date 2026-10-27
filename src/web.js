@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-27-7';
+const VER='2026-10-27-8';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,7 +11,14 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Exportar → Automático → «Que se instale solo al arrancar»: para el USB con ULC2_recovery. Al arrancar con el USB, la radio pregunta si instalar el diseño (Sí/No con el dedo), lo instala, lo comprueba y se reinicia. Sin Total Commander y sin lápiz',
+  [VER,['Corregido: en los teclados del teléfono, al tocar una tecla se abría la barra invisible de la lista que tiene encima (y el estilo dejaba todo como un bloque). Ahora gana la pieza más pequeña bajo el dedo, y las barras de fila pulsada salen tenues',
+    'En la ventana de cada pantalla, «Original de Renault» quita el estilo a todos sus botones, también a las barras y piezas raras',
+    'Las teclas y barras del teclado del teléfono tienen nombres que se entienden («Tecla 3 del teclado 2», «Barra de abajo del teclado»…)',
+    'En PC: las filas de iconos, colores, estilos y miniaturas se reparten en varias líneas en vez de cortarse; la rueda del ratón mueve las que quedan de lado; la hoja de cada botón es más ancha',
+    'En PC: al pasar el ratón por la vista de la radio se marca la pieza y su nombre antes de tocarla',
+    'Ctrl+S guarda el diseño con nombre (Esc cierra ventanas y Ctrl+Z deshace, como antes)',
+    'Editor de una imagen: si sale en una vista conocida, se ve en su sitio real dentro de esa vista, no en una posición aproximada']],
+  ['2026-10-27-7',['Exportar → Automático → «Que se instale solo al arrancar»: para el USB con ULC2_recovery. Al arrancar con el USB, la radio pregunta si instalar el diseño (Sí/No con el dedo), lo instala, lo comprueba y se reinicia. Sin Total Commander y sin lápiz',
     'Si dices que no, o si algo falla, se abre Total Commander como siempre. Tu Medianav.mscr de antes queda guardado en la carpeta Mediaskinhz',
     '«Deshacer en el coche» del historial también se instala solo al arrancar']],
   ['2026-10-27-6',['Corregido: los iconos de la barra de abajo del teléfono (micro, altavoz del móvil, altavoz del coche, llamada entrante, todas) se perdían con un estilo o al cambiarles el color. La textura de rayas del estado pulsado se confundía con el dibujo',

@@ -23,17 +23,25 @@ const vwList=s=>(VW.data||[]).filter(o=>o.s===s);
 const vwBand=s=>{const L=vwList(s),k=(S.vw||(S.vw={}))[s]||{};return k.band??(L[0]||{}).band??''};
 function vwCur(s){const L=vwList(s);if(!L.length)return null;const k=(S.vw||(S.vw={}))[s]||{},b0=vwBand(s),inB=L.filter(o=>o.band===b0||!o.band);
   return inB.find(o=>o.v===k.v)||inB.find(o=>VMAIN.test(o.v))||inB[0]||L[0]}
-function drawView(x,V,rc,press){
-  for(let i=0;i<V.c.length;i++){const [f,cx,cy,w,h,,t,lr,col,opt]=V.c[i],F=f&&byName(f);
-    x.globalAlpha=opt?.3:1;
-    if(F){const fw=vwFw(F,w,h),fr=Math.round(F.w/fw),st=i===press&&fr>1?1:0;x.drawImage(rc(F),st*fw,0,fw,F.h,cx,cy,fw,F.h)}
+// hl: {lc, st} resalta una imagen (editor) y la dibuja en ese estado; hov: índice bajo el ratón
+function drawView(x,V,rc,press,hl,hov){const HL=[];
+  for(let i=0;i<V.c.length;i++){const [f,cx,cy,w,h,,t,lr,col,opt]=V.c[i],F=f&&byName(f),me=hl&&f===hl.lc;
+    x.globalAlpha=opt&&!me?.3:1;
+    if(F){const fw=vwFw(F,w,h),fr=Math.round(F.w/fw),st=me?Math.min(hl.st||0,fr-1):i===press&&fr>1?1:0;x.drawImage(rc(F),st*fw,0,fw,F.h,cx,cy,fw,F.h);if(me)HL.push([cx,cy,fw,F.h])}
     else if(!t&&w<800){x.save();x.setLineDash([5,5]);x.strokeStyle='rgba(255,255,255,.16)';x.lineWidth=1;x.strokeRect(cx+.5,cy+.5,w-1,h-1);x.restore()}
     if(t){const [lx,ly,lw,lh]=lr;x.save();x.font=`600 ${Math.round(Math.max(13,Math.min(24,lh*.6)))}px Tahoma,Inter,sans-serif`;x.textAlign='center';x.textBaseline='middle';
-      x.fillStyle=i===press&&F&&frames(F)>1?'#000':col;x.fillText(t,lx+lw/2,ly+lh/2,Math.max(10,lw-8));x.restore()}}x.globalAlpha=1}
-function vwHit(V,c,e){const r=c.getBoundingClientRect(),px=(e.clientX-r.left)*800/r.width,py=(e.clientY-r.top)*480/r.height;
-  for(let i=V.c.length-1;i>=0;i--){const [f,cx,cy,w,h]=V.c[i],F=f&&byName(f);if(!F||w>=800)continue;const fw=vwFw(F,w,h);if(px>=cx&&px<cx+Math.max(w,fw)&&py>=cy&&py<cy+Math.max(h,F.h))return {i,F}}
-  // las barras de arriba ocupan todo el ancho: solo si no hay nada encima
-  for(let i=V.c.length-1;i>=0;i--){const [f,cx,cy,w,h]=V.c[i],F=f&&byName(f);if(F&&px>=cx&&px<cx+w&&py>=cy&&py<cy+h)return {i,F}}return {i:-1}}
+      x.fillStyle=i===press&&F&&frames(F)>1?'#000':col;x.fillText(t,lx+lw/2,ly+lh/2,Math.max(10,lw-8));x.restore()}}
+  x.globalAlpha=1;
+  for(const [a,b,c,d] of HL){x.save();x.strokeStyle='#3ddc9a';x.lineWidth=4;x.shadowColor='#3ddc9a';x.shadowBlur=12;x.strokeRect(a-3,b-3,c+6,d+6);x.restore()}
+  if(hov>=0&&V.c[hov]&&hov!==press){const [f,cx,cy,w,h]=V.c[hov],F=f&&byName(f);if(F){const fw=vwFw(F,w,h);x.save();x.setLineDash([7,5]);x.strokeStyle='#3ddc9a';x.lineWidth=2.5;x.strokeRect(cx+1,cy+1,fw-2,F.h-2);
+    const nm=pretty(F);x.font='600 15px Inter,sans-serif';const tw=x.measureText(nm).width+14,ty=cy>30?cy-26:Math.min(454,cy+F.h+4),tx=Math.max(0,Math.min(800-tw,cx));x.setLineDash([]);x.fillStyle='rgba(5,20,14,.92)';x.fillRect(tx,ty,tw,22);x.fillStyle='#3ddc9a';x.fillText(nm,tx+7,ty+16);x.restore()}}}
+function vwHit(V,c,e){const r=c.getBoundingClientRect(),px=(e.clientX-r.left)*800/r.width,py=(e.clientY-r.top)*480/r.height;let best=-1,ba=1e9,bF=null;
+  // gana la pieza más pequeña bajo el dedo: así una tecla gana a la barra de la lista que tiene encima, y un botón a la barra de arriba
+  for(let i=V.c.length-1;i>=0;i--){const [f,cx,cy,w,h,,,,,opt]=V.c[i],F=f&&byName(f);if(!F)continue;const fw=vwFw(F,w,h),W=Math.max(w,fw),H=Math.max(h,F.h);
+    if(px>=cx&&px<cx+W&&py>=cy&&py<cy+H){const ar=W*H*(opt?4:1);if(ar<ba){ba=ar;best=i;bF=F}}}
+  return best>=0?{i:best,F:bF}:{i:-1}}
+function vwFor(F,scr){if(VW.st!==2){if(!VW.p)loadVistas().then(()=>schedule());return null}const L=(VW.data||[]).filter(o=>o.c.some(c=>c[0]===F.lc));if(!L.length)return null;
+  const cur=VWS.has(scr)?vwCur(scr):null;return cur&&L.includes(cur)?cur:L.find(o=>o.s===scr&&VMAIN.test(o.v))||L.find(o=>o.s===scr)||L[0]}
 function vwBar(s){const el=$('#sc-vw');if(!el)return;
   if(VW.st!==2){el.innerHTML=`<p class="hint" style="padding:0">${VW.st===3?'No se han podido cargar las vistas de dentro (hace falta conexión la primera vez). <button class="btn o sm" data-rt>Reintentar</button>':'Cargando las vistas de dentro…'}</p>`;
     const rt=el.querySelector('[data-rt]');if(rt)rt.onclick=()=>{loadVistas().then(()=>{vwBar(s);schedule()});vwBar(s)};return}
@@ -66,11 +74,11 @@ function scrScreen(v,r){
       <div class="grid sc-grid">${btns.map(tile).join('')}</div></div>`:''}
     ${rest.length?`<div class="card"><h3>Otras piezas <small class="cnt">${rest.length}</small></h3><p class="note">Barras, listas, fondos de ventanas… Tócalas para cambiar sus colores o sustituirlas.</p><div class="list">${rest.map(F=>fileRow(F,KINDL.get(kindOf(F)))).join('')}</div></div>`:''}
     </div></div>`;
-  if(bg){const c=$('#pv'),vw=VWS.has(s);let press=-1,down=-1;mountPreview(c,()=>({scr:s,orig:S.hcmp==='orig',view:vw?vwCur(s):null,press}));
+  if(bg){const c=$('#pv'),vw=VWS.has(s);let press=-1,down=-1,hov=-1;mountPreview(c,()=>({scr:s,orig:S.hcmp==='orig',view:vw?vwCur(s):null,press,hov}));
     if(vw){vwBar(s);if(VW.st!==2)loadVistas().then(()=>{vwBar(s);schedule()});
       c.onpointerdown=e=>{const V=vwCur(s);if(!V)return;down=vwHit(V,c,e).i;press=down;schedule()};
-      c.onpointermove=e=>{if(e.pointerType!=='mouse')return;const V=vwCur(s);if(!V)return;const h=vwHit(V,c,e);c.style.cursor=h.i>=0?'pointer':'default'};
-      c.onpointerleave=c.onpointercancel=()=>{down=press=-1;schedule()};
+      c.onpointermove=e=>{if(e.pointerType!=='mouse')return;const V=vwCur(s);if(!V)return;const h=vwHit(V,c,e);c.style.cursor=h.i>=0?'pointer':'default';if(h.i!==hov){hov=h.i;schedule()}};
+      c.onpointerleave=c.onpointercancel=()=>{down=press=hov=-1;schedule()};
       c.onpointerup=e=>{const V=vwCur(s),i=down;down=press=-1;schedule();if(!V||i<0)return;const h=vwHit(V,c,e);if(h.i!==i)return;
         if(isBtnLike(h.F))btnSheet(h.F,()=>{mountThumbs(v);schedule()});else go({n:'edit',p:h.F.path})}}$('#sc-cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.hcmp=b.dataset.v;$$('#sc-cmp button').forEach(x=>x.setAttribute('aria-pressed',x===b));schedule()}}
   if(hb)btnSheet(hb,()=>mountThumbs(v),$('#sc-btn'));
@@ -81,8 +89,9 @@ function scrScreen(v,r){
     bk.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;bk.querySelectorAll('.swc').forEach(x=>x.setAttribute('aria-pressed',x===b));setBk(b.dataset.h==='none'?null:+b.dataset.h)};
     bk.querySelector('[data-pick]').onchange=e=>{const [h,,l]=hexHsl(e.target.value);before();const o={...defOps(),...(S.ops.file[bg.path]||{})};o.map={...(o.map||{}),13:{to:Math.round(h),ts:.6,tl:Math.min(.85,l)}};setFileOps(bg,o);bump()}}
   const lk=$('#sc-lk');if(lk)lk.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;const k=b.dataset.v,nm=(LOOKS().find(x=>x[0]===k)||['',''])[1];
-    if(!await confirmBS({title:`«${nm}» en ${scrName(s)}`,text:`Se aplicará a los ${sty.length} botones de esta pantalla. El icono y el color de cada uno se mantienen. Podrás deshacerlo.`,ok:'Aplicar'}))return;
-    before();for(const G of sty)(g.per[G.path]||(g.per[G.path]={})).look=k;toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(sty);render(true);toast(`${sty.length} botones con «${nm}»`,{label:'Deshacer',fn:undo})};
+    const L=k==='orig'?[...new Set([...sty,...btns.filter(G=>((g.per[G.path]||{}).look||'orig')!=='orig')])]:sty;
+    if(!await confirmBS({title:`«${nm}» en ${scrName(s)}`,text:k==='orig'?`Los ${L.length} botones de esta pantalla vuelven al estilo original de Renault (también las barras y piezas raras a las que pusiste estilo). El icono y el color de cada uno se mantienen. Podrás deshacerlo.`:`Se aplicará a los ${L.length} botones de esta pantalla (se saltan las barras alargadas). El icono y el color de cada uno se mantienen. Podrás deshacerlo.`,ok:'Aplicar'}))return;
+    before();for(const G of L)(g.per[G.path]||(g.per[G.path]={})).look=k;toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(L);render(true);toast(`${L.length} botones con «${nm}»`,{label:'Deshacer',fn:undo})};
   // colores de marco e icono para todos los botones de la pantalla a la vez
   const allCol=async(key,h)=>{before();for(const G of sty){const q=g.per[G.path]||(g.per[G.path]={});if(h==null)delete q[key];else q[key]=h}
     toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(sty);render(true);toast(`Color cambiado en ${sty.length} botones`,{label:'Deshacer',fn:undo})};

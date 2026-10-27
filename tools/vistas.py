@@ -30,7 +30,7 @@ ES = {'Main': 'Principal', 'List': 'Lista', 'Presets': 'Presintonías', 'Options
   'Financial': 'Economía', 'Transport': 'Tráfico', 'Warning': 'Alerta', 'Event': 'Evento', 'Special Event': 'Evento especial',
   'Program Info': 'Información del programa', 'Region': 'Regional', 'Nearby': 'Cercanas', 'Start': 'Iniciar',
   'Swallowed In The Sea': 'Título de la canción', 'COLDPLAY': 'ARTISTA'}
-# Imágenes que la radio solo enseña a veces (p. ej. la carátula vacía de Multimedia): se dibujan tenues
+# Imágenes que la radio solo enseña a veces (la carátula vacía de Multimedia, la barra que ilumina la fila pulsada de una lista): se dibujan tenues
 OPT = {'media/media_album_case_noalbum_img.bmp'}
 out, seen, sets = [], collections.Counter(), set()
 for sc in src['scenarios']:
@@ -65,7 +65,7 @@ for sc in src['scenarios']:
         lr = c.get('label_rect') or [x, y, w, h]
         col = (c.get('colors') or [16777215])[0]
         rgb = '#%02x%02x%02x' % (col & 255, (col >> 8) & 255, (col >> 16) & 255)   # COLORREF 0x00BBGGRR
-        C.append([f, x, y, w, h, {'button': 'b', 'image': 'i', 'list': 'l', 'progress': 'p'}[c['kind']], t, lr, rgb] + ([1] if f in OPT else []))
+        C.append([f, x, y, w, h, {'button': 'b', 'image': 'i', 'list': 'l', 'progress': 'p'}[c['kind']], t, lr, rgb] + ([1] if f in OPT or 'list_press' in f else []))
     out.append({'s': SCR[g], 'band': band, 'v': nm, 'c': C})
 BO = {b: i for i, b in enumerate(['FM', 'AM', 'DAB', 'USB', 'BT', 'iPod', 'aha', 'AUX', ''])}
 VO = ['Principal', 'Reproductor', 'Marcador', 'Lista', 'Agenda', 'Presintonías', 'Opciones', 'Avisos', 'Selector', 'Ventana', 'Asistente', 'Teclado']

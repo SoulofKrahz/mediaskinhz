@@ -418,6 +418,12 @@ body[data-route="edit"] .toast,body[data-route="layout"] .toast{bottom:calc(18px
   .sticky-pv{position:static;margin:0;padding:0;border:0;background:none}
   .strip,.chips.scroll{margin-inline:0;padding-inline:0}
   .chips.scroll{flex-wrap:wrap}
+  /* con ratón no hay arrastre lateral cómodo: las filas de iconos, colores y estilos se reparten en varias líneas */
+  .hs,.hsw .swg,.strip{flex-wrap:wrap;overflow:visible;scroll-snap-type:none}
+  .hs .icb{flex:0 0 84px}.hs .ocd{flex:0 0 118px}
+  .bs{max-width:780px;max-height:90%;scroll-padding:330px 0 96px}
+  .bs .hs .icb{flex-basis:80px}
+  #pv{cursor:default}
   .toast{bottom:24px}
   .grid{grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:14px}
   .tile .tt{height:108px}

@@ -159,6 +159,12 @@ async function run(browser, label, viewport, mobile) {
   ok(await p.evaluate(() => { const F = S.files.find(f => f.sec === 'HOME'); const e = autoEntries([{ F, u: new Uint8Array(F.buf) }], false, { boot: true, name: 'Prueba' }).ents.map(x => x.name);
     const m = new TextDecoder('windows-1252').decode(autoEntries([{ F, u: new Uint8Array(F.buf) }], false, { boot: true, name: 'Prueba' }).ents.find(x => x.name === 'Medianav.mscr').data);
     return e.includes('Medianav.mscr') && e.includes('Mediaskinhz/Medianav-original.mscr') && /MicomManager/.test(m) && /RunWait/.test(m) && /ttcmd/.test(m) && !/[^\x00-\xff]/.test(m); }), 'el modo automático trae el arranque desde el USB (Medianav.mscr) y sigue abriendo Total Commander');
+  // En las vistas gana la pieza más pequeña bajo el dedo (una tecla, no la barra invisible de la lista que tiene encima)
+  ok(await p.evaluate(() => { const V = { c: [['__a', 0, 0, 100, 100, 'b', '', [0, 0, 100, 100], '#fff'], ['__b', 0, 0, 400, 60, 'b', '', [0, 0, 400, 60], '#fff', 1]] };
+    const A = { w: 400, h: 100, name: 'a' }, B = { w: 1600, h: 60, name: 'b' }; const save = S.lc; S.lc = new Map([['__a', A], ['__b', B]]); const fr = S.frames; S.frames = { };
+    A.path = '__a'; B.path = '__b'; A.fdef = 4; B.fdef = 4; const c = { getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 480 }) };
+    const h = vwHit(V, c, { clientX: 20, clientY: 20 }); S.lc = save; S.frames = fr; return h.F === A; }), 'en las vistas se toca la pieza pequeña, no la barra de encima');
+  ok(await p.evaluate(() => /Tecla 3 del teclado 2/.test(pretty({ name: 'phone_keyboard2_3_btn' })) && /fila pulsada/.test(pretty({ name: 'phone_keyboard_list_press' }))), 'las teclas del teléfono tienen nombres que se entienden');
   // Ventana de cada pantalla y «Común»: abren y enseñan sus bloques
   for (const sc of ['radio', 'media', 'phone', 'eco', 'setting', 'common']) {
     await p.evaluate(s => go({ n: 'scr', s }), sc); await p.waitForTimeout(400);
