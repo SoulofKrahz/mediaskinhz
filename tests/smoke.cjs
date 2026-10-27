@@ -120,7 +120,7 @@ async function run(browser, label, viewport, mobile) {
   ok(await p.evaluate(() => { applyGen(); return genTargets().every(F => F.rep && outBytes(F).length === 1078 + (((F.w + 3) & ~3) * F.h)); }), 'aplica el estilo (relieve en círculo) y los BMP salen bien');
   await p.evaluate(() => { undo(); S.gen.ifx = 'none'; S.gen.ibox = 'none'; }); await p.waitForTimeout(300);
   const sty = await p.evaluate(() => { const F = genTargets()[0], bad = []; for (const [k] of GSTYLES) { try { const c = genTile(F, { ...S.gen, style: k }); const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let v = 0; for (let i = 0; i < d.length; i += 4) v += d[i] + d[i + 1] + d[i + 2]; if (!v) bad.push(k); } catch (e) { bad.push(k + ': ' + e.message); } } return { n: GSTYLES.length, bad }; });
-  ok(sty.n >= 14 && !sty.bad.length, `los ${sty.n} estilos de botón se dibujan` + (sty.bad.length ? ': fallan ' + sty.bad.join(', ') : ''));
+  ok(sty.n >= 22 && !sty.bad.length, `los ${sty.n} estilos de botón se dibujan` + (sty.bad.length ? ': fallan ' + sty.bad.join(', ') : ''));
   // Diálogo para poner nombre (lo usan «Mis diseños»)
   const nm = p.evaluate(() => promptBS({ title: 'Prueba', value: 'Mi diseño' })); await p.waitForTimeout(300);
   await p.fill('#pb-in', 'Neón azul'); await p.keyboard.press('Enter');

@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-27-2';
+const VER='2026-10-27-3';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,7 +11,9 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['«Usar en todos los botones» copia también el color del marco y el del icono, no solo el estilo',
+  [VER,['8 estilos de botón nuevos, pensados para que queden bien también en los botones de dentro: Futurista grande, Futurista marco, Biselado, Escáner, Luces LED, Doble línea, Barra lateral y Haz central',
+    'Futurista se queda como estaba (en Inicio y dentro): «Futurista grande» da a los botones de dentro las esquinas grandes de Inicio']],
+  ['2026-10-27-2',['«Usar en todos los botones» copia también el color del marco y el del icono, no solo el estilo',
     'En la ventana de cada pantalla, color del marco y del icono para todos sus botones a la vez',
     'El estilo «Plano» enseña más el color elegido',
     'Los botones de solo texto (Principal, Lista, Presintonías, Opciones…) ya no reciben un icono que no tenían']],
@@ -40,7 +42,7 @@ const CHANGES=[
     'Pestaña Iconos: trazo, acabado y fondo del icono a la vista. Pestaña Botones: el icono y el color de cada uno, con «Cambiar»']],
   ['2026-10-26-7.1',['Más fácil de encontrar: en «Rediseñar los botones», la lista «Icono y color de cada botón» va justo debajo de la pantalla, con «Cambiar» en cada uno',
     'En la hoja de cada botón, «Mis iconos» (para subir el tuyo) y «Ver todos» están explicados']],
-  ['2026-10-26-7',['9 estilos de botón nuevos (14 en total): Mosaico, Mínimo, Aluminio, Carbono, Aurora, Futurista, Esmerilado, Suave y Degradado vivo, cada uno con sus 4 estados',
+  ['2026-10-26-7',['8 estilos de botón nuevos (14 en total): Mosaico, Mínimo, Aluminio, Carbono, Aurora, Futurista, Esmerilado, Suave y Degradado vivo, cada uno con sus 4 estados',
     'Estilo de los iconos completo, común a todos (biblioteca, los tuyos y el original): trazo (ahora también Extra), acabado y fondo',
     'Acabados: liso, dos tonos, degradado, relieve, sombra, contorno, brillo y metal',
     'Fondo del icono: círculo, cuadrado redondeado o aro; dentro, el icono se invierte solo para que contraste en cada estado',
