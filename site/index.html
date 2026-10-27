@@ -1201,9 +1201,10 @@ function scrExport(v){
       <li>Mete el USB y arranca la radio como haces para entrar a Total Commander.</li>
       <li>Espera unos 25 s. Saldrá «¿Hacerlo ahora?» con el nombre del diseño: pulsa <b>Sí</b> con el dedo.</li>
       <li>El script guarda en el USB lo que hay ahora en la radio, copia las imágenes y comprueba cada una. Si algo falla, deja la radio como estaba y abre Total Commander.</li>
-      <li>Cuando diga «Listo», <b>saca el USB</b> y pulsa Aceptar: la radio se reinicia con el diseño nuevo.</li>
+      <li>Una ventana enseña el progreso. Al terminar sale «Instalación completada»: <b>primero pulsa Aceptar</b> y, <b>cuando la pantalla se apague</b>, saca el USB. Si sacas el USB antes de Aceptar, la pantalla se queda en negro (vuelve a meterlo y reinicia).</li>
+      <li>Si la radio arranca otra vez con el USB puesto, no se reinstala: te ofrece reiniciar o abrir Total Commander.</li>
       <li>Si pulsas <b>No</b>, se abre Total Commander como siempre. Para deshacer: Ajustes e historial → Historial → «Deshacer en el coche», y se instala igual.</li></ol>
-      <p class="warnbox">Sin probar todavía en el coche. Antes de descomprimir, guarda una copia de tu USB. Si el arranque no sale como esperas, vuelve a poner tu <code>Medianav.mscr</code> (está en <code>Mediaskinhz</code>) y todo queda como antes.</p>`:S.xmode==='auto'?`<ol class="steps">
+      <p class="note">Probado en el coche. Antes de descomprimir, guarda una copia de tu USB. Si el arranque no sale como esperas, vuelve a poner tu <code>Medianav.mscr</code> (está en <code>Mediaskinhz</code>) y todo queda como antes.</p>`:S.xmode==='auto'?`<ol class="steps">
       <li><b>Solo la primera vez:</b> copia <code>REINICIAR.exe</code> de tu USB dentro de la carpeta <code>Mediaskinhz</code> (así el script puede reiniciar la radio al terminar).</li>
       <li>Descomprime el ZIP en la raíz del USB y acepta sobrescribir. Quedará la carpeta <code>Mediaskinhz</code> con el script y las imágenes.</li>
       <li>Arranca el MediaNav con el USB y abre Total Commander. Toca una vez <code>MortScript.exe</code> (prepara la radio para abrir scripts) y después <code>Mediaskinhz\\instalar.mscr</code>.</li>
@@ -1268,7 +1269,7 @@ function readme(res,inc,stamp,mode){const R=S.root,lgu=mode==='lgu';const head=[
     '','El paquete copia las imágenes en \\Storage Card\\System\\Img\\'+R+'. Aún no se ha probado en este coche: empieza con una sola imagen.','Aviso: el instalador también respalda, formatea y restaura la partición de ajustes y envía una orden al microcontrolador aunque no haya firmware. No apagues durante la instalación.'];
   const ab=['Instalación automática al arrancar con el USB:','1. Descomprime este ZIP en la raíz de tu USB de siempre (el de ULC2_recovery, MortScript y Total Commander) y acepta sobrescribir.','   Cambia Medianav.mscr; el de antes queda en Mediaskinhz\\Medianav-original.mscr.',
     '2. Mete el USB y arranca la radio como para entrar a Total Commander. A los ~25 s pregunta si instalar: pulsa Sí.','3. Guarda lo que hay en Mediaskinhz\\antes-de-instalar, copia, comprueba cada imagen y, si algo falla, deja la radio como estaba y abre Total Commander.',
-    '4. Cuando diga «Listo», SACA EL USB y pulsa Aceptar: la radio se reinicia.','5. Si pulsas No, abre Total Commander como siempre. Lo que ha hecho queda en Mediaskinhz\\registro.txt.','','Sin probar todavía en el coche. Si el arranque no va como esperas, vuelve a poner tu Medianav.mscr de antes.'];
+    '4. Al terminar sale «Instalación completada»: PRIMERO pulsa ACEPTAR y, cuando la pantalla se apague, saca el USB.','   (Si sacas el USB antes de Aceptar, la pantalla se queda en negro: vuelve a meterlo y reinicia.)','5. Si pulsas No, abre Total Commander como siempre. Lo que ha hecho queda en Mediaskinhz\\registro.txt.','','Sin probar todavía en el coche. Si el arranque no va como esperas, vuelve a poner tu Medianav.mscr de antes.'];
   const au=['Instalación automática (MortScript):','0. Solo la primera vez: copia REINICIAR.exe de tu USB dentro de la carpeta Mediaskinhz.','1. Descomprime este ZIP en la raíz del USB y acepta sobrescribir.',
     '2. Arranca el MediaNav con el USB y abre Total Commander.','3. Toca una vez MortScript.exe (prepara la radio para abrir scripts) y después Mediaskinhz\\instalar.mscr.',
     '4. Acepta. El script guarda en Mediaskinhz\\antes-de-instalar lo que hay ahora en la radio, copia las imágenes, comprueba el tamaño de cada una y, si alguna falla, deja la radio como estaba.','5. Al terminar ofrece reiniciar. Lo que ha hecho queda en Mediaskinhz\\registro.txt.',
@@ -1821,18 +1822,31 @@ function dirsOf(paths){const out=[],seen=new Set();for(const p of paths){const p
 // Una cadena de MortScript no puede llevar comillas dobles
 const qs=s=>'"'+String(s).replace(/"/g,"'")+'"';
 
-function mortInstall(R,items,id,when){
-  const n=items.length,P=items.map(x=>winP(x.path)),D=dirsOf(items.map(x=>x.path));
-  const L=[];const w=s=>L.push(s);
-  w(`# Mediaskinhz · instalador automático · paquete ${id}`);
-  w(`# Copia ${n} ${n===1?'imagen':'imágenes'} en \\Storage Card\\System\\Img\\${R}. Generado el ${when}.`);
-  w('# Ábrelo desde Total Commander en la radio (antes, toca una vez MortScript.exe para que los .mscr se abran con él).');
+// Barra de progreso en texto para la ventana de estado de MortScript (no tiene barra de verdad; sin «%», que MortScript podría interpretar)
+const pbar=(i,n,w=20)=>{const k=Math.round(i/n*w);return '['+'#'.repeat(k)+'-'.repeat(w-k)+']  '+i+' de '+n};
+const plural=(n,a,b)=>n===1?a:b;
+// Reinicio: REINICIAR.exe se copia antes a la memoria de la radio (\Temp) para que no dependa de que el USB siga puesto
+function mortReboot(w,ind){const I=ind||'';
+  w(I+'rb2 = rb');
+  w(I+'If ( DirExists( "\\Temp" ) )');
+  w(I+'  Copy( rb, "\\Temp\\msz_reiniciar.exe", 1 )');
+  w(I+'  If ( FileExists( "\\Temp\\msz_reiniciar.exe" ) )');
+  w(I+'    rb2 = "\\Temp\\msz_reiniciar.exe"');
+  w(I+'  EndIf');
+  w(I+'EndIf')}
+function mortInstall(R,items,id,when,o){o=o||{};
+  const n=items.length,P=items.map(x=>winP(x.path)),D=dirsOf(items.map(x=>x.path)),nm=String(o.name||'Mediaskinhz').replace(/"/g,"'"),act=o.undo?'Restaurar las imágenes originales':`Instalar «${nm}»`;
+  const L=[];const w=s=>L.push(s),step=Math.max(1,Math.round(n/40));
+  const st=(t)=>w(`StatusMessage( ${qs(t)} )`);
+  w(`# Mediaskinhz · instalador · paquete ${id} · ${act}`);
+  w(`# Copia ${n} ${plural(n,'imagen','imágenes')} en \\Storage Card\\System\\Img\\${R}. Generado el ${when}.`);
+  w('# Lo abre Medianav.mscr al arrancar con el USB, o tú desde Total Commander (toca antes una vez MortScript.exe).');
   w('ErrorLevel( "off" )');
   w('base = SystemPath( "ScriptPath" )');
   w('If ( not FileExists( base \\ "instalar.mscr" ) )');
   w('  base = "\\MD\\Mediaskinhz"');
   w('EndIf');
-  w('# Lanzado por Medianav.mscr al arrancar con el USB: ya se ha preguntado y la radio ya está preparada');
+  w('# Lanzado por Medianav.mscr al arrancar: ya se ha preguntado y la radio ya está preparada');
   w('desde = FileExists( base \\ "desde-arranque.tmp" )');
   w('If ( desde )');
   w('  Delete( base \\ "desde-arranque.tmp" )');
@@ -1847,65 +1861,77 @@ function mortInstall(R,items,id,when){
   w('reg = base \\ "registro.txt"');
   w(`marca = base \\ "instalado-${id}.txt"`);
   w('If ( not DirExists( dst ) )');
-  w('  Message( "No encuentro la carpeta de imágenes de la radio:^NL^" & dst & "^NL^^NL^No se ha tocado nada.", "Mediaskinhz" )');
+  w(`  Message( "No se ha encontrado la carpeta de imágenes de la radio:^NL^" & dst & "^NL^^NL^No se ha modificado nada.", "Mediaskinhz · ${act}" )`);
   w('  Exit');
   w('EndIf');
   w(`If ( not FileExists( nuevo \\ ${qs(P[0])} ) )`);
-  w('  Message( "Faltan las imágenes nuevas junto al script (carpeta archivos). Descomprime el ZIP entero en el USB.^NL^^NL^No se ha tocado nada.", "Mediaskinhz" )');
+  w(`  Message( "Faltan las imágenes del diseño en el USB (carpeta Mediaskinhz\\archivos).^NL^^NL^Descomprime el ZIP completo en la raíz del USB.^NL^^NL^No se ha modificado nada.", "Mediaskinhz · ${act}" )`);
   w('  Exit');
   w('EndIf');
   w('repetido = FileExists( marca )');
   w('If ( not desde )');
   w('  If ( repetido )');
-  w(`    If ( not Question( "Este paquete ya se instaló.^NL^^NL^¿Copiar otra vez las ${n} imágenes? La copia de seguridad de antes no se toca.", "Mediaskinhz", "YesNo" ) )`);
+  w(`    If ( not Question( "Este paquete ya está instalado.^NL^^NL^¿Copiar otra vez las ${n} ${plural(n,'imagen','imágenes')}? La copia de seguridad anterior se conserva.", "Mediaskinhz · ${act}", "YesNo" ) )`);
   w('      Exit');
   w('    EndIf');
   w('  Else');
-  w(`    If ( not Question( "Se van a copiar ${n} ${n===1?'imagen':'imágenes'} de Mediaskinhz en la radio.^NL^^NL^Antes se guarda en el USB lo que hay ahora, y si algo falla se deja todo como estaba.^NL^^NL^¿Seguir?", "Mediaskinhz", "YesNo" ) )`);
+  w(`    If ( not Question( "${act}^NL^^NL^Imágenes: ${n}^NL^Paquete: ${when}^NL^^NL^Antes se guarda en el USB una copia de lo que hay en la radio. Si algo falla, la radio vuelve a su estado anterior.^NL^^NL^¿Continuar?", "Mediaskinhz", "YesNo" ) )`);
   w('      Exit');
   w('    EndIf');
   w('  EndIf');
   w('EndIf');
-  w(`WriteFile( reg, "=== " & FormatTime( "d/m/Y H:i:s" ) & " · instalar paquete ${id} (${n} imágenes)^NL^", 1 )`);
+  w(`WriteFile( reg, "=== " & FormatTime( "d/m/Y H:i:s" ) & " · ${act} · paquete ${id} (${n} imágenes)^NL^", 1 )`);
+  w('# Ventana de progreso');
+  w('StatusType( ST_MESSAGE )');
+  w(`StatusInfo( "Mediaskinhz", ${qs(act)} )`);
   w('# 1. Copia de seguridad de lo que hay ahora en la radio');
   w('If ( not repetido )');
+  st('Paso 1 de 2 · Copia de seguridad en el USB^NL^^NL^'+pbar(0,n));
   w('  MkDir( antes )');
   w(`  MkDir( antes \\ "${R}" )`);
   for(const d of D)w(`  MkDir( antes \\ ${qs(R+'\\'+d)} )`);
   w('  fallos = 0');
-  for(const p of P){w(`  If ( FileExists( dst \\ ${qs(p)} ) )`);w(`    Copy( dst \\ ${qs(p)}, antes \\ ${qs(R+'\\'+p)}, 1 )`);
-    w(`    If ( FileSize( antes \\ ${qs(R+'\\'+p)} ) <> FileSize( dst \\ ${qs(p)} ) )`);w('      fallos = fallos + 1');w(`      WriteFile( reg, "No se pudo copiar a la copia de seguridad: ${p.replace(/"/g,"'")}^NL^", 1 )`);w('    EndIf');w('  EndIf')}
+  for(const [i,p] of P.entries()){w(`  If ( FileExists( dst \\ ${qs(p)} ) )`);w(`    Copy( dst \\ ${qs(p)}, antes \\ ${qs(R+'\\'+p)}, 1 )`);
+    w(`    If ( FileSize( antes \\ ${qs(R+'\\'+p)} ) <> FileSize( dst \\ ${qs(p)} ) )`);w('      fallos = fallos + 1');w(`      WriteFile( reg, "No se pudo copiar a la copia de seguridad: ${p.replace(/"/g,"'")}^NL^", 1 )`);w('    EndIf');w('  EndIf');
+    if((i+1)%step===0||i===n-1)st('Paso 1 de 2 · Copia de seguridad en el USB^NL^^NL^'+pbar(i+1,n))}
   w('  If ( fallos > 0 )');
+  w('    StatusType( ST_HIDDEN )');
   w('    WriteFile( reg, "Cancelado: la copia de seguridad falló. No se ha tocado la radio.^NL^", 1 )');
-  w('    Message( "No he podido guardar la copia de seguridad de " & fallos & " archivos (¿USB lleno o protegido?).^NL^^NL^No se ha tocado la radio.", "Mediaskinhz" )');
+  w(`    Message( "No se ha podido guardar la copia de seguridad de " & fallos & " archivos (¿USB lleno o protegido contra escritura?).^NL^^NL^Por seguridad no se ha modificado la radio.", "Mediaskinhz · ${act}" )`);
   w('    Exit');
   w('  EndIf');
   w('EndIf');
   w('# 2. Copiar las imágenes nuevas y comprobar cada una');
   w('fallos = 0');
-  for(const [i,p] of P.entries()){w(`Copy( nuevo \\ ${qs(p)}, dst \\ ${qs(p)}, 1 )`);w(`If ( FileSize( dst \\ ${qs(p)} ) <> ${items[i].size} )`);w('  fallos = fallos + 1');w(`  WriteFile( reg, "Falló: ${p.replace(/"/g,"'")}^NL^", 1 )`);w('EndIf')}
+  st('Paso 2 de 2 · Instalando y comprobando^NL^^NL^'+pbar(0,n));
+  for(const [i,p] of P.entries()){w(`Copy( nuevo \\ ${qs(p)}, dst \\ ${qs(p)}, 1 )`);w(`If ( FileSize( dst \\ ${qs(p)} ) <> ${items[i].size} )`);w('  fallos = fallos + 1');w(`  WriteFile( reg, "Falló: ${p.replace(/"/g,"'")}^NL^", 1 )`);w('EndIf');
+    if((i+1)%step===0||i===n-1)st('Paso 2 de 2 · Instalando y comprobando^NL^^NL^'+pbar(i+1,n))}
   w('If ( fallos > 0 )');
-  w('  # 3. Algo ha fallado: la radio vuelve a como estaba');
+  w('  # Algo ha fallado: la radio vuelve a como estaba');
+  st('Ha habido un error · Restaurando el estado anterior…');
   for(const p of P){w(`  If ( FileExists( antes \\ ${qs(R+'\\'+p)} ) )`);w(`    Copy( antes \\ ${qs(R+'\\'+p)}, dst \\ ${qs(p)}, 1 )`);w('  EndIf')}
+  w('  StatusType( ST_HIDDEN )');
   w('  WriteFile( reg, "Han fallado " & fallos & " archivos. Se ha vuelto a poner lo de antes.^NL^", 1 )');
-  w('  Message( "Han fallado " & fallos & " de las ' + n + ' imágenes, así que he vuelto a dejar la radio como estaba.^NL^^NL^El detalle está en registro.txt, en el USB.", "Mediaskinhz" )');
+  w(`  Message( "No se ha completado: han fallado " & fallos & " de ${n} imágenes.^NL^^NL^La radio se ha dejado como estaba. El detalle está en Mediaskinhz\\registro.txt, en el USB.", "Mediaskinhz · ${act}" )`);
   w('  Exit');
   w('EndIf');
   w(`WriteFile( marca, "Instalado el " & FormatTime( "d/m/Y H:i:s" ) & "^NL^" )`);
   w('WriteFile( base \\ "resultado-ok.txt", "ok" )');
   w(`WriteFile( reg, "Correcto: ${n} imágenes copiadas y comprobadas.^NL^", 1 )`);
-  w('# 4. Reiniciar para ver los cambios');
-  w('If ( desde and FileExists( rb ) )');
-  w(`  Message( "Listo: ${n} ${n===1?'imagen copiada y comprobada':'imágenes copiadas y comprobadas'}.^NL^^NL^SACA EL USB AHORA y después pulsa Aceptar: la radio se reiniciará con el diseño nuevo.^NL^^NL^(Si lo dejas puesto, al arrancar te preguntará otra vez.)", "Mediaskinhz" )`);
-  w('  Run( rb )');
-  w('  Exit');
-  w('EndIf');
+  w('StatusType( ST_HIDDEN )');
+  w('# 3. Reiniciar. Orden: primero ACEPTAR, después (con la pantalla apagada) sacar el USB');
   w('If ( FileExists( rb ) )');
-  w(`  If ( Question( "Listo: ${n} ${n===1?'imagen copiada y comprobada':'imágenes copiadas y comprobadas'}.^NL^^NL^¿Reiniciar la radio ahora para verlas?", "Mediaskinhz", "YesNo" ) )`);
-  w('    Run( rb )');
+  mortReboot(w,'  ');
+  w('  If ( desde )');
+  w(`    BigMessage( "${o.undo?'Restauración completada':'Instalación completada'}^NL^^NL^${n} ${plural(n,'imagen instalada y comprobada','imágenes instaladas y comprobadas')}.^NL^^NL^1. Pulsa ACEPTAR: la radio se reiniciará.^NL^2. Cuando la pantalla se apague, saca el USB.^NL^^NL^No saques el USB antes de pulsar ACEPTAR.", "Mediaskinhz" )`);
+  w('    Run( rb2 )');
+  w('    Exit');
+  w('  EndIf');
+  w(`  If ( Question( "${o.undo?'Restauración completada':'Instalación completada'}: ${n} ${plural(n,'imagen instalada y comprobada','imágenes instaladas y comprobadas')}.^NL^^NL^¿Reiniciar ahora la radio para aplicar el diseño?^NL^^NL^Si dices que sí, saca el USB cuando la pantalla se apague, no antes.", "Mediaskinhz", "YesNo" ) )`);
+  w('    Run( rb2 )');
   w('  EndIf');
   w('Else');
-  w(`  Message( "Listo: ${n} ${n===1?'imagen copiada y comprobada':'imágenes copiadas y comprobadas'}.^NL^^NL^Reinicia la radio para verlas (o copia REINICIAR.exe en la carpeta Mediaskinhz del USB para hacerlo desde aquí).", "Mediaskinhz" )`);
+  w(`  Message( "${o.undo?'Restauración completada':'Instalación completada'}: ${n} ${plural(n,'imagen instalada y comprobada','imágenes instaladas y comprobadas')}.^NL^^NL^Reinicia la radio para aplicar el diseño (no se ha encontrado REINICIAR.exe en el USB).", "Mediaskinhz" )`);
   w('EndIf');
   return L.join('\n')+'\n';
 }
@@ -1946,8 +1972,9 @@ function mortUndo(R,items,id,when){
   w('Else');
   w(`  WriteFile( reg, "Correcto: ${n} imágenes devueltas.^NL^", 1 )`);
   w('  If ( FileExists( rb ) )');
-  w(`    If ( Question( "Listo: ${n} ${n===1?'imagen devuelta':'imágenes devueltas'} a como estaban.^NL^^NL^¿Reiniciar la radio ahora?", "Mediaskinhz", "YesNo" ) )`);
-  w('      Run( rb )');
+  mortReboot(w,'    ');
+  w(`    If ( Question( "Restauración completada: ${n} ${n===1?'imagen devuelta':'imágenes devueltas'} a como estaban.^NL^^NL^¿Reiniciar ahora la radio?^NL^^NL^Si dices que sí, saca el USB cuando la pantalla se apague, no antes.", "Mediaskinhz", "YesNo" ) )`);
+  w('      Run( rb2 )');
   w('    EndIf');
   w('  Else');
   w(`    Message( "Listo: ${n} ${n===1?'imagen devuelta':'imágenes devueltas'} a como estaban. Reinicia la radio para verlo.", "Mediaskinhz" )`);
@@ -1961,7 +1988,7 @@ function mortUndo(R,items,id,when){
    pregunta si instalar el diseño del USB y, si no, abre Total Commander como siempre. ULC2_recovery.* no se tocan. */
 const MEDIANAV_ORIG='Run("\\Storage Card\\System\\MicomManager.exe")\nSleep(20000)\nClose(ActiveWindow())\nSleep(5000)\nRun("\\Windows\\explorer.exe")\nKill("nngnavi.exe")\nSleep(5000)\nKill("AppMain.exe")\nSleep(5000)\nRun("\\MD\\TTCMD\\ttcmd.exe")\n';
 function mortBoot(items,id,when,name,undo){
-  const n=items.length,L=[];const w=x=>L.push(x),que=undo?`devolver ${n} ${n===1?'imagen':'imágenes'} a como estaban`:`instalar el diseño «${String(name).replace(/"/g,"'")}» (${n} ${n===1?'imagen':'imágenes'})`;
+  const n=items.length,L=[];const w=x=>L.push(x),nm=String(name||'Mediaskinhz').replace(/"/g,"'"),act=undo?'Restaurar las imágenes originales':`Instalar el diseño «${nm}»`;
   w(`# Mediaskinhz · arranque con el USB · paquete ${id} (${when})`);
   w('# Sustituye a Medianav.mscr (lo abre ULC2_recovery.mscr). El de antes está en Mediaskinhz\\Medianav-original.mscr.');
   w('ErrorLevel( "off" )');
@@ -1977,29 +2004,39 @@ function mortBoot(items,id,when,name,undo){
   w('mz = usb \\ "Mediaskinhz"');
   w('inst = mz \\ "instalar.mscr"');
   w('ms = usb \\ "MortScript.exe"');
-  w('tc = 0');
+  w('rb = usb \\ "REINICIAR.exe"');
   w('If ( FileExists( inst ) and FileExists( ms ) )');
   w(`  If ( FileExists( mz \\ "instalado-${id}.txt" ) )`);
-  w(`    sigue = Question( "Mediaskinhz^NL^^NL^Esto ya está instalado: ${que}.^NL^^NL^¿Hacerlo otra vez?^NL^^NL^(No = abrir Total Commander)", "Mediaskinhz", "YesNo" )`);
-  w('  Else');
-  w(`    sigue = Question( "Mediaskinhz^NL^^NL^En el USB hay algo para la radio: ${que}.^NL^^NL^¿Hacerlo ahora? Antes se guarda en el USB lo que hay, y si algo falla se deja como estaba.^NL^^NL^(No = abrir Total Commander)", "Mediaskinhz", "YesNo" )`);
-  w('  EndIf');
-  w('  If ( sigue )');
-  w('    # 2. Como el original antes de Total Commander: parar el navegador y AppMain para que las imágenes no estén en uso');
-  w('    Kill( "nngnavi.exe" )');
-  w('    Sleep( 3000 )');
-  w('    Kill( "AppMain.exe" )');
-  w('    Sleep( 5000 )');
-  w('    Delete( mz \\ "resultado-ok.txt" )');
-  w('    WriteFile( mz \\ "desde-arranque.tmp", "1" )');
-  w('    RunWait( ms, inst )');
-  w('    # Si ha terminado bien, el instalador deja su marca y ya está reiniciando la radio. Si no, se sigue a Total Commander');
-  w('    If ( FileExists( mz \\ "resultado-ok.txt" ) )');
-  w('      Exit');
+  w('    # Ya instalado (p. ej. la radio ha arrancado otra vez con el USB puesto): no se vuelve a instalar');
+  w(`    If ( Question( "${undo?'Las imágenes originales ya están restauradas.':`El diseño «${nm}» ya está instalado.`}^NL^^NL^Si no vas a usar Total Commander, pulsa NO: la radio se reiniciará. Saca el USB cuando la pantalla se apague.^NL^^NL^SÍ: abrir Total Commander^NL^NO: reiniciar la radio", "Mediaskinhz", "YesNo" ) )`);
+  w('      tc = 1');
+  w('    Else');
+  w('      tc = 0');
+  w('      If ( FileExists( rb ) )');
+  mortReboot(w,'        ');
+  w('        Run( rb2 )');
+  w('        Exit');
+  w('      EndIf');
+  w('      tc = 1');
   w('    EndIf');
-  w('    Message( "No se ha terminado (el detalle está en registro.txt, en la carpeta Mediaskinhz del USB).^NL^^NL^Ahora se abre Total Commander.", "Mediaskinhz" )');
+  w('  Else');
+  w(`    If ( Question( "${act}^NL^^NL^Imágenes: ${n}^NL^Paquete: ${when}^NL^^NL^Antes de instalar se guarda en el USB una copia de lo que hay en la radio. Si algo falla, la radio vuelve a su estado anterior. Tarda unos segundos; no apagues la radio.^NL^^NL^SÍ: ${undo?'restaurar':'instalar'} ahora^NL^NO: abrir Total Commander", "Mediaskinhz", "YesNo" ) )`);
+  w('      # 2. Como el original antes de Total Commander: parar el navegador y AppMain para que las imágenes no estén en uso');
+  w('      Kill( "nngnavi.exe" )');
+  w('      Sleep( 3000 )');
+  w('      Kill( "AppMain.exe" )');
+  w('      Sleep( 5000 )');
+  w('      Delete( mz \\ "resultado-ok.txt" )');
+  w('      WriteFile( mz \\ "desde-arranque.tmp", "1" )');
+  w('      RunWait( ms, inst )');
+  w('      # Si ha terminado bien, el instalador ya está reiniciando la radio. Si no, se sigue a Total Commander');
+  w('      If ( FileExists( mz \\ "resultado-ok.txt" ) )');
+  w('        Exit');
+  w('      EndIf');
+  w('      Message( "La instalación no se ha completado. La radio se ha dejado como estaba.^NL^^NL^El detalle está en Mediaskinhz\\registro.txt, en el USB. Ahora se abre Total Commander.", "Mediaskinhz" )');
+  w('    EndIf');
+  w('    tc = 1');
   w('  EndIf');
-  w('  tc = 1');
   w('Else');
   w('  tc = 1');
   w('EndIf');
@@ -2020,7 +2057,7 @@ function autoEntries(rs,inc,o){o=o||{};
   const id=`${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}${z(d.getSeconds())}`;
   const when=`${z(d.getDate())}/${z(d.getMonth()+1)}/${d.getFullYear()} ${z(d.getHours())}:${z(d.getMinutes())}`;
   const items=rs.map(r=>({path:r.F.path,size:r.u.length}));
-  const e=[{name:'Mediaskinhz/instalar.mscr',data:ansi(mortInstall(R,items,id,when))},{name:'Mediaskinhz/deshacer.mscr',data:ansi(mortUndo(R,items,id,when))}];
+  const e=[{name:'Mediaskinhz/instalar.mscr',data:ansi(mortInstall(R,items,id,when,{name:o.name,undo:o.undo}))},{name:'Mediaskinhz/deshacer.mscr',data:ansi(mortUndo(R,items,id,when))}];
   if(o.boot){e.push({name:'Medianav.mscr',data:ansi(mortBoot(items,id,when,o.name||'Mediaskinhz',o.undo))});e.push({name:'Mediaskinhz/Medianav-original.mscr',data:ansi(MEDIANAV_ORIG)})}
   for(const r of rs)e.push({name:`Mediaskinhz/archivos/${R}/${r.F.path}`,data:r.u});
   if(inc)for(const r of rs)e.push({name:`Mediaskinhz/originales/${R}/${r.F.path}`,data:new Uint8Array(r.F.buf)});
@@ -2537,7 +2574,7 @@ function scrScreen(v,r){
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-27-8';
+const VER='2026-10-27-9';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -2545,7 +2582,11 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Corregido: en los teclados del teléfono, al tocar una tecla se abría la barra invisible de la lista que tiene encima (y el estilo dejaba todo como un bloque). Ahora gana la pieza más pequeña bajo el dedo, y las barras de fila pulsada salen tenues',
+  [VER,['Corregido el orden al terminar la instalación automática: primero ACEPTAR y, cuando la pantalla se apague, sacar el USB (al revés se quedaba la pantalla en negro). El reinicio ya no depende del USB: REINICIAR.exe se copia antes a la memoria de la radio',
+    'Ventana de progreso durante la instalación: paso 1 de 2 (copia de seguridad) y paso 2 de 2 (instalar y comprobar), con barra y recuento de imágenes',
+    'Mensajes más claros: nombre del diseño, número de imágenes y fecha del paquete; mensaje final grande',
+    'Si la radio vuelve a arrancar con el USB puesto, ya no ofrece reinstalar: dice que está instalado y deja elegir entre reiniciar o abrir Total Commander']],
+  ['2026-10-27-8',['Corregido: en los teclados del teléfono, al tocar una tecla se abría la barra invisible de la lista que tiene encima (y el estilo dejaba todo como un bloque). Ahora gana la pieza más pequeña bajo el dedo, y las barras de fila pulsada salen tenues',
     'En la ventana de cada pantalla, «Original de Renault» quita el estilo a todos sus botones, también a las barras y piezas raras',
     'Las teclas y barras del teclado del teléfono tienen nombres que se entienden («Tecla 3 del teclado 2», «Barra de abajo del teclado»…)',
     'En PC: las filas de iconos, colores, estilos y miniaturas se reparten en varias líneas en vez de cortarse; la rueda del ratón mueve las que quedan de lado; la hoja de cada botón es más ancha',

@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-27-8';
+const VER='2026-10-27-9';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,7 +11,11 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Corregido: en los teclados del teléfono, al tocar una tecla se abría la barra invisible de la lista que tiene encima (y el estilo dejaba todo como un bloque). Ahora gana la pieza más pequeña bajo el dedo, y las barras de fila pulsada salen tenues',
+  [VER,['Corregido el orden al terminar la instalación automática: primero ACEPTAR y, cuando la pantalla se apague, sacar el USB (al revés se quedaba la pantalla en negro). El reinicio ya no depende del USB: REINICIAR.exe se copia antes a la memoria de la radio',
+    'Ventana de progreso durante la instalación: paso 1 de 2 (copia de seguridad) y paso 2 de 2 (instalar y comprobar), con barra y recuento de imágenes',
+    'Mensajes más claros: nombre del diseño, número de imágenes y fecha del paquete; mensaje final grande',
+    'Si la radio vuelve a arrancar con el USB puesto, ya no ofrece reinstalar: dice que está instalado y deja elegir entre reiniciar o abrir Total Commander']],
+  ['2026-10-27-8',['Corregido: en los teclados del teléfono, al tocar una tecla se abría la barra invisible de la lista que tiene encima (y el estilo dejaba todo como un bloque). Ahora gana la pieza más pequeña bajo el dedo, y las barras de fila pulsada salen tenues',
     'En la ventana de cada pantalla, «Original de Renault» quita el estilo a todos sus botones, también a las barras y piezas raras',
     'Las teclas y barras del teclado del teléfono tienen nombres que se entienden («Tecla 3 del teclado 2», «Barra de abajo del teclado»…)',
     'En PC: las filas de iconos, colores, estilos y miniaturas se reparten en varias líneas en vez de cortarse; la rueda del ratón mueve las que quedan de lado; la hoja de cada botón es más ancha',

@@ -25,7 +25,7 @@ class FS:
         return cur
 def pj(a, b): return a.rstrip('\\') + '\\' + b.lstrip('\\')
 class Run:
-    def __init__(s, fs, script_path): s.fs = fs; s.v = {}; s.sp = script_path
+    def __init__(s, fs, script_path): s.fs = fs; s.v = {'ST_MESSAGE': 'ST_MESSAGE', 'ST_LIST': 'ST_LIST', 'ST_HIDDEN': 'ST_HIDDEN'}; s.sp = script_path
     def call(s, f, a):
         f = f.lower(); F = s.fs
         if f == 'systempath': return s.sp
@@ -65,6 +65,9 @@ class Run:
             return 0
         if f in ('kill', 'close', 'sleep'): F.ran.append(f + ' ' + (str(a[0]) if a else '')); return 0
         if f == 'activewindow': return 'ventana'
+        if f in ('statustype', 'statusinfo'): F.ran.append(f + ' ' + ' | '.join(map(str, a))); return 0
+        if f == 'statusmessage': F.status = getattr(F, 'status', []) + [a[0].replace('^NL^', ' ')]; return 0
+        if f == 'bigmessage': F.msgs.append('[grande] ' + a[0].replace('^NL^', ' | ')); return 0
         raise NameError('función desconocida ' + f)
     # expresiones: or > and > not > comparación > + - & \ > átomo
     def expr(s, t):
