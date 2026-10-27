@@ -170,6 +170,10 @@ async function run(browser, label, viewport, mobile) {
     const pk = packGen().per[F.path]; const b = await designFile({ label: 'Prueba', n: 1, st: packState() }); const L = await readZip(await b.arrayBuffer(), () => true);
     const j = JSON.parse(new TextDecoder().decode(L.find(x => x.path === 'diseno.json').buf)); delete g.per[F.path];
     return pk.look === 'chamfer' && pk.ihue === 'white' && pk.rs === 1 && j.app === 'Mediaskinhz' && j.st.gen.per[F.path].look === 'chamfer'; }), 'los diseños guardan todo lo de cada botón y se exportan a .mskz');
+  // Pantalla de reposo: el texto se dibuja y deja libre el reloj
+  ok(await p.evaluate(() => { const c = document.createElement('canvas'); c.width = 800; c.height = 480; const x = c.getContext('2d'); stDraw(x, { ...stDef(), l1: 'Fran', l2: 'Clio IV', pos: 'below' });
+    const d = x.getImageData(0, 0, 800, 480).data; let inClock = 0, below = 0; for (let y = 0; y < 480; y++) for (let X = 0; X < 800; X++) { if (d[(y * 800 + X) * 4 + 3] > 200) { if (y > 200 && y < 282) inClock++; if (y > 300) below++ } } return below > 200 && inClock === 0; }), 'el texto de la pantalla de reposo no pisa el reloj');
+  ok(await p.evaluate(() => loadVistas().then(() => vwList('setting').some(o => o.v === 'Audio') && vwList('eco').length > 0)), 'Ajustes y Driving eco tienen vistas');
   // Ventana de cada pantalla y «Común»: abren y enseñan sus bloques
   for (const sc of ['radio', 'media', 'phone', 'eco', 'setting', 'common']) {
     await p.evaluate(s => go({ n: 'scr', s }), sc); await p.waitForTimeout(400);

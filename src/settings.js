@@ -17,7 +17,7 @@ async function getList(k){try{return (await idb.get(k))||[]}catch(_){return []}}
 function packGen(){if(!S.gen)return null;const gen={...S.gen,per:{}};for(const [k,p] of Object.entries(S.gen.per||{})){const {png,...r}=p;gen.per[k]={...r,icon:p.icon==='png'?undefined:p.icon}}return structuredClone(gen)}
 function packState(){const reps={};for(const F of S.files)if(F.rep)reps[F.path]={pal:F.rep.pal,idx:F.rep.idx,keyIdx:F.rep.keyIdx};
   const gen=packGen();
-  return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen,reps,icx:structuredClone(S.icx||{})}}
+  return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen,reps,icx:structuredClone(S.icx||{}),stby:S.stby?{...S.stby}:null}}
 // Miniatura de la pantalla de Inicio para reconocer cada diseño
 function designThumb(){try{const c=document.createElement('canvas');c.width=800;c.height=480;drawPreview(c,{scr:'home'});const t=document.createElement('canvas');t.width=240;t.height=144;const x=t.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(c,0,0,240,144);return t.toDataURL('image/jpeg',.8)}catch(_){return null}}
 function promptBS(o){return new Promise(res=>{

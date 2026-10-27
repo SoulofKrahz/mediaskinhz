@@ -689,9 +689,9 @@ function setFileOps(F,v){if(empty(v))delete S.ops.file[F.path];else S.ops.file[F
 /* ============ deshacer ============ */
 const H=[];
 const genCopy=g=>g?{...g,per:Object.fromEntries(Object.entries(g.per||{}).map(([k,p])=>[k,{...p}]))}:null;
-function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),icx:structuredClone(S.icx||{}),reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep])}}
+function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),icx:structuredClone(S.icx||{}),stby:S.stby?{...S.stby}:null,reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep])}}
 function before(){S.curDesign=null;S.curDesignName=null;H.push(snap());if(H.length>80)H.shift();updUndo()}
-function undo(){const s=H.pop();if(!s)return;Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen,icx:s.icx||{}});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
+function undo(){const s=H.pop();if(!s)return;Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen,icx:s.icx||{},stby:s.stby||null});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
   S.ver++;render(true);toast('Cambio deshecho');saveState()}
 function updUndo(){$('#ab-undo').disabled=!H.length}
 function bump(){S.ver++;schedule()}
@@ -763,8 +763,8 @@ const idb={db:null,open(){if(this.db)return Promise.resolve(this.db);return new 
 let saveT=0;
 function saveState(now){if(S.demo)return Promise.resolve();clearTimeout(saveT);const run=()=>{const reps={};for(const F of S.files)if(F.rep)reps[F.path]={pal:F.rep.pal,idx:F.rep.idx,keyIdx:F.rep.keyIdx,by:F.rep.by};
   const gen=packGen();
-  return idb.set('state',{v:2,ops:S.ops,ex:S.ex,frames:S.frames,layout:S.layout,reps,gen,icx:S.icx||{}}).catch(()=>{})};if(now)return run();saveT=setTimeout(run,600)}
-function applyState(st){if(!st)return;S.ops=st.ops||S.ops;S.icx=st.icx||{};if(st.gen)S.gen=st.gen;S.ex=st.ex||{};S.frames=st.frames||{};if(st.layout&&!(st.layout.slots&&st.layout.slots[0]&&st.layout.slots[0].x===75&&st.layout.slots[0].y===134))S.layout=st.layout;
+  return idb.set('state',{v:2,ops:S.ops,ex:S.ex,frames:S.frames,layout:S.layout,reps,gen,icx:S.icx||{},stby:S.stby||null}).catch(()=>{})};if(now)return run();saveT=setTimeout(run,600)}
+function applyState(st){if(!st)return;S.ops=st.ops||S.ops;S.icx=st.icx||{};S.stby=st.stby||null;if(st.gen)S.gen=st.gen;S.ex=st.ex||{};S.frames=st.frames||{};if(st.layout&&!(st.layout.slots&&st.layout.slots[0]&&st.layout.slots[0].x===75&&st.layout.slots[0].y===134))S.layout=st.layout;
   for(const [p,r] of Object.entries(st.reps||{})){const F=S.lc.get(p.toLowerCase());if(F&&r.idx&&r.idx.length===F.w*F.h){F.rep={pal:r.pal,idx:r.idx,keyIdx:r.keyIdx,by:r.by};if(r.exempt&&S.ex[F.path]===undefined)S.ex[F.path]=true}}migrateLook(st);S.ver++}
 function remember(){try{localStorage.setItem('skinhz-ui',JSON.stringify({cat:S.cat,grid:S.gridOn,gs:S.gridSize,snap:S.snap,scr:S.scr}))}catch(_){}}
 function recall(){let u={};try{u=JSON.parse(localStorage.getItem('skinhz-ui')||'{}')||{}}catch(_){}
@@ -777,14 +777,14 @@ function drawPreview(c,o){
   o=o||{};const x=c.getContext('2d'),scr=o.scr||'home';x.fillStyle='#000';x.fillRect(0,0,800,480);
   const rc=F=>o.orig?renderOrig(F,false):renderCanvas(F,false);
   const bg=byName(SCRBG.get(scr));if(bg)x.drawImage(rc(bg),0,0,bg.w/frames(bg),bg.h,0,0,800,480);
-  if(o.view)drawView(x,o.view,rc,o.press,null,o.hov==null?-1:o.hov);
+  let pvV=null;if(o.view)drawView(x,o.view,rc,o.press,null,o.hov==null?-1:o.hov);
   // editor: si la imagen sale en una vista conocida, se dibuja en su sitio real dentro de esa vista
-  const pv=o.place&&typeof vwFor==='function'?vwFor(o.place,scr):null;if(pv){drawView(x,pv,rc,-1,{lc:o.place.lc,st:o.state||0},-1);o={...o,place:null,vlabel:(pv.band?pv.band+' · ':'')+pv.v}}
+  const pv=o.place&&typeof vwFor==='function'?vwFor(o.place,scr):null;pvV=pv;if(pv){drawView(x,pv,rc,-1,{lc:o.place.lc,st:o.state||0},-1);o={...o,place:null,vlabel:(pv.band?pv.band+' · ':'')+pv.v}}
   if(scr==='home')S.layout.slots.forEach((s,i)=>{const F=slotF(s);if(!F)return;const fr=frames(F),fw=F.w/fr,f=(i===S.press&&fr>1)?1:Math.min(o.state||0,fr-1);
     const src=(o.gen&&S.genCv&&S.genCv.get(F.path))||rc(F);x.drawImage(src,f*fw,0,fw,F.h,s.x,s.y,fw,F.h);
     const lb=LABELS[F.name.toLowerCase()];if(lb&&!o.nolabels&&fw===210&&F.h===137){x.save();x.font='600 21px Tahoma,Inter,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillStyle=f%2===1?'#000':'#fff';x.fillText(lb,s.x+105,s.y+88+17.5,176);x.restore()}});
   const line=byName(scr==='home'?'home/common_indi_line.bmp':'common/common_indi_line.bmp')||byName('common/common_indi_line.bmp');
-  if(line)x.drawImage(rc(line),0,0);
+  if(line&&!(o.view&&o.view.noline)&&!(pvV&&pvV.noline))x.drawImage(rc(line),0,0);
   if(o.place){const F=o.place,fr=frames(F),fw=F.w/fr,st=Math.min(o.state||0,fr-1),src=o.orig?renderOrig(F,false):renderCanvas(F,false),kp=KNOWNPOS[F.lc];
     let sc=kp?1:(fw<80&&F.h<80?3:Math.min(1,720/fw,360/F.h));const w=Math.max(1,fw*sc),h=Math.max(1,F.h*sc),px=kp?kp[0]:Math.round((800-w)/2),py=kp?kp[1]:Math.round(78+(370-h)/2);
     x.save();x.imageSmoothingEnabled=sc<2;x.drawImage(src,st*fw,0,fw,F.h,px,py,w,h);x.restore();x.save();x.setLineDash([8,6]);x.strokeStyle='#3ddc9a';x.lineWidth=2;x.strokeRect(px-4,py-4,w+8,h+8);x.restore();
@@ -841,7 +841,7 @@ function render(keepScroll){
   const r=S.route,v=$('#view');document.body.dataset.route=r.n;const root=rootOf();
   $$('#bnav [data-r],#tnav [data-r]').forEach(b=>{if(b.dataset.r===root)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
   $('#ab-back').hidden=ROOTN.has(r.n);
-  ({home:scrHome,theme:scrTheme,lib:scrLib,cat:scrCat,edit:scrEdit,layout:scrLayout,export:scrExport,gen:scrGen,settings:scrSettings,scr:scrScreen})[r.n](v,r);
+  ({home:scrHome,theme:scrTheme,lib:scrLib,cat:scrCat,edit:scrEdit,layout:scrLayout,export:scrExport,gen:scrGen,settings:scrSettings,scr:scrScreen,stby:scrStandby})[r.n](v,r);
   mountThumbs(v);updUndo();updBadge();if(keepScroll)scrollTo(0,y);
 }
 function updBadge(){const n=S.files.filter(changed).length;$$('[data-badge]').forEach(b=>{b.textContent=n;b.hidden=!n});return n}
@@ -856,7 +856,7 @@ function scrHome(v){
   const sec=SCRSEC[S.scr],nSec=S.files.filter(F=>F.sec===sec).length;
   v.innerHTML=`<div class="two">
     <div class="stack stick">
-      <div class="chips scroll" id="h-scr">${have.map(([k,l])=>`<button class="chip" data-s="${k}" aria-pressed="${k===S.scr}">${l}</button>`).join('')}${S.demo?'':'<button class="chip" data-s="common">Común</button>'}</div>
+      <div class="chips scroll" id="h-scr">${have.map(([k,l])=>`<button class="chip" data-s="${k}" aria-pressed="${k===S.scr}">${l}</button>`).join('')}${S.demo?'':'<button class="chip" data-s="common">Común</button>'}${!S.demo&&byName('common/etc_bg.bmp')?'<button class="chip" data-s="stby">Reposo</button>':''}</div>
       <div class="screen"><canvas id="pv" width="800" height="480" aria-label="Vista previa de la pantalla ${esc(SCRL.get(S.scr))}"></canvas></div>
       <div class="e-bar"><div class="seg" id="h-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="${S.hcmp!=='orig'}">Ahora</button><button data-v="orig" aria-pressed="${S.hcmp==='orig'}">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">${S.scr==='home'?(S.demo?'Toca un botón para cambiarlo':'Toca un botón para abrir esa pantalla'):'Fondo con tu tema'}</span></div>
     </div>
@@ -870,7 +870,7 @@ function scrHome(v){
       ${nSec&&S.scr!=='home'?`<div class="list"><button class="li" data-cat="${catOf({sec})}" data-sec="${esc(sec)}"><span class="ic">${ic('M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z')}</span><span class="tx"><b>Todas las imágenes de ${esc(SECL.get(sec))}</b><small>${nSec} imágenes</small></span>${CHEV}</button></div>`:''}
       <div class="list"><button class="li" data-go="theme"><span class="ic">${ic(ROOTS[1][2])}</span><span class="tx"><b>Cambiar el color de toda la radio</b><small>${esc(describe(S.ops.global)||'Sin tema')}</small></span>${CHEV}</button></div>
     </div></div>`;
-  $('#h-scr').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;const k=b.dataset.s;if(k!=='home'&&!S.demo){go({n:'scr',s:k});return}S.scr=k;remember();render(true)};
+  $('#h-scr').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;const k=b.dataset.s;if(k==='stby'){go({n:'stby'});return}if(k!=='home'&&!S.demo){go({n:'scr',s:k});return}S.scr=k;remember();render(true)};
   const c=$('#pv');mountPreview(c,()=>({scr:S.scr,orig:S.hcmp==='orig'}));
   $('#h-cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.hcmp=b.dataset.v;$$('#h-cmp button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawPreview(c,{scr:S.scr,orig:S.hcmp==='orig'})};
   if(S.scr==='home'){let down=-1;
@@ -1687,7 +1687,7 @@ async function getList(k){try{return (await idb.get(k))||[]}catch(_){return []}}
 function packGen(){if(!S.gen)return null;const gen={...S.gen,per:{}};for(const [k,p] of Object.entries(S.gen.per||{})){const {png,...r}=p;gen.per[k]={...r,icon:p.icon==='png'?undefined:p.icon}}return structuredClone(gen)}
 function packState(){const reps={};for(const F of S.files)if(F.rep)reps[F.path]={pal:F.rep.pal,idx:F.rep.idx,keyIdx:F.rep.keyIdx};
   const gen=packGen();
-  return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen,reps,icx:structuredClone(S.icx||{})}}
+  return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen,reps,icx:structuredClone(S.icx||{}),stby:S.stby?{...S.stby}:null}}
 // Miniatura de la pantalla de Inicio para reconocer cada diseño
 function designThumb(){try{const c=document.createElement('canvas');c.width=800;c.height=480;drawPreview(c,{scr:'home'});const t=document.createElement('canvas');t.width=240;t.height=144;const x=t.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(c,0,0,240,144);return t.toDataURL('image/jpeg',.8)}catch(_){return null}}
 function promptBS(o){return new Promise(res=>{
@@ -2517,7 +2517,7 @@ function scrFiles(s){const bgs=new Set(SCREENS.map(x=>x[2]));
    site/vistas.json trae, para cada vista del programa de la radio (principal, lista, presintonías, opciones…), qué imagen va en cada sitio
    y los textos fijos. Sale del análisis del programa de la radio (AppMain 7.0.5) del proyecto MediaNav-to-Evolution-Upgrade (GPL-3.0).
    Es una foto de cuando se construye la pantalla: faltan los datos que la radio pone en marcha (emisora, canción, listas) y la letra es aproximada. */
-const VW={st:0,data:null,p:null},VWS=new Set(['radio','media','phone']),VMAIN=/^(Principal|Reproductor|Marcador)$/;
+const VW={st:0,data:null,p:null},VWS=new Set(['radio','media','phone','setting','eco']),VMAIN=/^(Principal|Reproductor|Marcador|Audio|Clasificación)$/;
 function loadVistas(){if(VW.p)return VW.p;VW.st=1;VW.p=fetch('vistas.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(j=>{VW.data=j.views;VW.st=2}).catch(()=>{VW.st=3;VW.p=null});return VW.p}
 // ancho de un estado: el del sitio que le da la radio si la tira es un múltiplo exacto; si no, el que se deduce de la imagen
 const vwFw=(F,w,h)=>F.w>w&&w>0&&F.w%w===0&&F.h===h?w:F.w/frames(F);
@@ -2527,12 +2527,13 @@ function vwCur(s){const L=vwList(s);if(!L.length)return null;const k=(S.vw||(S.v
   return inB.find(o=>o.v===k.v)||inB.find(o=>VMAIN.test(o.v))||inB[0]||L[0]}
 // hl: {lc, st} resalta una imagen (editor) y la dibuja en ese estado; hov: índice bajo el ratón
 function drawView(x,V,rc,press,hl,hov){const HL=[];
-  for(let i=0;i<V.c.length;i++){const [f,cx,cy,w,h,,t,lr,col,opt]=V.c[i],F=f&&byName(f),me=hl&&f===hl.lc;
+  for(let i=0;i<V.c.length;i++){const [f,cx,cy,w,h,,t,lr,col,opt,fi]=V.c[i],F=f&&byName(f),me=hl&&f===hl.lc;
     x.globalAlpha=opt&&!me?.3:1;
-    if(F){const fw=vwFw(F,w,h),fr=Math.round(F.w/fw),st=me?Math.min(hl.st||0,fr-1):i===press&&fr>1?1:0;x.drawImage(rc(F),st*fw,0,fw,F.h,cx,cy,fw,F.h);if(me)HL.push([cx,cy,fw,F.h])}
+    if(F){const fw=vwFw(F,w,h),fr=Math.round(F.w/fw),st=me?Math.min(hl.st||0,fr-1):i===press&&fr>1?1:fi!=null?Math.min(fi,fr-1):0;x.drawImage(rc(F),st*fw,0,fw,F.h,cx,cy,fw,F.h);if(me)HL.push([cx,cy,fw,F.h])}
     else if(!t&&w<800){x.save();x.setLineDash([5,5]);x.strokeStyle='rgba(255,255,255,.16)';x.lineWidth=1;x.strokeRect(cx+.5,cy+.5,w-1,h-1);x.restore()}
-    if(t){const [lx,ly,lw,lh]=lr;x.save();x.font=`600 ${Math.round(Math.max(13,Math.min(24,lh*.6)))}px Tahoma,Inter,sans-serif`;x.textAlign='center';x.textBaseline='middle';
-      x.fillStyle=i===press&&F&&frames(F)>1?'#000':col;x.fillText(t,lx+lw/2,ly+lh/2,Math.max(10,lw-8));x.restore()}}
+    // los textos sueltos de la izquierda (nombres de opción, títulos, filas de lista) van alineados a la izquierda, como en la radio
+    if(t){const [lx,ly,lw,lh]=lr,left=!F&&lx<130&&lw>150;x.save();x.font=`600 ${Math.round(Math.max(13,Math.min(24,lh*.6)))}px Tahoma,Inter,sans-serif`;x.textAlign=left?'left':'center';x.textBaseline='middle';
+      x.fillStyle=i===press&&F&&frames(F)>1?'#000':col;x.fillText(t,left?lx+4:lx+lw/2,ly+lh/2,Math.max(10,lw-8));x.restore()}}
   x.globalAlpha=1;
   for(const [a,b,c,d] of HL){x.save();x.strokeStyle='#3ddc9a';x.lineWidth=4;x.shadowColor='#3ddc9a';x.shadowBlur=12;x.strokeRect(a-3,b-3,c+6,d+6);x.restore()}
   if(hov>=0&&V.c[hov]&&hov!==press){const [f,cx,cy,w,h]=V.c[hov],F=f&&byName(f);if(F){const fw=vwFw(F,w,h);x.save();x.setLineDash([7,5]);x.strokeStyle='#3ddc9a';x.lineWidth=2.5;x.strokeRect(cx+1,cy+1,fw-2,F.h-2);
@@ -2550,7 +2551,8 @@ function vwBar(s){const el=$('#sc-vw');if(!el)return;
   const L=vwList(s),cur=vwCur(s);if(!cur){el.innerHTML='';return}
   const bands=[...new Set(L.map(o=>o.band))].filter(Boolean),b0=vwBand(s),inB=L.filter(o=>o.band===b0||!o.band);
   el.innerHTML=`${bands.length>1?`<div class="chips scroll vwb" role="group" aria-label="Fuente">${bands.map(b=>`<button class="chip" data-b="${esc(b)}" aria-pressed="${b===b0}">${esc(b)}</button>`).join('')}</div>`:''}
-    <div class="chips scroll vwv" role="group" aria-label="Vista">${inB.map(o=>`<button class="chip" data-w="${esc(o.v)}" aria-pressed="${o===cur}">${esc(o.v)}</button>`).join('')}</div>`;
+    <div class="chips scroll vwv" role="group" aria-label="Vista">${inB.map(o=>`<button class="chip" data-w="${esc(o.v)}" aria-pressed="${o===cur}">${esc(o.v)}</button>`).join('')}</div>
+    ${cur.aprox?'<p class="hint" style="padding:0">Vista dibujada a partir de fotos de la radio: las posiciones son aproximadas.</p>':''}`;
   el.onclick=e=>{const b=e.target.closest('[data-b],[data-w]');if(!b)return;const k=(S.vw||(S.vw={}))[s]||(S.vw[s]={});
     if(b.dataset.b!=null){k.band=b.dataset.b;delete k.v}else{k.v=b.dataset.w}vwBar(s);schedule()}}
 function scrScreen(v,r){
@@ -2604,11 +2606,69 @@ function scrScreen(v,r){
   mountThumbs(v);
 }
 
+/* ============ pantalla de reposo (la negra con el reloj) ============
+   La radio dibuja el reloj (etc/etc_clock_font.bmp) y la temperatura encima de common/etc_bg.bmp. Aquí se escribe en ese fondo
+   un texto propio (tu nombre, el coche…), dejando libre el sitio del reloj. El texto se mezcla con la imagen original y el tema
+   de la radio se sigue aplicando encima. Ese fondo también sale detrás del código de la radio y de algunos avisos. */
+const STBF='common/etc_bg.bmp';
+const STFONTS=[['Inter','600 {s}px Inter, sans-serif','Moderna'],['serif','600 {s}px Newsreader, Georgia, serif','Clásica'],['radio','bold {s}px Tahoma, Verdana, sans-serif','Como la radio'],['black','900 {s}px "Arial Black", Impact, sans-serif','Gruesa'],['mono','bold {s}px "Courier New", monospace','Máquina']];
+const STPOS=[['top','Arriba'],['above','Sobre el reloj'],['below','Bajo el reloj'],['bottom','Abajo']];
+const stDef=()=>({l1:'',l2:'',font:'Inter',size:36,hue:'white',pos:'below',glow:true,caps:false,sp:2});
+const stCol=h=>h==='white'?'#ffffff':`hsl(${h} 85% 62%)`;
+// Escribe las dos líneas en un lienzo de 800×480. El reloj ocupa más o menos y = 197…282
+function stDraw(x,st){const l1=(st.caps?st.l1.toUpperCase():st.l1).trim(),l2=(st.caps?st.l2.toUpperCase():st.l2).trim();if(!l1&&!l2)return;
+  const f=(STFONTS.find(q=>q[0]===st.font)||STFONTS[0])[1],s1=st.size,s2=Math.round(st.size*.6),gap=Math.round(st.size*.28),H=(l1?s1:0)+(l2?s2:0)+(l1&&l2?gap:0);
+  const top={top:Math.max(64,118-H/2),above:176-H,below:316,bottom:Math.min(458-H,412-H/2)}[st.pos]??316;
+  x.save();x.textAlign='center';x.textBaseline='top';x.fillStyle=stCol(st.hue);if('letterSpacing' in x)x.letterSpacing=(st.sp||0)+'px';
+  if(st.glow){x.shadowColor=stCol(st.hue);x.shadowBlur=Math.round(st.size*.45)}
+  let y=top;if(l1){x.font=f.replace('{s}',s1);x.fillText(l1,400,y,760);y+=s1+gap}
+  if(l2){x.font=f.replace('{s}',s2);x.globalAlpha=.85;x.fillText(l2,400,y,760)}x.restore()}
+let stT=0;
+function stApply(st,now){clearTimeout(stT);const run=()=>{const F=byName(STBF);if(!F)return;
+  if(!st||!(st.l1.trim()||st.l2.trim())){S.stby=st&&{...st};if(F.rep&&F.rep.by==='stby'){F.rep=null;if(S.ex[F.path]===false)delete S.ex[F.path]}F.cv=null;bump();return}
+  S.stby={...st};const c=document.createElement('canvas');c.width=F.w;c.height=F.h;const x=c.getContext('2d');x.drawImage(renderOrig(F,false),0,0);stDraw(x,st);
+  const d=x.getImageData(0,0,F.w,F.h).data,q=quantize(d,F.w,F.h,{key:new Uint8Array(F.w*F.h),dither:true});
+  F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'stby'};S.ex[F.path]=false;F.cv=null;bump()};if(now)run();else stT=setTimeout(run,320)}
+// Vista previa: el fondo como quedará y, encima, el reloj con la hora de ahora (la radio lo dibuja con su propia letra)
+function drawStandby(c,orig){const x=c.getContext('2d'),F=byName(STBF);x.fillStyle='#000';x.fillRect(0,0,800,480);if(!F)return;
+  x.drawImage(orig?renderOrig(F,false):renderCanvas(F,false),0,0,800,480);
+  const fn=byName('etc/etc_clock_font.bmp'),co=byName('etc/etc_clock_font_colon.bmp'),d=new Date(),t=String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0');
+  if(fn){const gw=fn.w/10,gh=fn.h,cw=co?co.w:25,W=gw*4+cw,x0=Math.round(400-W/2),y0=Math.round(240-gh/2),src=renderCanvas(fn,false);
+    [...t].forEach((ch,i)=>x.drawImage(src,+ch*gw,0,gw,gh,x0+i*gw+(i>1?cw:0),y0,gw,gh));if(co)x.drawImage(renderCanvas(co,false),x0+gw*2,y0)}
+  x.save();x.font='600 17px Tahoma, Inter, sans-serif';x.fillStyle='#fff';x.textAlign='center';x.fillText('16°C',740,48);x.restore()}
+function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La negra con el reloj');
+  if(!F){v.innerHTML='<p class="empty">Este backup no tiene el fondo de la pantalla de reposo (COMMON/ETC_BG.BMP).</p>';return}
+  const st={...stDef(),...(S.stby||{})};
+  v.innerHTML=`<div class="two"><div class="stick sticky-pv">${pvBlock('pv')}<div class="e-bar"><div class="seg" id="st-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="true">Ahora</button><button data-v="orig" aria-pressed="false">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">El reloj y la temperatura los pone la radio</span></div></div>
+    <div class="stack"><div class="card"><h3>Tu texto</h3>
+      <label class="field"><span class="lbl">Línea principal</span><input class="ipq" id="st-l1" maxlength="28" placeholder="Tu nombre" value="${esc(st.l1)}" autocomplete="off"></label>
+      <label class="field"><span class="lbl">Segunda línea</span><input class="ipq" id="st-l2" maxlength="40" placeholder="Renault Clio IV Limited" value="${esc(st.l2)}" autocomplete="off"></label>
+      <p class="lbl">Dónde</p><div class="chips" id="st-pos">${STPOS.map(([k,l])=>`<button class="chip" data-v="${k}" aria-pressed="${st.pos===k}">${l}</button>`).join('')}</div>
+      <p class="lbl">Letra</p><div class="chips" id="st-font">${STFONTS.map(([k,,l])=>`<button class="chip" data-v="${k}" aria-pressed="${st.font===k}">${l}</button>`).join('')}</div>
+      <label class="field"><span class="lbl">Tamaño <b id="st-szv">${st.size}</b></span><input type="range" id="st-sz" min="20" max="64" step="1" value="${st.size}"></label>
+      <p class="lbl">Color</p><div class="hsw" id="st-col">${swatches(st.hue,{white:true,label:'Color del texto'})}</div>
+      <label class="swrow" for="st-glow"><span>Brillo alrededor</span><input class="sw" type="checkbox" id="st-glow"${st.glow?' checked':''}></label>
+      <label class="swrow" for="st-caps"><span>En mayúsculas</span><input class="sw" type="checkbox" id="st-caps"${st.caps?' checked':''}></label>
+      <button class="btn o wide" id="st-del">Quitar el texto</button>
+      <p class="note">Se guarda en la imagen del fondo de reposo y sale en la exportación como cualquier otra. Ese mismo fondo aparece detrás de la pantalla del código de la radio y de algunos avisos.</p></div>
+      <div class="card"><h3>El fondo</h3><div class="list">${fileRow(F,'Fondo de reposo · 800×480')}</div><p class="note">Tócalo para cambiar sus colores o sustituirlo por una foto; el texto se mantiene encima.</p></div></div></div>`;
+  const c=$('#pv');let orig=false;const draw=()=>drawStandby(c,orig);S.live=draw;draw();
+  const cur=()=>({...st,l1:$('#st-l1').value,l2:$('#st-l2').value});let first=true;
+  const upd=(now)=>{if(first){before();first=false}Object.assign(st,cur());stApply(st,now)};
+  $('#st-l1').oninput=$('#st-l2').oninput=()=>upd();
+  const chips=(id,key)=>{$(id).onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;st[key]=b.dataset.v;$$(id+' .chip').forEach(q=>q.setAttribute('aria-pressed',q===b));upd(true)}};chips('#st-pos','pos');chips('#st-font','font');
+  $('#st-sz').oninput=e=>{st.size=+e.target.value;$('#st-szv').textContent=st.size;upd()};
+  const sw=$('#st-col .swg');sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;sw.querySelectorAll('.swc').forEach(q=>q.setAttribute('aria-pressed',q===b));st.hue=b.dataset.h==='white'?'white':+b.dataset.h;upd(true)};
+  sw.querySelector('[data-pick]').onchange=e=>{st.hue=Math.round(hexHsl(e.target.value)[0]);upd(true)};
+  $('#st-glow').onchange=e=>{st.glow=e.target.checked;upd(true)};$('#st-caps').onchange=e=>{st.caps=e.target.checked;upd(true)};
+  $('#st-del').onclick=()=>{before();$('#st-l1').value='';$('#st-l2').value='';st.l1='';st.l2='';stApply(st,true);toast('Texto quitado',{label:'Deshacer',fn:undo})};
+  $('#st-cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;orig=b.dataset.v==='orig';$$('#st-cmp button').forEach(q=>q.setAttribute('aria-pressed',q===b));draw()}}
+
 /* ============ app web: instalación, versión, novedades y créditos (como Noticiahz y Caravanahz) ============
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-27-10';
+const VER='2026-10-27-11';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -2616,7 +2676,11 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Importar diseños: Ajustes e historial → Mis diseños → «Importar un diseño». Vale un archivo .mskz o el ZIP que exportaste para la radio (lleva su diseño dentro). También arrastrándolo a la ventana, o con «Cargar»',
+  [VER,['Pantalla de reposo (la negra con el reloj): Pantalla → «Reposo». Escribe tu nombre y el coche en el fondo, con letra, tamaño, color, brillo y sitio (arriba, sobre o bajo el reloj, abajo). Deja libre el sitio del reloj',
+    'Vistas de Ajustes (Audio, Pantalla, Bluetooth, Sistema) y de Driving eco, dibujadas a partir de fotos de la radio',
+    'Textos como los de la radio, sacados de las fotos: «Desc/Conex», «AT», «Región», «Presintonía», «Marcar», «Agenda», «Lista de llamadas»; los nombres de opción van alineados a la izquierda',
+    'Teléfono → Marcador: los botones de micro y altavoz salen tenues (solo aparecen durante una llamada)']],
+  ['2026-10-27-10',['Importar diseños: Ajustes e historial → Mis diseños → «Importar un diseño». Vale un archivo .mskz o el ZIP que exportaste para la radio (lleva su diseño dentro). También arrastrándolo a la ventana, o con «Cargar»',
     'Cada diseño de Mis diseños se puede exportar a un archivo .mskz para llevarlo a otro aparato (del PC al móvil, por ejemplo). Lleva colores, estilos, iconos, imágenes sustituidas y tus iconos propios',
     'Corregido: los diseños guardados y el diseño en curso perdían el estilo de los botones de dentro, el color del icono y el tamaño de los iconos al recargar la página']],
   ['2026-10-27-9',['Corregido el orden al terminar la instalación automática: primero ACEPTAR y, cuando la pantalla se apague, sacar el USB (al revés se quedaba la pantalla en negro). El reinicio ya no depende del USB: REINICIAR.exe se copia antes a la memoria de la radio',

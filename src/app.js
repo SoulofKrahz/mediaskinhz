@@ -114,9 +114,9 @@ function setFileOps(F,v){if(empty(v))delete S.ops.file[F.path];else S.ops.file[F
 /* ============ deshacer ============ */
 const H=[];
 const genCopy=g=>g?{...g,per:Object.fromEntries(Object.entries(g.per||{}).map(([k,p])=>[k,{...p}]))}:null;
-function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),icx:structuredClone(S.icx||{}),reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep])}}
+function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),icx:structuredClone(S.icx||{}),stby:S.stby?{...S.stby}:null,reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep])}}
 function before(){S.curDesign=null;S.curDesignName=null;H.push(snap());if(H.length>80)H.shift();updUndo()}
-function undo(){const s=H.pop();if(!s)return;Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen,icx:s.icx||{}});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
+function undo(){const s=H.pop();if(!s)return;Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen,icx:s.icx||{},stby:s.stby||null});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
   S.ver++;render(true);toast('Cambio deshecho');saveState()}
 function updUndo(){$('#ab-undo').disabled=!H.length}
 function bump(){S.ver++;schedule()}
@@ -188,8 +188,8 @@ const idb={db:null,open(){if(this.db)return Promise.resolve(this.db);return new 
 let saveT=0;
 function saveState(now){if(S.demo)return Promise.resolve();clearTimeout(saveT);const run=()=>{const reps={};for(const F of S.files)if(F.rep)reps[F.path]={pal:F.rep.pal,idx:F.rep.idx,keyIdx:F.rep.keyIdx,by:F.rep.by};
   const gen=packGen();
-  return idb.set('state',{v:2,ops:S.ops,ex:S.ex,frames:S.frames,layout:S.layout,reps,gen,icx:S.icx||{}}).catch(()=>{})};if(now)return run();saveT=setTimeout(run,600)}
-function applyState(st){if(!st)return;S.ops=st.ops||S.ops;S.icx=st.icx||{};if(st.gen)S.gen=st.gen;S.ex=st.ex||{};S.frames=st.frames||{};if(st.layout&&!(st.layout.slots&&st.layout.slots[0]&&st.layout.slots[0].x===75&&st.layout.slots[0].y===134))S.layout=st.layout;
+  return idb.set('state',{v:2,ops:S.ops,ex:S.ex,frames:S.frames,layout:S.layout,reps,gen,icx:S.icx||{},stby:S.stby||null}).catch(()=>{})};if(now)return run();saveT=setTimeout(run,600)}
+function applyState(st){if(!st)return;S.ops=st.ops||S.ops;S.icx=st.icx||{};S.stby=st.stby||null;if(st.gen)S.gen=st.gen;S.ex=st.ex||{};S.frames=st.frames||{};if(st.layout&&!(st.layout.slots&&st.layout.slots[0]&&st.layout.slots[0].x===75&&st.layout.slots[0].y===134))S.layout=st.layout;
   for(const [p,r] of Object.entries(st.reps||{})){const F=S.lc.get(p.toLowerCase());if(F&&r.idx&&r.idx.length===F.w*F.h){F.rep={pal:r.pal,idx:r.idx,keyIdx:r.keyIdx,by:r.by};if(r.exempt&&S.ex[F.path]===undefined)S.ex[F.path]=true}}migrateLook(st);S.ver++}
 function remember(){try{localStorage.setItem('skinhz-ui',JSON.stringify({cat:S.cat,grid:S.gridOn,gs:S.gridSize,snap:S.snap,scr:S.scr}))}catch(_){}}
 function recall(){let u={};try{u=JSON.parse(localStorage.getItem('skinhz-ui')||'{}')||{}}catch(_){}
@@ -202,14 +202,14 @@ function drawPreview(c,o){
   o=o||{};const x=c.getContext('2d'),scr=o.scr||'home';x.fillStyle='#000';x.fillRect(0,0,800,480);
   const rc=F=>o.orig?renderOrig(F,false):renderCanvas(F,false);
   const bg=byName(SCRBG.get(scr));if(bg)x.drawImage(rc(bg),0,0,bg.w/frames(bg),bg.h,0,0,800,480);
-  if(o.view)drawView(x,o.view,rc,o.press,null,o.hov==null?-1:o.hov);
+  let pvV=null;if(o.view)drawView(x,o.view,rc,o.press,null,o.hov==null?-1:o.hov);
   // editor: si la imagen sale en una vista conocida, se dibuja en su sitio real dentro de esa vista
-  const pv=o.place&&typeof vwFor==='function'?vwFor(o.place,scr):null;if(pv){drawView(x,pv,rc,-1,{lc:o.place.lc,st:o.state||0},-1);o={...o,place:null,vlabel:(pv.band?pv.band+' · ':'')+pv.v}}
+  const pv=o.place&&typeof vwFor==='function'?vwFor(o.place,scr):null;pvV=pv;if(pv){drawView(x,pv,rc,-1,{lc:o.place.lc,st:o.state||0},-1);o={...o,place:null,vlabel:(pv.band?pv.band+' · ':'')+pv.v}}
   if(scr==='home')S.layout.slots.forEach((s,i)=>{const F=slotF(s);if(!F)return;const fr=frames(F),fw=F.w/fr,f=(i===S.press&&fr>1)?1:Math.min(o.state||0,fr-1);
     const src=(o.gen&&S.genCv&&S.genCv.get(F.path))||rc(F);x.drawImage(src,f*fw,0,fw,F.h,s.x,s.y,fw,F.h);
     const lb=LABELS[F.name.toLowerCase()];if(lb&&!o.nolabels&&fw===210&&F.h===137){x.save();x.font='600 21px Tahoma,Inter,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillStyle=f%2===1?'#000':'#fff';x.fillText(lb,s.x+105,s.y+88+17.5,176);x.restore()}});
   const line=byName(scr==='home'?'home/common_indi_line.bmp':'common/common_indi_line.bmp')||byName('common/common_indi_line.bmp');
-  if(line)x.drawImage(rc(line),0,0);
+  if(line&&!(o.view&&o.view.noline)&&!(pvV&&pvV.noline))x.drawImage(rc(line),0,0);
   if(o.place){const F=o.place,fr=frames(F),fw=F.w/fr,st=Math.min(o.state||0,fr-1),src=o.orig?renderOrig(F,false):renderCanvas(F,false),kp=KNOWNPOS[F.lc];
     let sc=kp?1:(fw<80&&F.h<80?3:Math.min(1,720/fw,360/F.h));const w=Math.max(1,fw*sc),h=Math.max(1,F.h*sc),px=kp?kp[0]:Math.round((800-w)/2),py=kp?kp[1]:Math.round(78+(370-h)/2);
     x.save();x.imageSmoothingEnabled=sc<2;x.drawImage(src,st*fw,0,fw,F.h,px,py,w,h);x.restore();x.save();x.setLineDash([8,6]);x.strokeStyle='#3ddc9a';x.lineWidth=2;x.strokeRect(px-4,py-4,w+8,h+8);x.restore();
@@ -266,7 +266,7 @@ function render(keepScroll){
   const r=S.route,v=$('#view');document.body.dataset.route=r.n;const root=rootOf();
   $$('#bnav [data-r],#tnav [data-r]').forEach(b=>{if(b.dataset.r===root)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
   $('#ab-back').hidden=ROOTN.has(r.n);
-  ({home:scrHome,theme:scrTheme,lib:scrLib,cat:scrCat,edit:scrEdit,layout:scrLayout,export:scrExport,gen:scrGen,settings:scrSettings,scr:scrScreen})[r.n](v,r);
+  ({home:scrHome,theme:scrTheme,lib:scrLib,cat:scrCat,edit:scrEdit,layout:scrLayout,export:scrExport,gen:scrGen,settings:scrSettings,scr:scrScreen,stby:scrStandby})[r.n](v,r);
   mountThumbs(v);updUndo();updBadge();if(keepScroll)scrollTo(0,y);
 }
 function updBadge(){const n=S.files.filter(changed).length;$$('[data-badge]').forEach(b=>{b.textContent=n;b.hidden=!n});return n}
@@ -281,7 +281,7 @@ function scrHome(v){
   const sec=SCRSEC[S.scr],nSec=S.files.filter(F=>F.sec===sec).length;
   v.innerHTML=`<div class="two">
     <div class="stack stick">
-      <div class="chips scroll" id="h-scr">${have.map(([k,l])=>`<button class="chip" data-s="${k}" aria-pressed="${k===S.scr}">${l}</button>`).join('')}${S.demo?'':'<button class="chip" data-s="common">Común</button>'}</div>
+      <div class="chips scroll" id="h-scr">${have.map(([k,l])=>`<button class="chip" data-s="${k}" aria-pressed="${k===S.scr}">${l}</button>`).join('')}${S.demo?'':'<button class="chip" data-s="common">Común</button>'}${!S.demo&&byName('common/etc_bg.bmp')?'<button class="chip" data-s="stby">Reposo</button>':''}</div>
       <div class="screen"><canvas id="pv" width="800" height="480" aria-label="Vista previa de la pantalla ${esc(SCRL.get(S.scr))}"></canvas></div>
       <div class="e-bar"><div class="seg" id="h-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="${S.hcmp!=='orig'}">Ahora</button><button data-v="orig" aria-pressed="${S.hcmp==='orig'}">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">${S.scr==='home'?(S.demo?'Toca un botón para cambiarlo':'Toca un botón para abrir esa pantalla'):'Fondo con tu tema'}</span></div>
     </div>
@@ -295,7 +295,7 @@ function scrHome(v){
       ${nSec&&S.scr!=='home'?`<div class="list"><button class="li" data-cat="${catOf({sec})}" data-sec="${esc(sec)}"><span class="ic">${ic('M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z')}</span><span class="tx"><b>Todas las imágenes de ${esc(SECL.get(sec))}</b><small>${nSec} imágenes</small></span>${CHEV}</button></div>`:''}
       <div class="list"><button class="li" data-go="theme"><span class="ic">${ic(ROOTS[1][2])}</span><span class="tx"><b>Cambiar el color de toda la radio</b><small>${esc(describe(S.ops.global)||'Sin tema')}</small></span>${CHEV}</button></div>
     </div></div>`;
-  $('#h-scr').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;const k=b.dataset.s;if(k!=='home'&&!S.demo){go({n:'scr',s:k});return}S.scr=k;remember();render(true)};
+  $('#h-scr').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;const k=b.dataset.s;if(k==='stby'){go({n:'stby'});return}if(k!=='home'&&!S.demo){go({n:'scr',s:k});return}S.scr=k;remember();render(true)};
   const c=$('#pv');mountPreview(c,()=>({scr:S.scr,orig:S.hcmp==='orig'}));
   $('#h-cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.hcmp=b.dataset.v;$$('#h-cmp button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawPreview(c,{scr:S.scr,orig:S.hcmp==='orig'})};
   if(S.scr==='home'){let down=-1;

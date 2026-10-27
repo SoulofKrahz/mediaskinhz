@@ -15,7 +15,7 @@ function scrFiles(s){const bgs=new Set(SCREENS.map(x=>x[2]));
    site/vistas.json trae, para cada vista del programa de la radio (principal, lista, presintonías, opciones…), qué imagen va en cada sitio
    y los textos fijos. Sale del análisis del programa de la radio (AppMain 7.0.5) del proyecto MediaNav-to-Evolution-Upgrade (GPL-3.0).
    Es una foto de cuando se construye la pantalla: faltan los datos que la radio pone en marcha (emisora, canción, listas) y la letra es aproximada. */
-const VW={st:0,data:null,p:null},VWS=new Set(['radio','media','phone']),VMAIN=/^(Principal|Reproductor|Marcador)$/;
+const VW={st:0,data:null,p:null},VWS=new Set(['radio','media','phone','setting','eco']),VMAIN=/^(Principal|Reproductor|Marcador|Audio|Clasificación)$/;
 function loadVistas(){if(VW.p)return VW.p;VW.st=1;VW.p=fetch('vistas.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(j=>{VW.data=j.views;VW.st=2}).catch(()=>{VW.st=3;VW.p=null});return VW.p}
 // ancho de un estado: el del sitio que le da la radio si la tira es un múltiplo exacto; si no, el que se deduce de la imagen
 const vwFw=(F,w,h)=>F.w>w&&w>0&&F.w%w===0&&F.h===h?w:F.w/frames(F);
@@ -25,12 +25,13 @@ function vwCur(s){const L=vwList(s);if(!L.length)return null;const k=(S.vw||(S.v
   return inB.find(o=>o.v===k.v)||inB.find(o=>VMAIN.test(o.v))||inB[0]||L[0]}
 // hl: {lc, st} resalta una imagen (editor) y la dibuja en ese estado; hov: índice bajo el ratón
 function drawView(x,V,rc,press,hl,hov){const HL=[];
-  for(let i=0;i<V.c.length;i++){const [f,cx,cy,w,h,,t,lr,col,opt]=V.c[i],F=f&&byName(f),me=hl&&f===hl.lc;
+  for(let i=0;i<V.c.length;i++){const [f,cx,cy,w,h,,t,lr,col,opt,fi]=V.c[i],F=f&&byName(f),me=hl&&f===hl.lc;
     x.globalAlpha=opt&&!me?.3:1;
-    if(F){const fw=vwFw(F,w,h),fr=Math.round(F.w/fw),st=me?Math.min(hl.st||0,fr-1):i===press&&fr>1?1:0;x.drawImage(rc(F),st*fw,0,fw,F.h,cx,cy,fw,F.h);if(me)HL.push([cx,cy,fw,F.h])}
+    if(F){const fw=vwFw(F,w,h),fr=Math.round(F.w/fw),st=me?Math.min(hl.st||0,fr-1):i===press&&fr>1?1:fi!=null?Math.min(fi,fr-1):0;x.drawImage(rc(F),st*fw,0,fw,F.h,cx,cy,fw,F.h);if(me)HL.push([cx,cy,fw,F.h])}
     else if(!t&&w<800){x.save();x.setLineDash([5,5]);x.strokeStyle='rgba(255,255,255,.16)';x.lineWidth=1;x.strokeRect(cx+.5,cy+.5,w-1,h-1);x.restore()}
-    if(t){const [lx,ly,lw,lh]=lr;x.save();x.font=`600 ${Math.round(Math.max(13,Math.min(24,lh*.6)))}px Tahoma,Inter,sans-serif`;x.textAlign='center';x.textBaseline='middle';
-      x.fillStyle=i===press&&F&&frames(F)>1?'#000':col;x.fillText(t,lx+lw/2,ly+lh/2,Math.max(10,lw-8));x.restore()}}
+    // los textos sueltos de la izquierda (nombres de opción, títulos, filas de lista) van alineados a la izquierda, como en la radio
+    if(t){const [lx,ly,lw,lh]=lr,left=!F&&lx<130&&lw>150;x.save();x.font=`600 ${Math.round(Math.max(13,Math.min(24,lh*.6)))}px Tahoma,Inter,sans-serif`;x.textAlign=left?'left':'center';x.textBaseline='middle';
+      x.fillStyle=i===press&&F&&frames(F)>1?'#000':col;x.fillText(t,left?lx+4:lx+lw/2,ly+lh/2,Math.max(10,lw-8));x.restore()}}
   x.globalAlpha=1;
   for(const [a,b,c,d] of HL){x.save();x.strokeStyle='#3ddc9a';x.lineWidth=4;x.shadowColor='#3ddc9a';x.shadowBlur=12;x.strokeRect(a-3,b-3,c+6,d+6);x.restore()}
   if(hov>=0&&V.c[hov]&&hov!==press){const [f,cx,cy,w,h]=V.c[hov],F=f&&byName(f);if(F){const fw=vwFw(F,w,h);x.save();x.setLineDash([7,5]);x.strokeStyle='#3ddc9a';x.lineWidth=2.5;x.strokeRect(cx+1,cy+1,fw-2,F.h-2);
@@ -48,7 +49,8 @@ function vwBar(s){const el=$('#sc-vw');if(!el)return;
   const L=vwList(s),cur=vwCur(s);if(!cur){el.innerHTML='';return}
   const bands=[...new Set(L.map(o=>o.band))].filter(Boolean),b0=vwBand(s),inB=L.filter(o=>o.band===b0||!o.band);
   el.innerHTML=`${bands.length>1?`<div class="chips scroll vwb" role="group" aria-label="Fuente">${bands.map(b=>`<button class="chip" data-b="${esc(b)}" aria-pressed="${b===b0}">${esc(b)}</button>`).join('')}</div>`:''}
-    <div class="chips scroll vwv" role="group" aria-label="Vista">${inB.map(o=>`<button class="chip" data-w="${esc(o.v)}" aria-pressed="${o===cur}">${esc(o.v)}</button>`).join('')}</div>`;
+    <div class="chips scroll vwv" role="group" aria-label="Vista">${inB.map(o=>`<button class="chip" data-w="${esc(o.v)}" aria-pressed="${o===cur}">${esc(o.v)}</button>`).join('')}</div>
+    ${cur.aprox?'<p class="hint" style="padding:0">Vista dibujada a partir de fotos de la radio: las posiciones son aproximadas.</p>':''}`;
   el.onclick=e=>{const b=e.target.closest('[data-b],[data-w]');if(!b)return;const k=(S.vw||(S.vw={}))[s]||(S.vw[s]={});
     if(b.dataset.b!=null){k.band=b.dataset.b;delete k.v}else{k.v=b.dataset.w}vwBar(s);schedule()}}
 function scrScreen(v,r){
