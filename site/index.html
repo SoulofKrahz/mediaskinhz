@@ -266,7 +266,7 @@ input[type=range].hue{--trk:linear-gradient(90deg,hsl(0 80% 50%),hsl(60 80% 50%)
 .dsc{border:1px solid var(--bd);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;background:var(--card)}.dsc.on{border-color:var(--em2);box-shadow:0 0 0 1px var(--em2)}
 .dsi{position:relative;display:block;aspect-ratio:5/3;background:#000;width:100%}.dsi img{width:100%;height:100%;object-fit:cover;display:block}.dsi .pill{position:absolute;top:6px;left:6px}.dsn{color:#9aa;font-size:12px;display:grid;place-items:center;height:100%}
 .dst{padding:8px 10px 2px;display:flex;flex-direction:column;min-width:0}.dst b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dst small{font-size:12px;color:var(--mu)}
-.dsa{display:flex;gap:2px;padding:4px 6px 8px;align-items:center}.dsa .btn{flex:1;padding:6px;min-height:40px;font-size:13.5px}.dsa .ib{width:40px;height:40px}.ib.dgi:hover{color:var(--bad);background:var(--badbg)}
+.dsa{display:flex;gap:2px;padding:4px 6px 8px;align-items:center}.dsa .btn{flex:1;padding:6px;min-height:40px;font-size:13.5px}.dsa .ib{width:40px;height:40px;flex:none}.dsa .ib svg{stroke-width:3.4}.ib.dgi:hover{color:var(--bad);background:var(--badbg)}
 .acs{display:flex;flex-wrap:wrap;gap:10px}.acs .swc{width:42px;min-width:42px}
 .acr{display:flex;align-items:center;gap:12px;padding-top:4px}.acr>span{flex:1;min-width:0;display:flex;flex-direction:column}.acr small{font-size:12.5px;color:var(--mu);line-height:1.4}
 .cpick{width:48px;height:40px;border:1px solid var(--bd);border-radius:10px;background:none;padding:2px;flex:none;cursor:pointer}
@@ -1712,6 +1712,17 @@ function promptBS(o){return new Promise(res=>{
   const done=v=>{S.bsCancel=null;closeBS();res(v)};const val=()=>inp.value.trim()||o.value||'Mi diseño';
   $('#bs').onclick=e=>{const x=e.target.closest('[data-c]');if(!x)return;done(x.dataset.c==='1'?val():null)};inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();done(val())}}})}
 function designName(){const g=S.gen;if(g&&g.look&&g.look!=='orig'){const st=(GSTYLES.find(x=>x[0]===g.style)||GSTYLES[0])[1];return st+(g.color==='one'?' '+hueName(g.hue).toLowerCase():'')}return 'Mi diseño'}
+// Nombres de diseño únicos (sin distinguir mayúsculas) entre los de este backup
+const normN=n=>String(n||'').trim().toLowerCase();
+async function takenBy(name,except){return (await listPoints()).find(x=>x.kind==='manual'&&x.sig===sig()&&x.id!==except&&normN(x.label)===normN(name))||null}
+async function uniqueName(name){let n=String(name).trim()||'Mi diseño',k=2;const base=n;while(await takenBy(n))n=`${base} (${k++})`;return n}
+// Pide un nombre que no esté repetido. Devuelve {name} o {over:id} si eliges sobrescribir el que ya tenía ese nombre, o null
+async function askName(o){let value=o.value;for(;;){const nm=await promptBS({...o,value});if(!nm)return null;const t=await takenBy(nm,o.except);if(!t)return {name:nm};
+  if(!o.allowOver){toast(`Ya hay un diseño llamado «${t.label}». Elige otro nombre.`,{ms:4000});value=nm;continue}
+  const a=await new Promise(res=>{openBS(`<h2>«${esc(t.label)}» ya existe</h2><p class="note">Ya tienes un diseño con ese nombre. ¿Lo sustituyes por el actual o eliges otro nombre?</p>
+    <div class="stack" style="gap:8px"><button class="btn wide" data-c="over">Sobrescribir «${esc(t.label)}»</button><button class="btn o wide" data-c="ren">Elegir otro nombre</button><button class="btn o wide" data-c="0">Cancelar</button></div>`);
+    S.bsCancel=()=>res(null);$('#bs').onclick=e=>{const x=e.target.closest('[data-c]');if(!x)return;S.bsCancel=null;closeBS();res(x.dataset.c==='0'?null:x.dataset.c)}});
+  if(!a)return null;if(a==='over')return {over:t.id};value=nm}}
 // Diseño del que vienes (guardado, cargado o importado): se recuerda aunque lo edites o recargues la página, para poder sobrescribirlo
 function setBase(id,name){S.base=id?{id,name}:null;try{if(id)localStorage.setItem('mediaskinhz-base',JSON.stringify({id,name,sig:sig()}));else localStorage.removeItem('mediaskinhz-base')}catch(_){}}
 async function recallBase(){try{const b=JSON.parse(localStorage.getItem('mediaskinhz-base')||'null');if(!b||b.sig!==sig())return;const p=(await listPoints()).find(x=>x.id===b.id&&x.kind==='manual');if(p)S.base={id:p.id,name:p.label}}catch(_){}}
@@ -1727,7 +1738,8 @@ async function saveDesign(){if(S.demo){toast('Carga tu backup para guardar dise�
   if(S.base){const p=(await listPoints()).find(x=>x.id===S.base.id&&x.kind==='manual');
     if(!p)setBase(null);else{if(S.curDesign===p.id){toast(`«${p.label}» ya está guardado: no hay cambios nuevos`);return}
       const a=await askSave(p.label,n);if(!a)return;if(a==='over'){await overwriteDesign(p.id);return}}}
-  const name=await promptBS({title:'Guardar el diseño',text:`Se guardan tus ${n} ${n===1?'imagen cambiada':'imágenes cambiadas'} con este nombre. Podrás volver a él cuando quieras.`,value:designName(),ok:'Guardar'});if(!name)return;
+  const r=await askName({title:'Guardar el diseño',text:`Se guardan tus ${n} ${n===1?'imagen cambiada':'imágenes cambiadas'} con este nombre. Podrás volver a él cuando quieras.`,value:await uniqueName(designName()),ok:'Guardar',allowOver:true});if(!r)return;
+  if(r.over){await overwriteDesign(r.over);return}const name=r.name;
   const id=await addPoint(name,'manual');if(id){S.curDesign=id;S.curDesignName=name;setBase(id,name);toast(`«${name}» guardado`,{label:'Ver',fn:()=>go({n:'settings'})})}}
 async function addPoint(label,kind){
   if(S.demo)return null;if(kind==='auto'&&!SET.auto)return null;
@@ -1770,10 +1782,10 @@ async function scrSettings(v){
         <details><summary>Ver archivos</summary><div class="hx-f">${x.files.map(f=>`<span>${esc(f)}</span>`).join('')}</div></details></div>`).join('')}</div>
       <p class="note">«Deshacer en el coche» baja un ZIP con solo los originales de esa exportación, listo para copiar igual que la exportación.</p>`:'<p class="note">Aún no has exportado nada. Cada exportación quedará aquí, con un botón para deshacerla en el coche.</p>'}</div>
     <div class="card" id="s-des"><h3>Mis diseños</h3>
-      ${S.demo?'<p class="note">Carga tu backup para guardar diseños.</p>':`<button class="btn wide" id="s-pt">Guardar el diseño actual</button><button class="btn o wide" id="s-imp">Importar un diseño</button><p class="note">Vale un archivo <b>.mskz</b> (botón ${ic('M12 3v12M7 10l5 5 5-5M5 21h14')} de cada diseño) o el <b>ZIP que exportaste para la radio</b>: lleva su diseño dentro. También puedes arrastrarlo a la ventana.</p>`}
+      ${S.demo?'<p class="note">Carga tu backup para guardar diseños.</p>':`<button class="btn wide" id="s-pt">Guardar el diseño actual</button><button class="btn o wide" id="s-imp">Importar un diseño</button><p class="note">Vale un archivo <b>.mskz</b> («⋯» de cada diseño → Guardar en un archivo) o el <b>ZIP que exportaste para la radio</b>: lleva su diseño dentro. También puedes arrastrarlo a la ventana.</p>`}
       ${D.length?`<div class="dsg">${D.map(p=>`<div class="dsc${S.curDesign===p.id||(S.base&&S.base.id===p.id)?' on':''}" data-d="${p.id}"><button class="dsi" data-a="load" aria-label="Cargar ${esc(p.label)}">${p.thumb?`<img src="${p.thumb}" alt="">`:'<span class="dsn">Sin vista previa</span>'}${S.curDesign===p.id?'<span class="pill p-col">Cargado</span>':S.base&&S.base.id===p.id?'<span class="pill p-img">Con cambios sin guardar</span>':''}</button>
         <div class="dst"><b>${esc(p.label)}</b><small>${fdt(p.t)} · ${p.n} ${p.n===1?'imagen':'imágenes'}</small></div>
-        <div class="dsa"><button class="btn o sm" data-a="load">Cargar</button><button class="ib" data-a="exp" aria-label="Exportar a un archivo" title="Exportar a un archivo (.mskz) para llevarlo a otro aparato">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}</button><button class="ib" data-a="ren" aria-label="Cambiar el nombre" title="Cambiar el nombre">${ic('M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4')}</button><button class="ib dgi" data-a="del" aria-label="Borrar" title="Borrar">${ic('M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3')}</button></div></div>`).join('')}</div>`:'<p class="note">Guarda aquí los diseños que te gusten, con su nombre, para cambiar entre ellos o volver atrás.</p>'}
+        <div class="dsa"><button class="btn o sm" data-a="load">Cargar</button><button class="ib" data-a="more" aria-label="Más opciones de ${esc(p.label)}" title="Más opciones">${ic('M5 12h.01M12 12h.01M19 12h.01')}</button></div></div>`).join('')}</div>`:'<p class="note">Guarda aquí los diseños que te gusten, con su nombre, para cambiar entre ellos o volver atrás.</p>'}
       ${A.length?`<details class="isd"><summary><span>Copias automáticas<small>Antes de cada cambio grande y en cada exportación</small></span><b>${A.length}</b></summary><div class="isb"><div class="hl">${A.map(p=>`<div class="hx"><div class="hx-h"><span class="tx"><b>${esc(p.label)}</b><small>${fdt(p.t)} · ${p.n} ${p.n===1?'imagen cambiada':'imágenes cambiadas'}</small></span></div>
         <div class="hx-a"><button class="btn o sm" data-p="${p.id}">Volver a este</button><button class="btn dg sm" data-pd="${p.id}">Borrar</button></div></div>`).join('')}</div></div></details><button class="btn o sm" id="s-cla">Borrar las ${A.length} copias automáticas</button>`:''}
       ${est&&est.usage?`<p class="note">Espacio usado en este navegador: <b>${fsz(est.usage)}</b>${est.quota?' de '+fsz(est.quota):''}. Las copias automáticas se borran solas a partir de 10; tus diseños, nunca.</p>`:''}</div>
@@ -1808,12 +1820,20 @@ async function scrSettings(v){
   const si=$('#s-imp');if(si)si.onclick=pickDesignFile;
   $$('.dsc',v).forEach(el=>el.onclick=async e=>{const b=e.target.closest('[data-a]');if(!b)return;const id=el.dataset.d,a=b.dataset.a,m=(await listPoints()).find(x=>x.id===id);if(!m)return render(true);
     if(a==='load')return restorePoint(id);
-    if(a==='exp'){const p=await getPoint(id);return p?exportDesign(p):toast('Ese diseño ya no está guardado')}
-    if(a==='ren'){const nm=await promptBS({title:'Cambiar el nombre',value:m.label,ok:'Guardar'});if(!nm)return;const p=await getPoint(id);if(!p)return;p.label=nm;
-      try{await putPoint(p)}catch(_){noSpace();return}if(S.base&&S.base.id===id)setBase(id,nm);render(true);return}
-    if(a==='del'){if(!await confirmBS({title:'Borrar «'+esc(m.label)+'»',text:'El diseño guardado se borrará. Lo que tienes ahora en pantalla no cambia.',ok:'Borrar',danger:true}))return;
-      try{await delPoint(id)}catch(_){toast('No se ha podido borrar. Cierra otras pestañas de Mediaskinhz y vuelve a probar.',{ms:6000});return}
-      if(S.curDesign===id)S.curDesign=null;if(S.base&&S.base.id===id)setBase(null);render(true);toast('Diseño borrado')}});
+    if(a==='more'){const c=await new Promise(res=>{openBS(`<h2>${esc(m.label)}</h2><p class="note">${fdt(m.t)} · ${m.n} ${m.n===1?'imagen cambiada':'imágenes cambiadas'}</p>
+      <div class="list"><button class="li" data-c="radio"><span class="ic">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}</span><span class="tx"><b>Llevar a la radio</b><small>Lo carga y te lleva a Exportar para descargar el ZIP del USB</small></span>${CHEV}</button>
+        <button class="li" data-c="file"><span class="ic">${ic('M14 3H6v18h12V7zM14 3v4h4')}</span><span class="tx"><b>Guardar en un archivo</b><small>Archivo .mskz para llevar el diseño a otro móvil u ordenador</small></span>${CHEV}</button>
+        <button class="li" data-c="ren"><span class="ic">${ic('M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4')}</span><span class="tx"><b>Cambiar el nombre</b></span>${CHEV}</button>
+        <button class="li" data-c="del"><span class="ic" style="color:var(--bad)">${ic('M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3')}</span><span class="tx"><b style="color:var(--bad)">Borrar</b></span>${CHEV}</button></div>
+      <button class="btn o wide" data-c="0">Cerrar</button>`);S.bsCancel=()=>res(null);$('#bs').onclick=e=>{const x=e.target.closest('[data-c]');if(!x)return;S.bsCancel=null;closeBS();res(x.dataset.c==='0'?null:x.dataset.c)}});
+      if(!c)return;
+      if(c==='radio'){if(S.curDesign!==id){await restorePoint(id);if(S.curDesign!==id)return}go({n:'export'});return}
+      if(c==='file'){const p=await getPoint(id);return p?exportDesign(p):toast('Ese diseño ya no está guardado')}
+      if(c==='ren'){const r=await askName({title:'Cambiar el nombre',value:m.label,ok:'Guardar',except:id});if(!r)return;const p=await getPoint(id);if(!p)return;p.label=r.name;
+        try{await putPoint(p)}catch(_){noSpace();return}if(S.base&&S.base.id===id)setBase(id,r.name);if(S.curDesign===id)S.curDesignName=r.name;render(true);toast('Nombre cambiado');return}
+      if(c==='del'){if(!await confirmBS({title:'Borrar «'+esc(m.label)+'»',text:'El diseño guardado se borrará. Lo que tienes ahora en pantalla no cambia.',ok:'Borrar',danger:true}))return;
+        try{await delPoint(id)}catch(_){toast('No se ha podido borrar. Cierra otras pestañas de Mediaskinhz y vuelve a probar.',{ms:6000});return}
+        if(S.curDesign===id)S.curDesign=null;if(S.base&&S.base.id===id)setBase(null);render(true);toast('Diseño borrado')}}});
   $$('[data-p]',v).forEach(b=>b.onclick=()=>restorePoint(b.dataset.p));
   $$('[data-pd]',v).forEach(b=>b.onclick=async()=>{if(!await confirmBS({title:'Borrar la copia',text:'Esta copia automática se borrará y no se podrá recuperar.',ok:'Borrar',danger:true}))return;try{await delPoint(b.dataset.pd)}catch(_){toast('No se ha podido borrar');return}render(true)});
   const ca=$('#s-cla');if(ca)ca.onclick=async()=>{if(!await confirmBS({title:'Borrar las copias automáticas',text:`Se borrarán las ${A.length} copias automáticas de este backup. Tus diseños con nombre y lo que tienes en pantalla no cambian.`,ok:'Borrar copias',danger:true}))return;
@@ -1869,7 +1889,7 @@ async function importDesign(blob,fname){
   try{const L=await readZip(await blob.arrayBuffer(),()=>true),j=L.find(x=>/(^|\/)diseno\.json$/.test(x.path));if(!j)throw 0;meta=JSON.parse(new TextDecoder().decode(j.buf));files=new Map(L.map(x=>[x.path,x.buf]))}catch(_){toast('Este archivo no es un diseño de Mediaskinhz');return}
   if(meta.app!=='Mediaskinhz'||!meta.st){toast('Este archivo no es un diseño de Mediaskinhz');return}
   const reps={};let miss=0;for(const [path,r] of Object.entries(meta.reps||{})){const b=files.get('reps/'+r.f),F=S.lc.get(path.toLowerCase());if(!b||!F||b.byteLength!==F.w*F.h){miss++;continue}reps[path]={pal:Uint8Array.from(r.pal),idx:new Uint8Array(b),keyIdx:r.keyIdx,by:r.by}}
-  const nm=String(meta.name||'Diseño importado');
+  const nm=await uniqueName(String(meta.name||'Diseño importado'));
   if(!await confirmBS({title:`Importar «${esc(nm)}»`,text:`${meta.n||0} ${meta.n===1?'imagen cambiada':'imágenes cambiadas'}${meta.t?' · guardado el '+fdt(meta.t):''}.${miss?` ${miss} ${miss===1?'imagen no encaja':'imágenes no encajan'} con este backup y se ${miss===1?'salta':'saltan'}.`:''} Lo que tienes ahora se guarda antes como copia automática, y el diseño se añade a Mis diseños.`,ok:'Importar',always:true}))return;
   let addI=0;for(const m of meta.my||[])if(m&&m.id&&!MY.by.has(m.id)){MY.list.push(m);addI++}if(addI){myIndex();await mySave()}
   await addPoint('Antes de importar «'+nm+'»','auto');before();for(const F of S.files){F.rep=null;F.ico=undefined;F.icz=null}S.src=new Map();S.ops={global:null,sec:{},file:{}};S.ex={};S.frames={};S.gen=null;S.icx={};
@@ -2712,7 +2732,11 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Común → vista «Barra de arriba»: la señal, la batería del móvil, la temperatura y el reloj en su sitio (medido en fotos de la radio), con su versión para fondo claro. Tócalos para cambiarlos']],
+  [VER,['Corregido: en Mis diseños el botón de borrar se salía de la tarjeta y no se veía. Ahora cada diseño tiene «Cargar» y «⋯», con Llevar a la radio, Guardar en un archivo, Cambiar el nombre y Borrar',
+    '«Llevar a la radio» carga el diseño y te lleva a Exportar para descargar el ZIP del USB; «Guardar en un archivo» baja el .mskz para otro móvil u ordenador',
+    'Los nombres de diseño ya no se repiten: al guardar con un nombre que existe te ofrece sobrescribirlo, al cambiar el nombre te pide otro y al importar se añade «(2)»',
+    'Común → vista «Barra de arriba»: la señal, la batería del móvil, la temperatura y el reloj en su sitio (medido en fotos de la radio), con su versión para fondo claro']],
+  ['2026-10-27-13',['Común → vista «Barra de arriba»: la señal, la batería del móvil, la temperatura y el reloj en su sitio (medido en fotos de la radio), con su versión para fondo claro. Tócalos para cambiarlos']],
   ['2026-10-27-13',['Corregido: a veces no se podían borrar diseños. Si el navegador estaba lleno, la escritura se cancelaba sin avisar y la app se quedaba esperando. Ahora cada diseño se guarda por separado: borrar libera espacio al momento, y si algo falla te lo dice',
     'Mis diseños: espacio usado en el navegador y botón para borrar de una vez las copias automáticas',
     'Se guardan como mucho 10 copias automáticas y 10 de exportación (las más antiguas se borran solas); tus diseños con nombre nunca. El historial guarda el ZIP de las 3 últimas exportaciones']],

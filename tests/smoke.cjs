@@ -177,6 +177,7 @@ async function run(browser, label, viewport, mobile) {
   ok(await p.evaluate(() => typeof overwriteDesign === 'function' && typeof setBase === 'function'), 'guardar puede sobrescribir el diseño del que vienes');
   ok(await p.evaluate(async () => { const id = 'prueba' + Date.now(); await putPoint({ id, t: Date.now(), label: 'x', kind: 'manual', sig: sig(), n: 0, st: {} }); const a = !!(await getPoint(id)) && (await listPoints()).some(x => x.id === id);
     await delPoint(id); return a && !(await getPoint(id)) && !(await listPoints()).some(x => x.id === id); }), 'los diseños se guardan y se borran uno a uno');
+  ok(await p.evaluate(async () => { await putPoint({ id: 'dup1', t: Date.now(), label: 'Azul', kind: 'manual', sig: sig(), n: 0, st: {} }); const t = await takenBy('  azul '), u = await uniqueName('Azul'); await delPoint('dup1'); return !!t && u === 'Azul (2)'; }), 'los nombres de diseño no se repiten');
   // Ventana de cada pantalla y «Común»: abren y enseñan sus bloques
   for (const sc of ['radio', 'media', 'phone', 'eco', 'setting', 'common']) {
     await p.evaluate(s => go({ n: 'scr', s }), sc); await p.waitForTimeout(400);

@@ -11,7 +11,11 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Común → vista «Barra de arriba»: la señal, la batería del móvil, la temperatura y el reloj en su sitio (medido en fotos de la radio), con su versión para fondo claro. Tócalos para cambiarlos']],
+  [VER,['Corregido: en Mis diseños el botón de borrar se salía de la tarjeta y no se veía. Ahora cada diseño tiene «Cargar» y «⋯», con Llevar a la radio, Guardar en un archivo, Cambiar el nombre y Borrar',
+    '«Llevar a la radio» carga el diseño y te lleva a Exportar para descargar el ZIP del USB; «Guardar en un archivo» baja el .mskz para otro móvil u ordenador',
+    'Los nombres de diseño ya no se repiten: al guardar con un nombre que existe te ofrece sobrescribirlo, al cambiar el nombre te pide otro y al importar se añade «(2)»',
+    'Común → vista «Barra de arriba»: la señal, la batería del móvil, la temperatura y el reloj en su sitio (medido en fotos de la radio), con su versión para fondo claro']],
+  ['2026-10-27-13',['Común → vista «Barra de arriba»: la señal, la batería del móvil, la temperatura y el reloj en su sitio (medido en fotos de la radio), con su versión para fondo claro. Tócalos para cambiarlos']],
   ['2026-10-27-13',['Corregido: a veces no se podían borrar diseños. Si el navegador estaba lleno, la escritura se cancelaba sin avisar y la app se quedaba esperando. Ahora cada diseño se guarda por separado: borrar libera espacio al momento, y si algo falla te lo dice',
     'Mis diseños: espacio usado en el navegador y botón para borrar de una vez las copias automáticas',
     'Se guardan como mucho 10 copias automáticas y 10 de exportación (las más antiguas se borran solas); tus diseños con nombre nunca. El historial guarda el ZIP de las 3 últimas exportaciones']],
