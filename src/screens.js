@@ -24,11 +24,12 @@ const vwBand=s=>{const L=vwList(s),k=(S.vw||(S.vw={}))[s]||{};return k.band??(L[
 function vwCur(s){const L=vwList(s);if(!L.length)return null;const k=(S.vw||(S.vw={}))[s]||{},b0=vwBand(s),inB=L.filter(o=>o.band===b0||!o.band);
   return inB.find(o=>o.v===k.v)||inB.find(o=>VMAIN.test(o.v))||inB[0]||L[0]}
 function drawView(x,V,rc,press){
-  for(let i=0;i<V.c.length;i++){const [f,cx,cy,w,h,,t,lr,col]=V.c[i],F=f&&byName(f);
+  for(let i=0;i<V.c.length;i++){const [f,cx,cy,w,h,,t,lr,col,opt]=V.c[i],F=f&&byName(f);
+    x.globalAlpha=opt?.3:1;
     if(F){const fw=vwFw(F,w,h),fr=Math.round(F.w/fw),st=i===press&&fr>1?1:0;x.drawImage(rc(F),st*fw,0,fw,F.h,cx,cy,fw,F.h)}
     else if(!t&&w<800){x.save();x.setLineDash([5,5]);x.strokeStyle='rgba(255,255,255,.16)';x.lineWidth=1;x.strokeRect(cx+.5,cy+.5,w-1,h-1);x.restore()}
     if(t){const [lx,ly,lw,lh]=lr;x.save();x.font=`600 ${Math.round(Math.max(13,Math.min(24,lh*.6)))}px Tahoma,Inter,sans-serif`;x.textAlign='center';x.textBaseline='middle';
-      x.fillStyle=i===press&&F&&frames(F)>1?'#000':col;x.fillText(t,lx+lw/2,ly+lh/2,Math.max(10,lw-8));x.restore()}}}
+      x.fillStyle=i===press&&F&&frames(F)>1?'#000':col;x.fillText(t,lx+lw/2,ly+lh/2,Math.max(10,lw-8));x.restore()}}x.globalAlpha=1}
 function vwHit(V,c,e){const r=c.getBoundingClientRect(),px=(e.clientX-r.left)*800/r.width,py=(e.clientY-r.top)*480/r.height;
   for(let i=V.c.length-1;i>=0;i--){const [f,cx,cy,w,h]=V.c[i],F=f&&byName(f);if(!F||w>=800)continue;const fw=vwFw(F,w,h);if(px>=cx&&px<cx+Math.max(w,fw)&&py>=cy&&py<cy+Math.max(h,F.h))return {i,F}}
   // las barras de arriba ocupan todo el ancho: solo si no hay nada encima

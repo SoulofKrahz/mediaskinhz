@@ -22,6 +22,16 @@ def name(group, files, texts):
     if has('presets_arrow', 'arrow_left'): return 'Presintonías'
     if has('control_', 'thumbsup'): return 'Reproductor' if group == 'media' else 'Principal'
     return 'Otra'
+# Textos fijos en español de España (la radio los trae en inglés en el análisis; los de tu radio pueden variar un poco)
+ES = {'Main': 'Principal', 'List': 'Lista', 'Presets': 'Presintonías', 'Options': 'Opciones', 'Player': 'Reproductor', 'Dial': 'Marcar',
+  'Phone Book': 'Agenda', 'Calling Lists': 'Registro de llamadas', 'Close': 'Cerrar', 'Search by Name': 'Buscar por nombre', 'Folder': 'Carpeta',
+  'Track': 'Pista', 'Repeat': 'Repetir', 'Shuffle': 'Aleatorio', 'All': 'Todo', 'On': 'Sí', 'Off': 'No', 'Update List': 'Actualizar lista',
+  'Announcement': 'Avisos', 'Announcement Setup': 'Ajustes de avisos', 'News': 'Noticias', 'Weather': 'Tiempo', 'Sport': 'Deportes',
+  'Financial': 'Economía', 'Transport': 'Tráfico', 'Warning': 'Alerta', 'Event': 'Evento', 'Special Event': 'Evento especial',
+  'Program Info': 'Información del programa', 'Region': 'Regional', 'Nearby': 'Cercanas', 'Start': 'Iniciar',
+  'Swallowed In The Sea': 'Título de la canción', 'COLDPLAY': 'ARTISTA'}
+# Imágenes que la radio solo enseña a veces (p. ej. la carátula vacía de Multimedia): se dibujan tenues
+OPT = {'media/media_album_case_noalbum_img.bmp'}
 out, seen, sets = [], collections.Counter(), set()
 for sc in src['scenarios']:
     g = sc['group']; cs = sc['controls']
@@ -38,11 +48,11 @@ for sc in src['scenarios']:
     for c in cs:
         f = c['filename'].replace('\\', '/').lower() if c.get('filename') else ''
         x, y, w, h = c['rect']
-        t = c.get('text') or ''
+        t = ES.get(c.get('text') or '', c.get('text') or '')
         lr = c.get('label_rect') or [x, y, w, h]
         col = (c.get('colors') or [16777215])[0]
         rgb = '#%02x%02x%02x' % (col & 255, (col >> 8) & 255, (col >> 16) & 255)   # COLORREF 0x00BBGGRR
-        C.append([f, x, y, w, h, {'button': 'b', 'image': 'i', 'list': 'l', 'progress': 'p'}[c['kind']], t, lr, rgb])
+        C.append([f, x, y, w, h, {'button': 'b', 'image': 'i', 'list': 'l', 'progress': 'p'}[c['kind']], t, lr, rgb] + ([1] if f in OPT else []))
     out.append({'s': SCR[g], 'band': band, 'v': nm, 'c': C})
 BO = {b: i for i, b in enumerate(['FM', 'AM', 'DAB', 'USB', 'BT', 'iPod', 'aha', 'AUX', ''])}
 VO = ['Principal', 'Reproductor', 'Marcador', 'Lista', 'Agenda', 'Presintonías', 'Opciones', 'Avisos', 'Selector', 'Ventana', 'Asistente', 'Teclado']

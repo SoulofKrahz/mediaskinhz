@@ -151,6 +151,14 @@ async function run(browser, label, viewport, mobile) {
     await p.evaluate(s => go({ n: 'scr', s }), sc); await p.waitForTimeout(400);
     ok(await p.locator('#sc-tint').count() === 1 && (await p.evaluate(() => document.querySelector('#ab-t .t1').textContent)).length > 0, 'la ventana «' + sc + '» se abre con sus colores y piezas');
   }
+  // Con la hoja de su botón metida en la ventana, la hoja que se abre encima sigue respondiendo (antes se cruzaban los controles)
+  await p.evaluate(() => go({ n: 'scr', s: 'radio' })); await p.waitForTimeout(400);
+  if (await p.locator('#sc-btn #bt-fc').count()) {
+    const tp = await p.evaluate(() => { const F = S.files.find(f => isBtnLike(f) && f.sec === SCRSEC.radio) || genTargets().find(f => slotScr(f) !== 'radio'); btnSheet(F); return F.path; });
+    await tap('#bs #bt-fc button[data-h="24"]'); await p.waitForTimeout(500);
+    ok(await p.evaluate(P => (S.gen.per[P] || {}).hue === 24 && !!document.querySelector('#bs #bt-pv'), tp), 'la hoja de un botón abierta desde una ventana cambia ese botón');
+    await p.evaluate(() => { closeBS(); undo(); });
+  }
   // Vistas de dentro: se cargan, se eligen y tocar un botón de la vista abre su hoja
   await p.evaluate(() => go({ n: 'scr', s: 'radio' }));
   const hasVw = await p.waitForFunction(() => document.querySelector('#sc-vw .vwv') || !document.querySelector('#sc-vw'), null, { timeout: 10000 }).then(() => p.evaluate(() => !!document.querySelector('#sc-vw .vwv'))).catch(() => false);
