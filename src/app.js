@@ -111,7 +111,7 @@ function setFileOps(F,v){if(empty(v))delete S.ops.file[F.path];else S.ops.file[F
 const H=[];
 const genCopy=g=>g?{...g,per:Object.fromEntries(Object.entries(g.per||{}).map(([k,p])=>[k,{...p}]))}:null;
 function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),icx:structuredClone(S.icx||{}),reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep])}}
-function before(){S.curDesign=null;H.push(snap());if(H.length>80)H.shift();updUndo()}
+function before(){S.curDesign=null;S.curDesignName=null;H.push(snap());if(H.length>80)H.shift();updUndo()}
 function undo(){const s=H.pop();if(!s)return;Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen,icx:s.icx||{}});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
   S.ver++;render(true);toast('Cambio deshecho');saveState()}
 function updUndo(){$('#ab-undo').disabled=!H.length}
@@ -608,12 +608,20 @@ function scrExport(v){
         <p class="note" id="x-mnote"></p></div>
       <p class="warnbox" id="x-part" hidden>Las imágenes que no exportes se quedarán como están en el coche, aunque aquí las veas cambiadas.</p>
       <div class="chk" id="x-chk"><span>Comprobando los archivos… <b id="x-n">0</b> de ${fs.length}</span></div>
+      <label class="swrow" for="x-boot" id="x-bootrow"${S.xmode==='auto'?'':' hidden'}><span>Que se instale solo al arrancar<small>Para tu USB con ULC2_recovery: al arrancar pregunta si instalar (con el dedo, sin Total Commander). Si dices que no, abre Total Commander como siempre</small></span><input class="sw" type="checkbox" id="x-boot"${SET.xboot!==false?' checked':''}></label>
       <label class="swrow" for="x-orig"><span>Incluir los originales<small>Carpeta ORIGINALES con solo estos archivos, para deshacer</small></span><input class="sw" type="checkbox" id="x-orig"${SET.xorig?' checked':''}></label>
       <button class="btn wide" id="x-go" disabled>Descargar ZIP</button></div>
     <div class="card"><h3>Archivos</h3><div class="fl" id="x-list"><p class="note">Comprobando…</p></div></div></div>
     <div class="stack"><div class="card"><h3>Cómo instalarlo</h3><div id="x-steps"></div></div></div></div>`;
   const R0=esc(S.root);
-  const stepsHTML=()=>S.xmode==='auto'?`<ol class="steps">
+  const stepsHTML=()=>S.xmode==='auto'&&SET.xboot!==false?`<ol class="steps">
+      <li>Descomprime el ZIP en la raíz de tu USB de siempre (el de <code>ULC2_recovery</code>, MortScript y Total Commander) y acepta sobrescribir. Cambia <code>Medianav.mscr</code> y añade la carpeta <code>Mediaskinhz</code>. Tu <code>Medianav.mscr</code> de antes queda en <code>Mediaskinhz\\Medianav-original.mscr</code>.</li>
+      <li>Mete el USB y arranca la radio como haces para entrar a Total Commander.</li>
+      <li>Espera unos 25 s. Saldrá «¿Hacerlo ahora?» con el nombre del diseño: pulsa <b>Sí</b> con el dedo.</li>
+      <li>El script guarda en el USB lo que hay ahora en la radio, copia las imágenes y comprueba cada una. Si algo falla, deja la radio como estaba y abre Total Commander.</li>
+      <li>Cuando diga «Listo», <b>saca el USB</b> y pulsa Aceptar: la radio se reinicia con el diseño nuevo.</li>
+      <li>Si pulsas <b>No</b>, se abre Total Commander como siempre. Para deshacer: Ajustes e historial → Historial → «Deshacer en el coche», y se instala igual.</li></ol>
+      <p class="warnbox">Sin probar todavía en el coche. Antes de descomprimir, guarda una copia de tu USB. Si el arranque no sale como esperas, vuelve a poner tu <code>Medianav.mscr</code> (está en <code>Mediaskinhz</code>) y todo queda como antes.</p>`:S.xmode==='auto'?`<ol class="steps">
       <li><b>Solo la primera vez:</b> copia <code>REINICIAR.exe</code> de tu USB dentro de la carpeta <code>Mediaskinhz</code> (así el script puede reiniciar la radio al terminar).</li>
       <li>Descomprime el ZIP en la raíz del USB y acepta sobrescribir. Quedará la carpeta <code>Mediaskinhz</code> con el script y las imágenes.</li>
       <li>Arranca el MediaNav con el USB y abre Total Commander. Toca una vez <code>MortScript.exe</code> (prepara la radio para abrir scripts) y después <code>Mediaskinhz\\instalar.mscr</code>.</li>
@@ -632,10 +640,11 @@ function scrExport(v){
       <li>Quita el USB. Si al volver a meterlo te propone otra vez la actualización, cancélala con el botón de inicio.</li>
       <li>Para deshacer, haz lo mismo con <code>RESTAURAR\\upgrade.lgu</code>: devuelve solo esas imágenes a como estaban.</li></ol>
       <p class="warnbox">Úsalo con cautela. El paquete solo lleva tus imágenes, pero el instalador del MediaNav hace más cosas: respalda, formatea y restaura la partición de ajustes, y según un análisis del instalador de la versión 7.0.5 envía siempre una orden de actualización al microcontrolador de la radio, aunque el paquete no traiga firmware. Muchos paquetes solo de imágenes se han instalado así sin problemas conocidos, pero el riesgo no es cero y no está probado en tu coche. Con Total Commander solo se copia el archivo.</p>`;
-  const modeUI=()=>{$('#x-steps').innerHTML=stepsHTML();$('#x-hw').hidden=S.xmode!=='lgu';
+  const modeUI=()=>{$('#x-steps').innerHTML=stepsHTML();$('#x-hw').hidden=S.xmode!=='lgu';$('#x-bootrow').hidden=S.xmode!=='auto';
     $('#x-mnote').textContent=S.xmode==='auto'?'El ZIP trae un script que hace la copia en la radio por ti: guarda lo de antes, copia, comprueba y deshace si falla. Usa el MortScript que ya tienes en el USB.':S.xmode!=='lgu'?'El ZIP trae las carpetas para copiarlas a mano. Es la opción más segura: solo se sustituyen esos archivos.':'El ZIP trae un upgrade.lgu que el MediaNav instala solo, sin entrar al Windows CE.'+(S.xhw===1?' Formato LGU0 (primera generación).':' Formato ULC2 (Evolution, versiones 5 a 9).');
     const o=$('#x-orig').closest('.swrow').querySelector('small');if(o)o.textContent=S.xmode==='auto'?'Carpeta originales por si falta la copia que hace el script':S.xmode!=='lgu'?'Carpeta ORIGINALES con solo estos archivos, para deshacer':'Un segundo upgrade.lgu en RESTAURAR para deshacer'};
   modeUI();
+  $('#x-boot').onchange=e=>{SET.xboot=e.target.checked;saveSet();modeUI()};
   $('#x-mode').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;S.xmode=b.dataset.m;$$('#x-mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));modeUI()};
   $('#x-hw').onclick=e=>{const b=e.target.closest('[data-h]');if(!b)return;S.xhw=+b.dataset.h;$$('#x-hw .chip').forEach(x=>x.setAttribute('aria-pressed',x===b));modeUI()};
   const res=[];let i=0,done=false;
@@ -662,11 +671,11 @@ function scrExport(v){
   $('#x-go').onclick=async e=>{const btn=e.currentTarget,rs=sel();if(!rs.length)return;btn.disabled=true;btn.textContent='Preparando el ZIP…';
     try{const inc=$('#x-orig').checked,lgu=S.xmode==='lgu',ulc2=S.xhw!==1;let ents;
       if(lgu){ents=[{name:'upgrade.lgu',data:await makeLGU(lguEntries(rs,false),ulc2,'Mediaskinhz')}];if(inc)ents.push({name:'RESTAURAR/upgrade.lgu',data:await makeLGU(lguEntries(rs,true),ulc2,'Skinhz restaurar')})}
-      else if(S.xmode==='auto'){ents=autoEntries(rs,inc).ents}
+      else if(S.xmode==='auto'){ents=autoEntries(rs,inc,{boot:SET.xboot!==false,name:S.curDesignName||designName()}).ents}
       else{ents=rs.map(r=>({name:S.root+'/'+r.F.path,data:r.u}));if(inc)for(const r of rs)ents.push({name:'ORIGINALES/'+S.root+'/'+r.F.path,data:new Uint8Array(r.F.buf)})}
       const d=new Date(),stamp=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
       ents.push({name:'LEEME.txt',data:new TextEncoder().encode(readme(rs,inc,stamp,lgu?'lgu':S.xmode==='auto'?'auto':'tc'))});const zb=await makeZip(ents),zn=`skin-medianav-${stamp}${lgu?'-actualizacion':S.xmode==='auto'?'-automatico':''}${rs.length<fs.length?'-'+rs.length+'-imagenes':''}.zip`;
-      if(await saveBlob(zb,zn)){await recordExport({mode:lgu?'lgu':S.xmode==='auto'?'auto':'tc',hw:ulc2?2:1,inc,files:rs.map(r=>r.F.path),name:zn,blob:zb,count:rs.length});if(!S.demo)setTimeout(()=>toast('Exportación guardada en el historial',{label:'Ver',fn:()=>go({n:'settings'})}),2700)}}
+      if(await saveBlob(zb,zn)){await recordExport({mode:lgu?'lgu':S.xmode==='auto'?'auto':'tc',boot:S.xmode==='auto'&&SET.xboot!==false,hw:ulc2?2:1,inc,files:rs.map(r=>r.F.path),name:zn,blob:zb,count:rs.length});if(!S.demo)setTimeout(()=>toast('Exportación guardada en el historial',{label:'Ver',fn:()=>go({n:'settings'})}),2700)}}
     catch(err){toast(err.message||'No se pudo crear el ZIP',{ms:6000})}finally{upd()}};
 }
 function readme(res,inc,stamp,mode){const R=S.root,lgu=mode==='lgu';const head=[`Skin MediaNav · ${stamp}`,'',`Imágenes incluidas (${res.length}):`,...res.map(r=>`  ${R}/${r.F.path}  [${r.kind}${r.ok?'':' · REVISAR: '+r.msgs.join(' ')}]`),''];
@@ -675,11 +684,14 @@ function readme(res,inc,stamp,mode){const R=S.root,lgu=mode==='lgu';const head=[
   const up=['Instalación como actualización:','1. Copia upgrade.lgu a la raíz de un USB en FAT32 (sin otros upgrade.lgu ni archivos de acceso a Windows CE).','2. Arranca el motor y espera a que el MediaNav termine de encenderse.',
     '3. Mete el USB y acepta la actualización. No toques nada hasta que se reinicie solo.','4. Quita el USB. Si vuelve a proponer la actualización, cancélala con el botón de inicio.',inc?'5. Para deshacer, haz lo mismo con RESTAURAR\\upgrade.lgu.':'5. Para deshacer, vuelve a copiar los archivos de tu backup.',
     '','El paquete copia las imágenes en \\Storage Card\\System\\Img\\'+R+'. Aún no se ha probado en este coche: empieza con una sola imagen.','Aviso: el instalador también respalda, formatea y restaura la partición de ajustes y envía una orden al microcontrolador aunque no haya firmware. No apagues durante la instalación.'];
+  const ab=['Instalación automática al arrancar con el USB:','1. Descomprime este ZIP en la raíz de tu USB de siempre (el de ULC2_recovery, MortScript y Total Commander) y acepta sobrescribir.','   Cambia Medianav.mscr; el de antes queda en Mediaskinhz\\Medianav-original.mscr.',
+    '2. Mete el USB y arranca la radio como para entrar a Total Commander. A los ~25 s pregunta si instalar: pulsa Sí.','3. Guarda lo que hay en Mediaskinhz\\antes-de-instalar, copia, comprueba cada imagen y, si algo falla, deja la radio como estaba y abre Total Commander.',
+    '4. Cuando diga «Listo», SACA EL USB y pulsa Aceptar: la radio se reinicia.','5. Si pulsas No, abre Total Commander como siempre. Lo que ha hecho queda en Mediaskinhz\\registro.txt.','','Sin probar todavía en el coche. Si el arranque no va como esperas, vuelve a poner tu Medianav.mscr de antes.'];
   const au=['Instalación automática (MortScript):','0. Solo la primera vez: copia REINICIAR.exe de tu USB dentro de la carpeta Mediaskinhz.','1. Descomprime este ZIP en la raíz del USB y acepta sobrescribir.',
     '2. Arranca el MediaNav con el USB y abre Total Commander.','3. Toca una vez MortScript.exe (prepara la radio para abrir scripts) y después Mediaskinhz\\instalar.mscr.',
     '4. Acepta. El script guarda en Mediaskinhz\\antes-de-instalar lo que hay ahora en la radio, copia las imágenes, comprueba el tamaño de cada una y, si alguna falla, deja la radio como estaba.','5. Al terminar ofrece reiniciar. Lo que ha hecho queda en Mediaskinhz\\registro.txt.',
     '6. Para deshacer: Mediaskinhz\\deshacer.mscr.','','Modo nuevo, sin probar todavía en el coche: la primera vez, con un cambio pequeño. Si el script no arranca, puedes copiar a mano Mediaskinhz\\archivos\\'+R+' como siempre.'];
-  return [...head,...(lgu?up:mode==='auto'?au:tc),'','Este ZIP solo contiene las imágenes listadas arriba; el resto del equipo no se toca.','Todos los BMP mantienen el nombre, el tamaño en píxeles y el formato de 8 bits del original.'].join('\r\n')}
+  return [...head,...(lgu?up:mode==='auto'?(SET.xboot!==false?ab:au):tc),'','Este ZIP solo contiene las imágenes listadas arriba; el resto del equipo no se toca.','Todos los BMP mantienen el nombre, el tamaño en píxeles y el formato de 8 bits del original.'].join('\r\n')}
 async function saveBlob(blob,name){
   if(DL){try{await DL.save({filename:name,data:blob});toast('ZIP guardado');return true}catch(e){if(e&&e.code==='declined'){toast('Descarga cancelada');return false}if(e&&e.code==='rate_limited'){toast('Ya hay una descarga pendiente de confirmar');return false}}}
   const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);

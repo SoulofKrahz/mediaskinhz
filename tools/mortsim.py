@@ -58,11 +58,26 @@ class Run:
         if f == 'question':
             assert a[2] == 'YesNo'; F.msgs.append('? ' + a[0].replace('^NL^', ' | ')); return F.answers.pop(0) if F.answers else 1
         if f == 'run': F.ran.append(a[0]); return 0
+        if f == 'runwait':  # otro MortScript: se ejecuta el script hijo con su propia carpeta
+            F.ran.append(a[0] + (' ' + a[1] if len(a) > 1 else ''))
+            if len(a) > 1 and a[1].lower().endswith('.mscr') and os.path.isfile(F.real(a[1])):
+                child = Run(F, a[1].rsplit('\\', 1)[0]); child.run(open(F.real(a[1]), encoding='cp1252').read())
+            return 0
+        if f in ('kill', 'close', 'sleep'): F.ran.append(f + ' ' + (str(a[0]) if a else '')); return 0
+        if f == 'activewindow': return 'ventana'
         raise NameError('función desconocida ' + f)
     # expresiones: or > and > not > comparación > + - & \ > átomo
     def expr(s, t):
-        s.t, s.i = t, 0; v = s.cmp_()
+        s.t, s.i = t, 0; v = s.or_()
         assert s.i == len(t), ('sobra', t[s.i:]); return v
+    def or_(s):
+        a = s.and_()
+        while s.pk()[0] == 'id' and s.pk()[1].lower() == 'or': s.nx(); b = s.and_(); a = int(bool(a) or bool(b))
+        return a
+    def and_(s):
+        a = s.cmp_()
+        while s.pk()[0] == 'id' and s.pk()[1].lower() == 'and': s.nx(); b = s.cmp_(); a = int(bool(a) and bool(b))
+        return a
     def pk(s): return s.t[s.i] if s.i < len(s.t) else (None, None)
     def nx(s): x = s.t[s.i]; s.i += 1; return x
     def cmp_(s):
@@ -85,13 +100,13 @@ class Run:
         if k == 's': return v[1:-1]
         if k == 'n': return int(v)
         if v == '(':
-            x = s.cmp_(); assert s.nx()[1] == ')'; return x
+            x = s.or_(); assert s.nx()[1] == ')'; return x
         if k == 'id':
             if s.pk()[1] == '(':
                 s.nx(); args = []
                 if s.pk()[1] != ')':
                     while True:
-                        args.append(s.cmp_())
+                        args.append(s.or_())
                         if s.pk()[1] == ',': s.nx(); continue
                         break
                 assert s.nx()[1] == ')', 'falta )'

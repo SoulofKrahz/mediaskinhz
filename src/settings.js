@@ -1,6 +1,6 @@
 
 /* ============ ajustes, confirmaciones, puntos de restauración e historial ============ */
-const SETDEF={confirm:true,auto:true,xmode:'tc',xhw:2,xorig:true,pv:'m',theme:'auto'};
+const SETDEF={confirm:true,auto:true,xboot:true,xmode:'tc',xhw:2,xorig:true,pv:'m',theme:'auto'};
 let SET={...SETDEF};
 function loadSet(){try{SET={...SETDEF,...JSON.parse(localStorage.getItem('skinhz-set')||'{}')}}catch(_){SET={...SETDEF}}
   if(S.xmode===undefined)S.xmode=SET.xmode;if(S.xhw===undefined)S.xhw=SET.xhw;applySetUI()}
@@ -26,7 +26,7 @@ function promptBS(o){return new Promise(res=>{
 function designName(){const g=S.gen;if(g&&g.look&&g.look!=='orig'){const st=(GSTYLES.find(x=>x[0]===g.style)||GSTYLES[0])[1];return st+(g.color==='one'?' '+hueName(g.hue).toLowerCase():'')}return 'Mi diseño'}
 async function saveDesign(){if(S.demo){toast('Carga tu backup para guardar diseños');return}const n=S.files.filter(changed).length;if(!n){toast('Todavía no hay cambios que guardar');return}
   const name=await promptBS({title:'Guardar el diseño',text:`Se guardan tus ${n} ${n===1?'imagen cambiada':'imágenes cambiadas'} con este nombre. Podrás volver a él cuando quieras.`,value:designName(),ok:'Guardar'});if(!name)return;
-  const id=await addPoint(name,'manual');if(id){S.curDesign=id;toast(`«${name}» guardado`,{label:'Ver',fn:()=>go({n:'settings'})})}}
+  const id=await addPoint(name,'manual');if(id){S.curDesign=id;S.curDesignName=name;toast(`«${name}» guardado`,{label:'Ver',fn:()=>go({n:'settings'})})}}
 async function addPoint(label,kind){
   if(S.demo)return null;if(kind==='auto'&&!SET.auto)return null;
   const n=S.files.filter(changed).length;if(kind==='auto'&&!n)return null;
@@ -38,16 +38,16 @@ async function restorePoint(id){
   const p=(await getList('points')).find(x=>x.id===id);if(!p)return;
   if(!await confirmBS({title:'Volver a este diseño',text:`Se cargará «${esc(p.label)}» (${p.n} ${p.n===1?'imagen cambiada':'imágenes cambiadas'}). Lo que tienes ahora se guarda antes como copia automática, por si quieres volver.`,ok:'Cargar',always:true}))return;
   await addPoint('Antes de volver a «'+p.label+'»','auto');before();for(const F of S.files)F.rep=null;S.src=new Map();S.ops={global:null,sec:{},file:{}};S.ex={};S.frames={};
-  applyState(p.st);if(!p.st.gen)S.gen=null;else if(!S.gen.look)migrateLook(p.st);if(p.kind==='manual')S.curDesign=p.id;bump();render(true);toast(`«${p.label}» cargado`,{label:'Deshacer',fn:undo})}
+  applyState(p.st);if(!p.st.gen)S.gen=null;else if(!S.gen.look)migrateLook(p.st);if(p.kind==='manual'){S.curDesign=p.id;S.curDesignName=p.label}bump();render(true);toast(`«${p.label}» cargado`,{label:'Deshacer',fn:undo})}
 async function recordExport(o){
   if(S.demo)return;const pid=await addPoint('Exportación · '+o.count+' '+(o.count===1?'imagen':'imágenes'),'export');
-  const xs=await getList('exports');xs.unshift({id:Date.now().toString(36),t:Date.now(),sig:sig(),mode:o.mode,hw:o.hw,inc:o.inc,files:o.files,name:o.name,size:o.blob.size,pid,blob:o.blob.size<=25e6?o.blob:null});
+  const xs=await getList('exports');xs.unshift({id:Date.now().toString(36),t:Date.now(),sig:sig(),mode:o.mode,boot:!!o.boot,hw:o.hw,inc:o.inc,files:o.files,name:o.name,size:o.blob.size,pid,blob:o.blob.size<=25e6?o.blob:null});
   xs.forEach((x,i)=>{if(i>=5)x.blob=null});try{await idb.set('exports',xs.slice(0,30))}catch(_){xs.forEach(x=>x.blob=null);try{await idb.set('exports',xs.slice(0,30))}catch(_){}}}
 async function undoZip(x){
   const fs=x.files.map(p=>S.lc.get(p.toLowerCase())).filter(Boolean);if(!fs.length){toast('Este backup no tiene esos archivos');return}
   const d=new Date(),stamp=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,R=S.root;let ents;
   if(x.mode==='lgu')ents=[{name:'upgrade.lgu',data:await makeLGU(fs.map(F=>({name:'upgrade/Storage Card/System/Img/'+R+'/'+F.path,data:new Uint8Array(F.buf)})),x.hw!==1,'Mediaskinhz restaurar')}];
-  else if(x.mode==='auto')ents=autoEntries(fs.map(F=>({F,u:new Uint8Array(F.buf)})),false).ents;
+  else if(x.mode==='auto')ents=autoEntries(fs.map(F=>({F,u:new Uint8Array(F.buf)})),false,{boot:!!x.boot,undo:true}).ents;
   else ents=fs.map(F=>({name:R+'/'+F.path,data:new Uint8Array(F.buf)}));
   ents.push({name:'LEEME.txt',data:new TextEncoder().encode([`Deshacer la exportación del ${new Date(x.t).toLocaleString('es-ES')}`,'',`Devuelve a su estado original ${fs.length} ${fs.length===1?'imagen':'imágenes'}:`,...fs.map(F=>'  '+R+'/'+F.path),'',
     x.mode==='auto'?'Descomprime el ZIP en la raíz del USB, abre Total Commander en la radio y toca Mediaskinhz\\instalar.mscr: instala estos originales igual que una exportación normal.':x.mode==='lgu'?'Copia upgrade.lgu a la raíz de un USB en FAT32, arranca el motor, mete el USB y acepta la actualización.':`Copia la carpeta ${R} encima de \\Storage Card\\System\\Img\\${R} con Total Commander y reinicia.`].join('\r\n'))});

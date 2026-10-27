@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-27-6';
+const VER='2026-10-27-7';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,7 +11,10 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Corregido: los iconos de la barra de abajo del teléfono (micro, altavoz del móvil, altavoz del coche, llamada entrante, todas) se perdían con un estilo o al cambiarles el color. La textura de rayas del estado pulsado se confundía con el dibujo',
+  [VER,['Exportar → Automático → «Que se instale solo al arrancar»: para el USB con ULC2_recovery. Al arrancar con el USB, la radio pregunta si instalar el diseño (Sí/No con el dedo), lo instala, lo comprueba y se reinicia. Sin Total Commander y sin lápiz',
+    'Si dices que no, o si algo falla, se abre Total Commander como siempre. Tu Medianav.mscr de antes queda guardado en la carpeta Mediaskinhz',
+    '«Deshacer en el coche» del historial también se instala solo al arrancar']],
+  ['2026-10-27-6',['Corregido: los iconos de la barra de abajo del teléfono (micro, altavoz del móvil, altavoz del coche, llamada entrante, todas) se perdían con un estilo o al cambiarles el color. La textura de rayas del estado pulsado se confundía con el dibujo',
     'Tamaño de los iconos de dentro: como el original, algo mayor (por defecto), grande o muy grande. En la ventana de cada pantalla y en la hoja de cada botón',
     'Los iconos anchos (altavoz, coche) crecen a lo ancho en vez de encogerse',
     'Al cambiar el icono ya no quedan restos del original en ningún estado',

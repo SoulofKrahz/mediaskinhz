@@ -155,6 +155,10 @@ async function run(browser, label, viewport, mobile) {
   ok(await p.evaluate(async () => { const F = S.files.find(f => kindOf(f) === 'btn' && frames(f) >= 2 && !genTargets().includes(f) && extractIcon(f)); if (!F) return true;
     before(); await setIsIn(1.35, [F]); const a = S.gen.isIn === 1.35 && F.rep && outBytes(F).length === 1078 + (((F.w + 3) & ~3) * F.h); undo(); return a; }), 'el tamaño de los iconos de dentro se aplica');
   ok(await p.evaluate(() => typeof fgroups === 'function' && FWFR['phone/phone_dial_btn_call.bmp'] === 8), 'el botón de llamar se trata como dos iconos (llamar y colgar)');
+  // Exportación automática que se instala sola al arrancar con el USB
+  ok(await p.evaluate(() => { const F = S.files.find(f => f.sec === 'HOME'); const e = autoEntries([{ F, u: new Uint8Array(F.buf) }], false, { boot: true, name: 'Prueba' }).ents.map(x => x.name);
+    const m = new TextDecoder('windows-1252').decode(autoEntries([{ F, u: new Uint8Array(F.buf) }], false, { boot: true, name: 'Prueba' }).ents.find(x => x.name === 'Medianav.mscr').data);
+    return e.includes('Medianav.mscr') && e.includes('Mediaskinhz/Medianav-original.mscr') && /MicomManager/.test(m) && /RunWait/.test(m) && /ttcmd/.test(m) && !/[^\x00-\xff]/.test(m); }), 'el modo automático trae el arranque desde el USB (Medianav.mscr) y sigue abriendo Total Commander');
   // Ventana de cada pantalla y «Común»: abren y enseñan sus bloques
   for (const sc of ['radio', 'media', 'phone', 'eco', 'setting', 'common']) {
     await p.evaluate(s => go({ n: 'scr', s }), sc); await p.waitForTimeout(400);
