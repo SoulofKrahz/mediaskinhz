@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-27-1';
+const VER='2026-10-27-2';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,7 +11,11 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Corregido: al tocar un botón desde la ventana de una pantalla, la hoja no respondía (colores, estilo) y su vista previa salía vacía',
+  [VER,['«Usar en todos los botones» copia también el color del marco y el del icono, no solo el estilo',
+    'En la ventana de cada pantalla, color del marco y del icono para todos sus botones a la vez',
+    'El estilo «Plano» enseña más el color elegido',
+    'Los botones de solo texto (Principal, Lista, Presintonías, Opciones…) ya no reciben un icono que no tenían']],
+  ['2026-10-27-1',['Corregido: al tocar un botón desde la ventana de una pantalla, la hoja no respondía (colores, estilo) y su vista previa salía vacía',
     'Los textos de las vistas de dentro, en español (Principal, Lista, Presintonías, Opciones…)',
     'La carátula de Multimedia sale tenue: la radio no siempre la enseña']],
   ['2026-10-27-0',['Cada pantalla tiene su ventana: toca Radio, Multimedia, Teléfono, Driving eco o Ajustes en la vista previa de Inicio y tienes junto todo lo suyo (su botón, el color de la pantalla, el negro del fondo, sus botones y el resto de piezas). «Común» reúne lo que comparten todas',

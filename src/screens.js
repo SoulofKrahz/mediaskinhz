@@ -48,6 +48,7 @@ function scrScreen(v,r){
   setTitle(scrName(s),`${files.length+(bg?1:0)} imágenes de esta pantalla`);
   const btns=files.filter(isBtnLike),rest=files.filter(F=>!isBtnLike(F)),sty=btns.filter(F=>kindOf(F)==='btn'&&canStyle(F));
   const g=S.gen||(S.gen=defGen()),looks=new Set(sty.map(F=>(g.per[F.path]||{}).look||'orig')),curLook=looks.size===1?[...looks][0]:null;
+  const same=k=>{const vs=new Set(sty.map(F=>{const h=(g.per[F.path]||{})[k];return h==null?'none':h}));return vs.size===1?[...vs][0]:''};
   v.innerHTML=`<div class="two">
     ${bg?`<div class="stick sticky-pv">${VWS.has(s)?'<div id="sc-vw" class="vwbar"></div>':''}${pvBlock('pv')}<div class="e-bar"><div class="seg" id="sc-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="${S.hcmp!=='orig'}">Ahora</button><button data-v="orig" aria-pressed="${S.hcmp==='orig'}">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">${VWS.has(s)?'Toca un botón de la pantalla para cambiarlo':'Fondo de '+esc(scrName(s))+' con tus cambios'}</span></div></div>`:''}
     <div class="stack">
@@ -58,7 +59,9 @@ function scrScreen(v,r){
       <p class="lbl">Color del negro del fondo</p><div class="hsw" id="sc-bk">${swatches(((S.ops.file[bg.path]||{}).map||{})[13]?((S.ops.file[bg.path].map[13].to)):'none',{none:'Negro original',label:'Color del negro del fondo'})}</div>
       <p class="note">Conserva el degradado. Para un fondo claro o una foto: toca el fondo → Sustituir.</p></div>`:''}
     ${btns.length?`<div class="card"><h3>Botones e iconos <small class="cnt">${btns.length}</small></h3><p class="note">Toca uno para cambiar su icono, colores y estilo.</p>
-      ${sty.length?`<p class="lbl">El mismo estilo para los ${sty.length} botones</p><div class="chips scroll" id="sc-lk">${LOOKS().map(([k,l])=>`<button class="chip" data-v="${k}" aria-pressed="${curLook===k}">${l}</button>`).join('')}</div>`:''}
+      ${sty.length?`<p class="lbl">El mismo estilo para los ${sty.length} botones</p><div class="chips scroll" id="sc-lk">${LOOKS().map(([k,l])=>`<button class="chip" data-v="${k}" aria-pressed="${curLook===k}">${l}</button>`).join('')}</div>
+        <p class="lbl">Color del marco de todos</p><div class="hsw" id="sc-fc">${swatches(same('hue'),{none:'El original',white:true,label:'Color del marco de todos'})}</div>
+        <p class="lbl">Color del icono de todos</p><div class="hsw" id="sc-icc">${swatches(same('ihue'),{none:'Como el original',white:true,label:'Color del icono de todos'})}</div>`:''}
       <div class="grid sc-grid">${btns.map(tile).join('')}</div></div>`:''}
     ${rest.length?`<div class="card"><h3>Otras piezas <small class="cnt">${rest.length}</small></h3><p class="note">Barras, listas, fondos de ventanas… Tócalas para cambiar sus colores o sustituirlas.</p><div class="list">${rest.map(F=>fileRow(F,KINDL.get(kindOf(F)))).join('')}</div></div>`:''}
     </div></div>`;
@@ -79,5 +82,11 @@ function scrScreen(v,r){
   const lk=$('#sc-lk');if(lk)lk.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;const k=b.dataset.v,nm=(LOOKS().find(x=>x[0]===k)||['',''])[1];
     if(!await confirmBS({title:`«${nm}» en ${scrName(s)}`,text:`Se aplicará a los ${sty.length} botones de esta pantalla. El icono y el color de cada uno se mantienen. Podrás deshacerlo.`,ok:'Aplicar'}))return;
     before();for(const G of sty)(g.per[G.path]||(g.per[G.path]={})).look=k;toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(sty);render(true);toast(`${sty.length} botones con «${nm}»`,{label:'Deshacer',fn:undo})};
+  // colores de marco e icono para todos los botones de la pantalla a la vez
+  const allCol=async(key,h)=>{before();for(const G of sty){const q=g.per[G.path]||(g.per[G.path]={});if(h==null)delete q[key];else q[key]=h}
+    toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(sty);render(true);toast(`Color cambiado en ${sty.length} botones`,{label:'Deshacer',fn:undo})};
+  for(const [id,key] of [['#sc-fc','hue'],['#sc-icc','ihue']]){const sw=$(id+' .swg');if(!sw)continue;
+    sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;const h=b.dataset.h;allCol(key,h==='none'?null:h==='white'?'white':+h)};
+    sw.querySelector('[data-pick]').onchange=e=>allCol(key,Math.round(hexHsl(e.target.value)[0]))}
   mountThumbs(v);
 }

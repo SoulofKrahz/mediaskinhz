@@ -30,14 +30,19 @@ function drawLib(x,k,cx,cy,size,col,glow){x.save();x.translate(cx-size/2,cy-size
 function defIcon(F){const n=F.name.toLowerCase();for(const [w,k] of ICONDEF)if(n.includes(w))return k;return 'star'}
 /* Extrae la silueta del icono original a partir del estado pulsado (fondo claro casi uniforme por filas) */
 function extractIcon(F){if(F.ico!==undefined)return F.ico;const fr=frames(F);if(fr<2){F.ico=null;return null}
-  const fw=F.w/fr,h=F.h,ox=fw,m=new Float32Array(fw*h),pal=F.pal,idx=F.idx,B=4;
-  for(let y=B;y<h-B;y++){const rs=[],gs=[],bs=[];for(let x=B;x<fw-B;x++){const p=idx[y*F.w+ox+x]*3;rs.push(pal[p]);gs.push(pal[p+1]);bs.push(pal[p+2])}
-    const med=a=>{a.sort((u,v)=>u-v);return a[a.length>>1]},mr=med(rs.slice()),mg=med(gs.slice()),mb=med(bs.slice());
-    for(let x=B;x<fw-B;x++){const p=idx[y*F.w+ox+x]*3,dr=pal[p]-mr,dg=pal[p+1]-mg,db=pal[p+2]-mb,d=Math.sqrt(dr*dr+dg*dg+db*db);m[y*fw+x]=cl((d-26)/64)}}
-  const bl=new Float32Array(fw*h);for(let y=1;y<h-1;y++)for(let x=1;x<fw-1;x++){let a=0;for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++)a+=m[(y+j)*fw+x+i];bl[y*fw+x]=a/9}
-  for(let i=0;i<fw*h;i++){const v=cl((bl[i]-.22)/.36);m[i]=v*v*(3-2*v)}
-  let x0=fw,y0=h,x1=-1,y1=-1,sum=0;for(let y=0;y<h;y++)for(let x=0;x<fw;x++)if(m[y*fw+x]>.5){sum++;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
-  if(sum<30||x1-x0>fw*.9||y1-y0>h*.9){F.ico=null;return null}
+  const fw=F.w/fr,h=F.h,pal=F.pal,idx=F.idx,B=4;
+  // máscara del icono en un estado: lo que se aparta del color típico de su fila
+  const det=ox=>{const m=new Float32Array(fw*h);
+    for(let y=B;y<h-B;y++){const rs=[],gs=[],bs=[];for(let x=B;x<fw-B;x++){const p=idx[y*F.w+ox+x]*3;rs.push(pal[p]);gs.push(pal[p+1]);bs.push(pal[p+2])}
+      const med=a=>{a.sort((u,v)=>u-v);return a[a.length>>1]},mr=med(rs.slice()),mg=med(gs.slice()),mb=med(bs.slice());
+      for(let x=B;x<fw-B;x++){const p=idx[y*F.w+ox+x]*3,dr=pal[p]-mr,dg=pal[p+1]-mg,db=pal[p+2]-mb,d=Math.sqrt(dr*dr+dg*dg+db*db);m[y*fw+x]=cl((d-26)/64)}}
+    const bl=new Float32Array(fw*h);for(let y=1;y<h-1;y++)for(let x=1;x<fw-1;x++){let a=0;for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++)a+=m[(y+j)*fw+x+i];bl[y*fw+x]=a/9}
+    for(let i=0;i<fw*h;i++){const v=cl((bl[i]-.22)/.36);m[i]=v*v*(3-2*v)}
+    let x0=fw,y0=h,x1=-1,y1=-1,sum=0;for(let y=0;y<h;y++)for(let x=0;x<fw;x++)if(m[y*fw+x]>.5){sum++;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
+    return {m,sum,x0,y0,x1,y1,ok:sum>=30&&x1-x0<=fw*.9&&y1-y0<=h*.9}};
+  // se recorta del estado pulsado, pero solo si también hay icono en reposo: los botones de solo texto (p. ej. «Principal», «Lista»)
+  // tienen una textura de rayas que en el pulsado parece un dibujo
+  const r=det(fw);if(!r.ok||!det(0).ok){F.ico=null;return null}const {m,x0,y0,x1,y1}=r;
   const c=document.createElement('canvas');c.width=fw;c.height=h;const x=c.getContext('2d'),im=x.createImageData(fw,h);
   for(let i=0;i<fw*h;i++){im.data[i*4]=im.data[i*4+1]=im.data[i*4+2]=255;im.data[i*4+3]=Math.round(m[i]*255)}x.putImageData(im,0,0);
   F.ico={cv:c,bx:x0,by:y0,bw:x1-x0+1,bh:y1-y0+1};return F.ico}
@@ -63,14 +68,14 @@ function cornerBase(F){const s=S.layout.slots.find(s=>s.p===F.path),bg=byName('c
   if(s&&bg)x.drawImage(renderCanvas(bg,false),s.x,s.y,fw,F.h,0,0,fw,F.h);return c}
 function rrect(x,X,Y,W,H,r){r=Math.max(0,Math.min(r,W/2,H/2));x.beginPath();x.moveTo(X+r,Y);x.lineTo(X+W-r,Y);x.arcTo(X+W,Y,X+W,Y+r,r);x.lineTo(X+W,Y+H-r);x.arcTo(X+W,Y+H,X+W-r,Y+H,r);x.lineTo(X+r,Y+H);x.arcTo(X,Y+H,X,Y+H-r,r);x.lineTo(X,Y+r);x.arcTo(X,Y,X+r,Y,r);x.closePath()}
 const gRad=(g,h)=>g.shape==='rect'?0:g.shape==='pill'?(h-2*g.inset)/2:g.r;
-function genIconSrc(F,g){const p=g.per[F.path]||{};const k=p.icon||(extractIcon(F)?'orig':'lib:'+defIcon(F));return k}
+function genIconSrc(F,g){const p=g.per[F.path]||{};const k=p.icon||(extractIcon(F)?'orig':S.layout.slots.some(s=>s.p===F.path)?'lib:'+defIcon(F):'none');return k}  // fuera de Inicio, un botón sin dibujo (solo texto) sigue sin icono
 function drawState(x,F,w,h,s,H,g,bgc){
   const on=s%2===1,dim=s===2,ins=g.inset,X=ins,Y=ins,W=w-2*ins,Hh=h-2*ins,r=gRad(g,h);
   x.drawImage(bgc,0,0);
   const lin=(a,b,c)=>{const gr=x.createLinearGradient(0,Y,0,Y+Hh);gr.addColorStop(0,a);if(c){gr.addColorStop(.62,b);gr.addColorStop(1,c)}else gr.addColorStop(1,b);return gr};
   let ic,glow=0;rrect(x,X+1,Y+1,W-2,Hh-2,r);
   switch(g.style){
-    case 'flat':x.fillStyle=on?`hsl(${H} 78% 50%)`:`hsl(${H} 22% ${dim?8:14}%)`;x.fill();ic=on?'#ffffff':`hsl(${H} 80% ${dim?36:62}%)`;break;
+    case 'flat':x.fillStyle=on?`hsl(${H} 78% 50%)`:`hsl(${H} 42% ${dim?9:19}%)`;x.fill();ic=on?'#ffffff':`hsl(${H} 80% ${dim?36:62}%)`;break;
     case 'outline':x.fillStyle=on?`hsl(${H} 70% 15%)`:'#030405';x.fill();x.lineWidth=on?4:3;x.strokeStyle=`hsl(${H} 85% ${on?60:dim?28:52}%)`;rrect(x,X+2.5,Y+2.5,W-5,Hh-5,Math.max(0,r-1.5));x.stroke();ic=on?'#ffffff':`hsl(${H} 80% ${dim?30:58}%)`;break;
     case 'glass':x.fillStyle=on?lin(`hsl(${H} 75% 58%)`,`hsl(${H} 75% 32%)`):lin(`hsl(${H} 25% ${dim?12:24}%)`,`hsl(${H} 25% ${dim?4:7}%)`);x.fill();
       x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const gl=x.createLinearGradient(0,Y,0,Y+Hh*.5);gl.addColorStop(0,'rgba(255,255,255,.22)');gl.addColorStop(1,'rgba(255,255,255,.02)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh*.5);x.restore();
@@ -108,7 +113,7 @@ function drawState(x,F,w,h,s,H,g,bgc){
   if(p.ihue!=null&&!on)ic=p.ihue==='white'?(dim?'rgba(255,255,255,.5)':'#ffffff'):`hsl(${p.ihue} 85% ${dim?34:62}%)`;
   if(src==='orig'){const mk=extractIcon(F);if(mk)drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,mk,X,Y,sz/56,col,gl);return true},cx,cy,isz,ic,glow)}
   else if(src==='png'&&p.png){drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,p.png,X,Y,sz/96*1.15,col,gl);return true},cx,cy,isz,ic,glow)}
-  else drawIcon(x,keyPainter(src),cx,cy,isz,ic,glow);
+  else if(src!=='none')drawIcon(x,keyPainter(src),cx,cy,isz,ic,glow);
 }
 function genHue(F,g){const p=g.per[F.path]||{};if(p.hue!=null)return p.hue;return g.color==='orig'?origHue(F):g.hue}
 function genTile(F,g){const fr=frames(F),fw=F.w/fr,h=F.h,c=document.createElement('canvas');c.width=F.w;c.height=h;const x=c.getContext('2d');const H=genHue(F,g),bgc=cornerBase(F);
