@@ -6,7 +6,7 @@ import os, re
 D = os.path.dirname(os.path.abspath(__file__))
 rd = lambda p: open(os.path.join(D, p), encoding='utf-8').read()
 core = rd('src/core.js'); h = rd('src/head.html'); a = rd('src/app.js')
-g = rd('src/lgu-data.js') + rd('src/gen.js') + rd('src/settings.js') + rd('src/auto.js') + rd('src/icons.js') + rd('src/icostyle.js') + rd('src/buttons.js') + rd('src/web.js')
+g = rd('src/lgu-data.js') + rd('src/gen.js') + rd('src/settings.js') + rd('src/auto.js') + rd('src/icons.js') + rd('src/icostyle.js') + rd('src/buttons.js') + rd('src/screens.js') + rd('src/web.js')
 assert a.count("boot();\n") == 1 and h.count('<!--WEBHEAD-->') == 1
 js = "'use strict';\n" + core + a.replace("boot();\n", g + "\nboot();\n")
 # crossorigin="use-credentials": sin esto Chrome pide el manifest SIN cookies y _worker.js no ve el color (icono siempre verde)

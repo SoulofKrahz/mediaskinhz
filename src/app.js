@@ -251,7 +251,7 @@ function render(keepScroll){
   const r=S.route,v=$('#view');document.body.dataset.route=r.n;const root=rootOf();
   $$('#bnav [data-r],#tnav [data-r]').forEach(b=>{if(b.dataset.r===root)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
   $('#ab-back').hidden=ROOTN.has(r.n);
-  ({home:scrHome,theme:scrTheme,lib:scrLib,cat:scrCat,edit:scrEdit,layout:scrLayout,export:scrExport,gen:scrGen,settings:scrSettings})[r.n](v,r);
+  ({home:scrHome,theme:scrTheme,lib:scrLib,cat:scrCat,edit:scrEdit,layout:scrLayout,export:scrExport,gen:scrGen,settings:scrSettings,scr:scrScreen})[r.n](v,r);
   mountThumbs(v);updUndo();updBadge();if(keepScroll)scrollTo(0,y);
 }
 function updBadge(){const n=S.files.filter(changed).length;$$('[data-badge]').forEach(b=>{b.textContent=n;b.hidden=!n});return n}
@@ -266,9 +266,9 @@ function scrHome(v){
   const sec=SCRSEC[S.scr],nSec=S.files.filter(F=>F.sec===sec).length;
   v.innerHTML=`<div class="two">
     <div class="stack stick">
-      <div class="chips scroll" id="h-scr">${have.map(([k,l])=>`<button class="chip" data-s="${k}" aria-pressed="${k===S.scr}">${l}</button>`).join('')}</div>
+      <div class="chips scroll" id="h-scr">${have.map(([k,l])=>`<button class="chip" data-s="${k}" aria-pressed="${k===S.scr}">${l}</button>`).join('')}${S.demo?'':'<button class="chip" data-s="common">Común</button>'}</div>
       <div class="screen"><canvas id="pv" width="800" height="480" aria-label="Vista previa de la pantalla ${esc(SCRL.get(S.scr))}"></canvas></div>
-      <div class="e-bar"><div class="seg" id="h-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="${S.hcmp!=='orig'}">Ahora</button><button data-v="orig" aria-pressed="${S.hcmp==='orig'}">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">${S.scr==='home'?'Toca un botón para cambiar su icono, color o estilo':'Fondo con tu tema'}</span></div>
+      <div class="e-bar"><div class="seg" id="h-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="${S.hcmp!=='orig'}">Ahora</button><button data-v="orig" aria-pressed="${S.hcmp==='orig'}">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">${S.scr==='home'?(S.demo?'Toca un botón para cambiarlo':'Toca un botón para abrir esa pantalla'):'Fondo con tu tema'}</span></div>
     </div>
     <div class="stack">
       ${S.demo?`<div class="card demo"><h2>Esto es un ejemplo</h2><p>Las imágenes son de muestra. Carga tu backup (la carpeta <b>M1</b> o un ZIP) para editar las de tu MediaNav. No sale de tu móvil.</p><button class="btn wide" data-act="load">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}Cargar mi backup</button></div>`:''}
@@ -280,14 +280,14 @@ function scrHome(v){
       ${nSec&&S.scr!=='home'?`<div class="list"><button class="li" data-cat="${catOf({sec})}" data-sec="${esc(sec)}"><span class="ic">${ic('M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z')}</span><span class="tx"><b>Todas las imágenes de ${esc(SECL.get(sec))}</b><small>${nSec} imágenes</small></span>${CHEV}</button></div>`:''}
       <div class="list"><button class="li" data-go="theme"><span class="ic">${ic(ROOTS[1][2])}</span><span class="tx"><b>Cambiar el color de toda la radio</b><small>${esc(describe(S.ops.global)||'Sin tema')}</small></span>${CHEV}</button></div>
     </div></div>`;
-  $('#h-scr').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;S.scr=b.dataset.s;remember();render(true)};
+  $('#h-scr').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;const k=b.dataset.s;if(k!=='home'&&!S.demo){go({n:'scr',s:k});return}S.scr=k;remember();render(true)};
   const c=$('#pv');mountPreview(c,()=>({scr:S.scr,orig:S.hcmp==='orig'}));
   $('#h-cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.hcmp=b.dataset.v;$$('#h-cmp button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawPreview(c,{scr:S.scr,orig:S.hcmp==='orig'})};
   if(S.scr==='home'){let down=-1;
     c.onpointerdown=e=>{const h=slotAt(c,e);down=h.i;if(h.i>=0){S.press=h.i;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})}};
     c.onpointermove=e=>{if(e.pointerType!=='mouse')return;const h=slotAt(c,e);c.style.cursor=h.i>=0?'pointer':'default';if(down<0&&S.press!==h.i){S.press=h.i;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})}};
     c.onpointerleave=c.onpointercancel=()=>{down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})};
-    c.onpointerup=e=>{const h=slotAt(c,e);const i=down;down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'});if(i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F){if(genTargets().includes(F))btnSheet(F);else go({n:'edit',p:F.path})}}}}
+    c.onpointerup=e=>{const h=slotAt(c,e);const i=down;down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'});if(i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F){const sc=slotScr(F);if(sc&&!S.demo)go({n:'scr',s:sc});else if(genTargets().includes(F))btnSheet(F);else go({n:'edit',p:F.path})}}}}
   S.slow=()=>{};
 }
 

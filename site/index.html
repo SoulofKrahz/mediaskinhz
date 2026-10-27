@@ -249,6 +249,8 @@ input[type=range].hue{--trk:linear-gradient(90deg,hsl(0 80% 50%),hsl(60 80% 50%)
 .icw{position:relative;display:flex}.icw .icb{flex:1}.icx{position:absolute;top:2px;right:2px;width:26px;height:26px;border-radius:50%;background:var(--card);border:1px solid var(--bd2);color:var(--mu);font-size:16px;line-height:1;display:grid;place-items:center}.icx.ice{right:auto;left:2px}.icx.ice svg{width:14px;height:14px}
 .icrow{display:flex;align-items:center;gap:14px}.icrow canvas{width:56px;height:56px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);flex:none}
 .bts~*,.bs>.lbl,.bs>.hs,.bs>.hsw,.bs>.bt-more,.bs>.gnav{flex-shrink:0}
+.bts.inl{position:static;margin:0;padding:0;border:0;background:none}.cnt{font-size:13px;color:var(--mu);font-weight:600;margin-left:4px}
+.sc-grid{grid-template-columns:repeat(auto-fill,minmax(min(130px,100%),1fr))}
 .hs{flex:none;display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;margin:0 -2px;scroll-snap-type:x proximity;scrollbar-width:none}.hs::-webkit-scrollbar{display:none}
 .hs .icb{flex:0 0 78px;scroll-snap-align:start}.hs .icb canvas{width:44px;height:44px}.hs .ocd{flex:0 0 112px;scroll-snap-align:start}
 .hsw{flex:none}.hsw .swg{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;padding:3px 3px 6px;scrollbar-width:none}.hsw .swg::-webkit-scrollbar{display:none}.hsw .swc{flex:0 0 42px;width:42px;min-width:42px}
@@ -817,7 +819,7 @@ function render(keepScroll){
   const r=S.route,v=$('#view');document.body.dataset.route=r.n;const root=rootOf();
   $$('#bnav [data-r],#tnav [data-r]').forEach(b=>{if(b.dataset.r===root)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
   $('#ab-back').hidden=ROOTN.has(r.n);
-  ({home:scrHome,theme:scrTheme,lib:scrLib,cat:scrCat,edit:scrEdit,layout:scrLayout,export:scrExport,gen:scrGen,settings:scrSettings})[r.n](v,r);
+  ({home:scrHome,theme:scrTheme,lib:scrLib,cat:scrCat,edit:scrEdit,layout:scrLayout,export:scrExport,gen:scrGen,settings:scrSettings,scr:scrScreen})[r.n](v,r);
   mountThumbs(v);updUndo();updBadge();if(keepScroll)scrollTo(0,y);
 }
 function updBadge(){const n=S.files.filter(changed).length;$$('[data-badge]').forEach(b=>{b.textContent=n;b.hidden=!n});return n}
@@ -832,9 +834,9 @@ function scrHome(v){
   const sec=SCRSEC[S.scr],nSec=S.files.filter(F=>F.sec===sec).length;
   v.innerHTML=`<div class="two">
     <div class="stack stick">
-      <div class="chips scroll" id="h-scr">${have.map(([k,l])=>`<button class="chip" data-s="${k}" aria-pressed="${k===S.scr}">${l}</button>`).join('')}</div>
+      <div class="chips scroll" id="h-scr">${have.map(([k,l])=>`<button class="chip" data-s="${k}" aria-pressed="${k===S.scr}">${l}</button>`).join('')}${S.demo?'':'<button class="chip" data-s="common">Común</button>'}</div>
       <div class="screen"><canvas id="pv" width="800" height="480" aria-label="Vista previa de la pantalla ${esc(SCRL.get(S.scr))}"></canvas></div>
-      <div class="e-bar"><div class="seg" id="h-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="${S.hcmp!=='orig'}">Ahora</button><button data-v="orig" aria-pressed="${S.hcmp==='orig'}">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">${S.scr==='home'?'Toca un botón para cambiar su icono, color o estilo':'Fondo con tu tema'}</span></div>
+      <div class="e-bar"><div class="seg" id="h-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="${S.hcmp!=='orig'}">Ahora</button><button data-v="orig" aria-pressed="${S.hcmp==='orig'}">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">${S.scr==='home'?(S.demo?'Toca un botón para cambiarlo':'Toca un botón para abrir esa pantalla'):'Fondo con tu tema'}</span></div>
     </div>
     <div class="stack">
       ${S.demo?`<div class="card demo"><h2>Esto es un ejemplo</h2><p>Las imágenes son de muestra. Carga tu backup (la carpeta <b>M1</b> o un ZIP) para editar las de tu MediaNav. No sale de tu móvil.</p><button class="btn wide" data-act="load">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}Cargar mi backup</button></div>`:''}
@@ -846,14 +848,14 @@ function scrHome(v){
       ${nSec&&S.scr!=='home'?`<div class="list"><button class="li" data-cat="${catOf({sec})}" data-sec="${esc(sec)}"><span class="ic">${ic('M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z')}</span><span class="tx"><b>Todas las imágenes de ${esc(SECL.get(sec))}</b><small>${nSec} imágenes</small></span>${CHEV}</button></div>`:''}
       <div class="list"><button class="li" data-go="theme"><span class="ic">${ic(ROOTS[1][2])}</span><span class="tx"><b>Cambiar el color de toda la radio</b><small>${esc(describe(S.ops.global)||'Sin tema')}</small></span>${CHEV}</button></div>
     </div></div>`;
-  $('#h-scr').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;S.scr=b.dataset.s;remember();render(true)};
+  $('#h-scr').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;const k=b.dataset.s;if(k!=='home'&&!S.demo){go({n:'scr',s:k});return}S.scr=k;remember();render(true)};
   const c=$('#pv');mountPreview(c,()=>({scr:S.scr,orig:S.hcmp==='orig'}));
   $('#h-cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.hcmp=b.dataset.v;$$('#h-cmp button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawPreview(c,{scr:S.scr,orig:S.hcmp==='orig'})};
   if(S.scr==='home'){let down=-1;
     c.onpointerdown=e=>{const h=slotAt(c,e);down=h.i;if(h.i>=0){S.press=h.i;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})}};
     c.onpointermove=e=>{if(e.pointerType!=='mouse')return;const h=slotAt(c,e);c.style.cursor=h.i>=0?'pointer':'default';if(down<0&&S.press!==h.i){S.press=h.i;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})}};
     c.onpointerleave=c.onpointercancel=()=>{down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})};
-    c.onpointerup=e=>{const h=slotAt(c,e);const i=down;down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'});if(i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F){if(genTargets().includes(F))btnSheet(F);else go({n:'edit',p:F.path})}}}}
+    c.onpointerup=e=>{const h=slotAt(c,e);const i=down;down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'});if(i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F){const sc=slotScr(F);if(sc&&!S.demo)go({n:'scr',s:sc});else if(genTargets().includes(F))btnSheet(F);else go({n:'edit',p:F.path})}}}}
   S.slow=()=>{};
 }
 
@@ -2179,17 +2181,17 @@ const canStyle=F=>{const fr=frames(F);if(fr<2)return false;const r=F.w/fr/F.h;re
 const secBtns=F=>S.files.filter(G=>G.sec===F.sec&&kindOf(G)==='btn'&&canStyle(G)&&!genTargets().includes(G));
 // Al cambiar la forma o el estilo del icono se redibujan todos los botones con estilo
 function restyleAll(){applyButtons([...genTargets(),...styledOut()])}
-function btnSheet(F,after){
-  const g=S.gen||(S.gen=defGen()),T=genTargets(),home=T.includes(F),look=home?btnLook():((g.per[F.path]||{}).look||'orig'),list=home?T:null,idx=list?list.indexOf(F):-1;S.gsel=F.path;
+function btnSheet(F,after,el){
+  const g=S.gen||(S.gen=defGen()),T=genTargets(),home=T.includes(F),look=home?btnLook():((g.per[F.path]||{}).look||'orig'),list=home&&!el?T:null,idx=list?list.indexOf(F):-1;S.gsel=F.path;const pvH=home&&!el,again=()=>btnSheet(F,after,el);
   const p=()=>g.per[F.path]||(g.per[F.path]={}),ps=g.per[F.path]||{};const cur=ps.icon||'orig',sug=icSuggest2(F).map(n=>'t:'+n);
   const icons=['orig','mine',...(cur.startsWith('t:')||cur.startsWith('lib:')||cur.startsWith('my:'))&&!sug.includes(cur)?[cur]:[],...sug,'all'];
-  if(IC.st!==2){icLoad();S.icRedraw=()=>{if($('#bt-ic'))btnSheet(F,after)}}
+  if(IC.st!==2){icLoad();S.icRedraw=()=>{if($('#bt-ic'))again()}}
   const icT=k=>k==='orig'?'El original':k==='mine'?'Mis iconos':k==='all'?'Ver todos':k.startsWith('lib:')?ICONL[k.slice(4)]||k:keyLabel(k);
   const done=()=>{after&&after();for(const q of S.pvs)if(q.c.isConnected)drawPreview(q.c,q.o())};
   const change=fn=>{before();fn();applyButtons([F]);done();pv()};
   const fsel=ps.hue==null?'none':ps.hue==='white'?'white':ps.hue,isel=ps.ihue==null?'none':ps.ihue==='white'?'white':ps.ihue;
-  openBS(`<div class="gsh bts">${home?`<div class="screen"><canvas id="bt-pv" width="800" height="480" aria-label="Vista previa de Inicio con ${esc(pretty(F))} marcado"></canvas></div>`:`<div class="btstrip"><canvas id="bt-pv" aria-label="${esc(pretty(F))} con sus estados"></canvas></div>`}
-      <div class="e-bar"><div><h2>${esc(pretty(F))}</h2></div><span class="sp"></span>${home?`<div class="seg" id="bt-st" role="group" aria-label="Estado"><button data-s="0" aria-pressed="${!S.gstate}">Reposo</button><button data-s="1" aria-pressed="${S.gstate===1}">Pulsado</button></div>`:''}</div></div>
+  const html=(`<div class="gsh bts${el?' inl':''}">${pvH?`<div class="screen"><canvas id="bt-pv" width="800" height="480" aria-label="Vista previa de Inicio con ${esc(pretty(F))} marcado"></canvas></div>`:`<div class="btstrip"><canvas id="bt-pv" aria-label="${esc(pretty(F))} con sus estados"></canvas></div>`}
+      <div class="e-bar"><div><h2>${esc(pretty(F))}</h2></div><span class="sp"></span>${pvH?`<div class="seg" id="bt-st" role="group" aria-label="Estado"><button data-s="0" aria-pressed="${!S.gstate}">Reposo</button><button data-s="1" aria-pressed="${S.gstate===1}">Pulsado</button></div>`:''}</div></div>
     <p class="lbl">Icono</p><div class="hs" id="bt-ic">${icons.map(k=>`<button class="icb${k==='all'||k==='mine'?' all':''}" data-k="${k}" aria-pressed="${cur===k}" title="${esc(icT(k))}"><canvas width="88" height="88"></canvas><span>${esc(icT(k))}</span></button>`).join('')}</div>
     ${frames(F)>1||!F.keyCount?`<p class="lbl">Color del marco</p><div class="hsw" id="bt-fc">${swatches(fsel,{none:look==='orig'?'El original':'Como el resto',white:look==='orig',label:'Color del marco'})}</div>`:''}
     <p class="lbl">Color del icono</p><div class="hsw" id="bt-icc">${swatches(isel,{none:'Como el original',white:true,label:'Color del icono'})}</div>
@@ -2197,18 +2199,19 @@ function btnSheet(F,after){
     ${home?'':`<button class="btn o sm wide" id="bt-all">Usar este estilo en los ${secBtns(F).length} botones de ${esc(SECL.get(F.sec)||F.sec)}</button>`}
     <p class="lbl">Forma <small>· común a todos los botones con estilo</small></p><div class="chips" id="bt-sh">${GSHAPES.map(([k,l])=>`<button class="chip" data-v="${k}" aria-pressed="${g.shape===k}">${l}</button>`).join('')}</div>`:''}
     <div class="bt-more">${home?`<button class="btn o sm" data-mo="gen">Forma y trazo</button>`:''}<button class="btn o sm" data-mo="edit">Editar a fondo</button><button class="btn o sm" data-mo="reset">Volver al original</button></div>
-    <div class="gnav">${list?`<button class="btn o sm" data-mv="-1"${idx<=0?' disabled':''}>‹ Anterior</button>`:'<span></span>'}<button class="btn sm" data-done>Hecho</button>${list?`<button class="btn o sm" data-mv="1"${idx>=list.length-1?' disabled':''}>Siguiente ›</button>`:'<span></span>'}</div>`);
-  const bs=$('#bs');bs.onclick=null;const gcv=$('#bt-pv');
-  const pv=home?()=>drawPreview(gcv,{scr:'home',state:S.gstate||0,selP:F.path}):()=>{const src=renderCanvas(F,true),k=Math.min(3,Math.max(1,Math.floor(340/F.w*2)/2||1));gcv.width=F.w;gcv.height=F.h;const x=gcv.getContext('2d');x.clearRect(0,0,F.w,F.h);x.drawImage(src,0,0);gcv.style.width=Math.min(F.w*k,window.innerWidth-56)+'px'};pv();
+    ${el?'':`<div class="gnav">${list?`<button class="btn o sm" data-mv="-1"${idx<=0?' disabled':''}>‹ Anterior</button>`:'<span></span>'}<button class="btn sm" data-done>Hecho</button>${list?`<button class="btn o sm" data-mv="1"${idx>=list.length-1?' disabled':''}>Siguiente ›</button>`:'<span></span>'}</div>`}`);
+  if(el)el.innerHTML=html;else openBS(html);
+  const bs=el||$('#bs');if(!el)bs.onclick=null;const gcv=$('#bt-pv');
+  const pv=pvH?()=>drawPreview(gcv,{scr:'home',state:S.gstate||0,selP:F.path}):()=>{const src=renderCanvas(F,true),k=Math.min(3,Math.max(1,Math.floor(340/F.w*2)/2||1));gcv.width=F.w;gcv.height=F.h;const x=gcv.getContext('2d');x.clearRect(0,0,F.w,F.h);x.drawImage(src,0,0);gcv.style.width=Math.min(F.w*k,window.innerWidth-56)+'px'};pv();
   const st=$('#bt-st');if(st)st.onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;S.gstate=+b.dataset.s;$$('#bt-st button').forEach(x=>x.setAttribute('aria-pressed',x===b));pv();done()};
-  if(home){let gd=-1;gcv.onpointerdown=e=>{gd=slotAt(gcv,e).i};gcv.onpointerup=e=>{const h=slotAt(gcv,e),i=gd;gd=-1;if(i<0||h.i!==i)return;const n=slotF(S.layout.slots[i]);if(n&&n!==F&&T.includes(n))btnSheet(n,after)}}
+  if(pvH){let gd=-1;gcv.onpointerdown=e=>{gd=slotAt(gcv,e).i};gcv.onpointerup=e=>{const h=slotAt(gcv,e),i=gd;gd=-1;if(i<0||h.i!==i)return;const n=slotF(S.layout.slots[i]);if(n&&n!==F&&T.includes(n))btnSheet(n,after)}}
   const col=getComputedStyle(document.body).color;
   $$('#bt-ic canvas').forEach(cv=>{const k=cv.parentNode.dataset.k,x=cv.getContext('2d');x.clearRect(0,0,88,88);
     if(k==='orig'){const mk=extractIcon(F);if(mk)drawMask(x,mk,44,44,Math.min(70/mk.bw,70/mk.bh),col,0);else{const src=renderOrig(F,false),fw=F.w/frames(F),sc=Math.min(80/fw,80/F.h);x.drawImage(src,0,0,fw,F.h,44-fw*sc/2,44-F.h*sc/2,fw*sc,F.h*sc)}}
     else if(k==='mine'){x.strokeStyle=col;x.lineWidth=4;x.lineCap='round';x.lineJoin='round';x.beginPath();x.moveTo(44,62);x.lineTo(44,26);x.moveTo(30,40);x.lineTo(44,26);x.lineTo(58,40);x.moveTo(26,66);x.lineTo(62,66);x.stroke()}
     else if(k==='all'){x.fillStyle=col;for(let i=0;i<3;i++)for(let j=0;j<3;j++){x.globalAlpha=i===1&&j===1?1:.45;x.beginPath();x.arc(28+i*16,28+j*16,4.5,0,7);x.fill()}x.globalAlpha=1}
     else drawIconKey(x,k,44,44,52,col,0)});
-  const openPicker=cat=>{S.ipk=S.ipk||{q:'',cat:'radio',n:96};if(cat){S.ipk.cat=cat;S.ipk.q=''}iconPicker({title:'Icono para '+pretty(F),cur,back:()=>btnSheet(F,after),onPick:nk=>{before();p().icon=nk;applyButtons([F]);done();btnSheet(F,after)}})};
+  const openPicker=cat=>{S.ipk=S.ipk||{q:'',cat:'radio',n:96};if(cat){S.ipk.cat=cat;S.ipk.q=''}iconPicker({title:'Icono para '+pretty(F),cur,back:()=>el?closeBS():again(),onPick:nk=>{before();p().icon=nk;applyButtons([F]);done();if(el)closeBS();again()}})};
   $('#bt-ic').onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;const k=b.dataset.k;
     if(k==='all')return openPicker(null);if(k==='mine')return openPicker('my');
     $$('#bt-ic .icb').forEach(x=>x.setAttribute('aria-pressed',x===b));change(()=>{p().icon=k==='orig'?undefined:k})};
@@ -2218,18 +2221,63 @@ function btnSheet(F,after){
   const lk=$('#bt-lk');if(lk){$$('#bt-lk canvas').forEach(cv=>{const k=cv.dataset.lk;if(k==='orig'){const fr=frames(F),fw=F.w/fr,c=document.createElement('canvas');c.width=fw;c.height=F.h;c.getContext('2d').drawImage(renderOrig(F,false),0,0,fw,F.h,0,0,fw,F.h);putMini(cv,c)}else putMini(cv,miniTile(F,{...g,style:k},0))});
     lk.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;const v=b.dataset.v;
       if(home){if(await setLook(v)){$$('#bt-lk .ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));done();pv()}return}
-      if(v!=='orig'&&handRep(F)&&!await confirmBS({title:'Cambiar el estilo',text:'Este botón tiene una imagen que pusiste tú. El estilo la sustituirá. Podrás deshacerlo.',ok:'Cambiar el estilo'}))return btnSheet(F,after);
-      $$('#bt-lk .ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));change(()=>{p().look=v});if($('#bs').hidden||!$('#bt-lk'))btnSheet(F,after)}}
+      if(v!=='orig'&&handRep(F)&&!await confirmBS({title:'Cambiar el estilo',text:'Este botón tiene una imagen que pusiste tú. El estilo la sustituirá. Podrás deshacerlo.',ok:'Cambiar el estilo'}))return again();
+      $$('#bt-lk .ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));change(()=>{p().look=v});if(el||$('#bs').hidden||!$('#bt-lk'))again()}}
   const all=$('#bt-all');if(all)all.onclick=async()=>{const v=(g.per[F.path]||{}).look||'orig',L=secBtns(F);if(!L.length)return;
     const nm=(LOOKS().find(x=>x[0]===v)||['','Original'])[1];
-    if(!await confirmBS({title:`«${nm}» en ${SECL.get(F.sec)||F.sec}`,text:`Se aplicará a los ${L.length} botones de esta pantalla (se saltan las barras alargadas). El icono y el color de cada uno se mantienen. Podrás deshacerlo.`,ok:'Aplicar a todos'}))return btnSheet(F,after);
-    before();for(const G of L){(g.per[G.path]||(g.per[G.path]={})).look=v}toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(L);toast(`${L.length} botones con «${nm}»`,{label:'Deshacer',fn:undo});btnSheet(F,after)};
+    if(!await confirmBS({title:`«${nm}» en ${SECL.get(F.sec)||F.sec}`,text:`Se aplicará a los ${L.length} botones de esta pantalla (se saltan las barras alargadas). El icono y el color de cada uno se mantienen. Podrás deshacerlo.`,ok:'Aplicar a todos'}))return again();
+    before();for(const G of L){(g.per[G.path]||(g.per[G.path]={})).look=v}toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(L);toast(`${L.length} botones con «${nm}»`,{label:'Deshacer',fn:undo});again()};
   const sh=$('#bt-sh');if(sh)sh.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;before();g.shape=b.dataset.v;sh.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===b));restyleAll();done();pv();$$('#bt-lk canvas').forEach(cv=>{const k=cv.dataset.lk;if(k!=='orig')putMini(cv,miniTile(F,{...g,style:k},0))})};
   $$('[data-mo]').forEach(b=>b.onclick=()=>{const m=b.dataset.mo;
     if(m==='gen'){closeBS();go({n:'gen'})}else if(m==='edit'){closeBS();go({n:'edit',p:F.path})}
     else{change(()=>{delete g.per[F.path]});toast(pretty(F)+' vuelve al original',{label:'Deshacer',fn:undo})}});
   bs.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{const n=list[idx+ +b.dataset.mv];if(n)btnSheet(n,after)});
-  bs.querySelector('[data-done]').onclick=()=>{S.icRedraw=null;closeBS();after&&after()};
+  const dn=bs.querySelector('[data-done]');if(dn)dn.onclick=()=>{S.icRedraw=null;closeBS();after&&after()};
+}
+
+/* ============ ventana de cada pantalla de la radio ============
+   Como solo se toca la skin, cada pantalla (Radio, Multimedia, Teléfono, Driving eco, Ajustes) es un conjunto cerrado de imágenes:
+   aquí está todo lo suyo junto. «Común» reúne lo que comparten todas (barra superior, ventanas, teclados, cámara, ayudas, 4x4).
+   Navegación no tiene pantalla propia en la skin (la dibuja el navegador): su botón abre solo la hoja del botón. */
+const SLOTSCR={'home_radio_btn':'radio','home_media_btn':'media','home_phone_btn':'phone','home_driving eco_btn':'eco','home_setting_btn':'setting'};
+const COMMON_SECS=['COMMON','ETC','POPUP','ADAS','RVC','4WD'];
+const scrName=s=>s==='common'?'Común':SCRL.get(s)||s;
+const slotScr=F=>F?SLOTSCR[F.name.toLowerCase().replace(/\.bmp$/,'')]:null;
+const scrHomeBtn=s=>genTargets().find(F=>slotScr(F)===s);
+const scrSecs=s=>s==='common'?COMMON_SECS:[SCRSEC[s]];
+function scrFiles(s){const bgs=new Set(SCREENS.map(x=>x[2]));
+  if(s==='common')return S.files.filter(F=>COMMON_SECS.includes(F.sec)&&!bgs.has(F.lc));return S.files.filter(F=>F.sec===SCRSEC[s])}
+function scrScreen(v,r){
+  const s=r.s,secs=scrSecs(s),files=scrFiles(s),bg=s==='common'?null:byName(SCRBG.get(s)),hb=s==='common'?null:scrHomeBtn(s);
+  setTitle(scrName(s),`${files.length+(bg?1:0)} imágenes de esta pantalla`);
+  const btns=files.filter(isBtnLike),rest=files.filter(F=>!isBtnLike(F)),sty=btns.filter(F=>kindOf(F)==='btn'&&canStyle(F));
+  const g=S.gen||(S.gen=defGen()),looks=new Set(sty.map(F=>(g.per[F.path]||{}).look||'orig')),curLook=looks.size===1?[...looks][0]:null;
+  v.innerHTML=`<div class="two">
+    ${bg?`<div class="stick sticky-pv">${pvBlock('pv')}<div class="e-bar"><div class="seg" id="sc-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="${S.hcmp!=='orig'}">Ahora</button><button data-v="orig" aria-pressed="${S.hcmp==='orig'}">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">Fondo de ${esc(scrName(s))} con tus cambios</span></div></div>`:''}
+    <div class="stack">
+    ${hb?`<div class="card"><h3>Su botón en Inicio</h3><div id="sc-btn"></div></div>`:''}
+    <div class="card"><h3>Color de toda la pantalla</h3><p class="note">Tiñe todas las imágenes de ${esc(scrName(s))} a la vez. Lo que cambies después en una imagen concreta manda sobre esto.</p><div id="sc-tint"></div>
+      <button class="btn o sm" id="sc-more">Más colores de esta pantalla</button></div>
+    ${bg?`<div class="card"><h3>Fondo</h3><div class="list">${fileRow(bg,'Fondo · 800×480')}</div>
+      <p class="lbl">Color del negro del fondo</p><div class="hsw" id="sc-bk">${swatches(((S.ops.file[bg.path]||{}).map||{})[13]?((S.ops.file[bg.path].map[13].to)):'none',{none:'Negro original',label:'Color del negro del fondo'})}</div>
+      <p class="note">Conserva el degradado. Para un fondo claro o una foto: toca el fondo → Sustituir.</p></div>`:''}
+    ${btns.length?`<div class="card"><h3>Botones e iconos <small class="cnt">${btns.length}</small></h3><p class="note">Toca uno para cambiar su icono, colores y estilo.</p>
+      ${sty.length?`<p class="lbl">El mismo estilo para los ${sty.length} botones</p><div class="chips scroll" id="sc-lk">${LOOKS().map(([k,l])=>`<button class="chip" data-v="${k}" aria-pressed="${curLook===k}">${l}</button>`).join('')}</div>`:''}
+      <div class="grid sc-grid">${btns.map(tile).join('')}</div></div>`:''}
+    ${rest.length?`<div class="card"><h3>Otras piezas <small class="cnt">${rest.length}</small></h3><p class="note">Barras, listas, fondos de ventanas… Tócalas para cambiar sus colores o sustituirlas.</p><div class="list">${rest.map(F=>fileRow(F,KINDL.get(kindOf(F)))).join('')}</div></div>`:''}
+    </div></div>`;
+  if(bg){const c=$('#pv');mountPreview(c,()=>({scr:s,orig:S.hcmp==='orig'}));$('#sc-cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.hcmp=b.dataset.v;$$('#sc-cmp button').forEach(x=>x.setAttribute('aria-pressed',x===b));schedule()}}
+  if(hb)btnSheet(hb,()=>mountThumbs(v),$('#sc-btn'));
+  const sec0=secs[0],get=()=>S.ops.sec[sec0],set=o=>{for(const k of secs)setScopeOps(k,o?structuredClone(o):o)};
+  tintUI($('#sc-tint'),'sc',get,set,()=>{schedule();mountThumbs(v)});
+  $('#sc-more').onclick=()=>{S.scope=sec0;go({n:'theme'})};
+  const bk=$('#sc-bk .swg');if(bk){const setBk=h=>{before();const o={...defOps(),...(S.ops.file[bg.path]||{})};o.map={...(o.map||{})};if(h==null)delete o.map[13];else o.map[13]={to:h,ts:.6,tl:.1};if(!Object.keys(o.map).length)delete o.map;setFileOps(bg,o);bump()};
+    bk.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;bk.querySelectorAll('.swc').forEach(x=>x.setAttribute('aria-pressed',x===b));setBk(b.dataset.h==='none'?null:+b.dataset.h)};
+    bk.querySelector('[data-pick]').onchange=e=>{const [h,,l]=hexHsl(e.target.value);before();const o={...defOps(),...(S.ops.file[bg.path]||{})};o.map={...(o.map||{}),13:{to:Math.round(h),ts:.6,tl:Math.min(.85,l)}};setFileOps(bg,o);bump()}}
+  const lk=$('#sc-lk');if(lk)lk.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;const k=b.dataset.v,nm=(LOOKS().find(x=>x[0]===k)||['',''])[1];
+    if(!await confirmBS({title:`«${nm}» en ${scrName(s)}`,text:`Se aplicará a los ${sty.length} botones de esta pantalla. El icono y el color de cada uno se mantienen. Podrás deshacerlo.`,ok:'Aplicar'}))return;
+    before();for(const G of sty)(g.per[G.path]||(g.per[G.path]={})).look=k;toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(sty);render(true);toast(`${sty.length} botones con «${nm}»`,{label:'Deshacer',fn:undo})};
+  mountThumbs(v);
 }
 
 /* ============ app web: instalación, versión, novedades y créditos (como Noticiahz y Caravanahz) ============

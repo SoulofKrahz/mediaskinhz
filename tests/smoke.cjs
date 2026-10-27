@@ -146,6 +146,12 @@ async function run(browser, label, viewport, mobile) {
     const L = secBtns(F); for (const G of L) (S.gen.per[G.path] || (S.gen.per[G.path] = {})).look = 'tile'; applyButtons(L); const b = L.every(G => G.rep && G.rep.by === 'gen');
     S.gen.shape = 'pill'; restyleAll(); const c = outBytes(F).length === 1078 + (((F.w + 3) & ~3) * F.h); undo(); return a && b && c ? 'ok' : [a, b, c].join(); });
   ok(out === 'ok' || out === 'sin botones', 'los botones de otras pantallas admiten estilo y forma, también todos a la vez (' + out + ')');
+  // Ventana de cada pantalla y «Común»: abren y enseñan sus bloques
+  for (const sc of ['radio', 'media', 'phone', 'eco', 'setting', 'common']) {
+    await p.evaluate(s => go({ n: 'scr', s }), sc); await p.waitForTimeout(400);
+    ok(await p.locator('#sc-tint').count() === 1 && (await p.evaluate(() => document.querySelector('#ab-t .t1').textContent)).length > 0, 'la ventana «' + sc + '» se abre con sus colores y piezas');
+  }
+  await p.evaluate(() => go({ n: 'home' })); await p.waitForTimeout(300);
   // Familia «Negros y fondo»
   ok(await p.evaluate(() => { const F = S.files.find(f => /HOME_BG/i.test(f.path)); return famsOfFiles([F]).some(f => f.k === 13); }), 'el fondo de Inicio ofrece la familia «Negros y fondo»');
   // Exportar (ejemplo) → descarga un ZIP
