@@ -139,7 +139,13 @@ async function run(browser, label, viewport, mobile) {
   ok(await p.evaluate(() => { const [a, ...r] = genTargets(); return a.rep && a.rep.by === 'btn' && r.every(F => !F.rep); }), 'volver al original conserva el icono elegido y deja el resto como estaba');
   await tap('#bs [data-done]'); await p.waitForTimeout(300);
   // La misma hoja vale para cualquier botón de otra pantalla
-  ok(await p.evaluate(() => { const F = S.files.find(f => kindOf(f) === 'btn' && !genTargets().includes(f)); if (!F) return true; btnSheet(F); const ok = !!document.querySelector('#bt-icc') && !document.querySelector('#bt-lk'); closeBS(); return ok; }), 'la hoja sirve también para botones de otras pantallas (sin estilo)');
+  ok(await p.evaluate(() => { const F = S.files.find(f => kindOf(f) === 'btn' && !genTargets().includes(f)); if (!F) return true; btnSheet(F); const ok = !!document.querySelector('#bt-icc') && !!document.querySelector('#bt-lk') === canStyle(F); closeBS(); return ok; }), 'la hoja sirve también para botones de otras pantallas');
+  // Estilos y forma también fuera de Inicio
+  const out = await p.evaluate(async () => { const F = S.files.find(f => kindOf(f) === 'btn' && canStyle(f) && !genTargets().includes(f)); if (!F) return 'sin botones'; before();
+    (S.gen.per[F.path] || (S.gen.per[F.path] = {})).look = 'neon'; applyButtons([F]); const a = F.rep && F.rep.by === 'gen' && S.gen.look === 'orig';
+    const L = secBtns(F); for (const G of L) (S.gen.per[G.path] || (S.gen.per[G.path] = {})).look = 'tile'; applyButtons(L); const b = L.every(G => G.rep && G.rep.by === 'gen');
+    S.gen.shape = 'pill'; restyleAll(); const c = outBytes(F).length === 1078 + (((F.w + 3) & ~3) * F.h); undo(); return a && b && c ? 'ok' : [a, b, c].join(); });
+  ok(out === 'ok' || out === 'sin botones', 'los botones de otras pantallas admiten estilo y forma, también todos a la vez (' + out + ')');
   // Familia «Negros y fondo»
   ok(await p.evaluate(() => { const F = S.files.find(f => /HOME_BG/i.test(f.path)); return famsOfFiles([F]).some(f => f.k === 13); }), 'el fondo de Inicio ofrece la familia «Negros y fondo»');
   // Exportar (ejemplo) → descarga un ZIP

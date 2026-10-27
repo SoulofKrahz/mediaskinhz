@@ -254,6 +254,7 @@ input[type=range].hue{--trk:linear-gradient(90deg,hsl(0 80% 50%),hsl(60 80% 50%)
 .hsw{flex:none}.hsw .swg{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;padding:3px 3px 6px;scrollbar-width:none}.hsw .swg::-webkit-scrollbar{display:none}.hsw .swc{flex:0 0 42px;width:42px;min-width:42px}
 .bts .lbl{margin-top:4px}.lbl small{font-weight:400;color:var(--mu);text-transform:none;letter-spacing:0}
 .btstrip{background:repeating-conic-gradient(#20252d 0 25%,#171b21 0 50%) 0 0/16px 16px;border-radius:14px;padding:10px;display:flex;justify-content:center;overflow:hidden}.btstrip canvas{max-width:100%;height:auto;image-rendering:auto}
+.bts~#bt-all,.bs>#bt-all,.bs>.chips{flex-shrink:0}
 .bt-more{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.bt-more .btn{flex:1 1 30%}
 .qa{display:grid;grid-template-columns:1fr 1fr;gap:10px}.qai{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:14px;border-radius:16px;background:var(--card);border:1px solid var(--bd);min-height:110px}
 .qai .ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--tint);color:var(--em);margin-bottom:6px}.qai b{font-size:15px;line-height:1.25}.qai small{font-size:12.5px;color:var(--mu);line-height:1.35}
@@ -1391,7 +1392,12 @@ const defGen=()=>({look:'orig',style:'glow',shape:'round',r:14,inset:4,corners:'
 function origHue(F){if(F.oh!=null)return F.oh;const cnt=new Uint32Array(256);for(let i=0;i<F.idx.length;i++)cnt[F.idx[i]]++;let sx=0,sy=0;
   for(let i=0;i<F.n;i++){if(!cnt[i])continue;const r=F.pal[i*3],g=F.pal[i*3+1],b=F.pal[i*3+2];if(isKey(r,g,b))continue;const C=(Math.max(r,g,b)-Math.min(r,g,b))/255;if(C<.2)continue;const [h]=rgb2hsl(r,g,b),w=cnt[i]*C*C;sx+=Math.cos(h*Math.PI/180)*w;sy+=Math.sin(h*Math.PI/180)*w}
   F.oh=sx||sy?Math.round(((Math.atan2(sy,sx)*180/Math.PI)+360)%360):210;return F.oh}
-function cornerBase(F){const s=S.layout.slots.find(s=>s.p===F.path),bg=byName('common/home_bg.bmp'),fw=F.w/frames(F),c=document.createElement('canvas');c.width=fw;c.height=F.h;const x=c.getContext('2d');x.fillStyle='#000';x.fillRect(0,0,fw,F.h);
+function borderColor(F){if(F.bdc)return F.bdc;const fw=F.w/frames(F),rs=[],gs=[],bs=[];const add=(x,y)=>{const i=F.idx[y*F.w+x]*3;if(isKey(F.pal[i],F.pal[i+1],F.pal[i+2]))return;rs.push(F.pal[i]);gs.push(F.pal[i+1]);bs.push(F.pal[i+2])};
+  for(let x=0;x<fw;x++){add(x,0);add(x,F.h-1)}for(let y=0;y<F.h;y++){add(0,y);add(fw-1,y)}const m=a=>{a.sort((u,v)=>u-v);return a[a.length>>1]||0},r=m(rs),G=m(gs),B=m(bs);
+  // las pantallas del MediaNav son oscuras: un borde claro o de color es parte del botón, no del fondo
+  F.bdc=(r*.3+G*.59+B*.11)<60?`rgb(${r},${G},${B})`:'#000';return F.bdc}
+function cornerBase(F){const s=S.layout.slots.find(s=>s.p===F.path),bg=byName('common/home_bg.bmp'),fw=F.w/frames(F),c=document.createElement('canvas');c.width=fw;c.height=F.h;const x=c.getContext('2d');
+  if(!s){if(!F.keyCount){x.fillStyle=borderColor(F);x.fillRect(0,0,fw,F.h)}return c}x.fillStyle='#000';x.fillRect(0,0,fw,F.h);
   if(s&&bg)x.drawImage(renderCanvas(bg,false),s.x,s.y,fw,F.h,0,0,fw,F.h);return c}
 function rrect(x,X,Y,W,H,r){r=Math.max(0,Math.min(r,W/2,H/2));x.beginPath();x.moveTo(X+r,Y);x.lineTo(X+W-r,Y);x.arcTo(X+W,Y,X+W,Y+r,r);x.lineTo(X+W,Y+H-r);x.arcTo(X+W,Y+H,X+W-r,Y+H,r);x.lineTo(X+r,Y+H);x.arcTo(X,Y+H,X,Y+H-r,r);x.lineTo(X,Y+r);x.arcTo(X,Y,X+r,Y,r);x.closePath()}
 const gRad=(g,h)=>g.shape==='rect'?0:g.shape==='pill'?(h-2*g.inset)/2:g.r;
@@ -1436,11 +1442,11 @@ function drawState(x,F,w,h,s,H,g,bgc){
       x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const gl=x.createLinearGradient(0,Y,0,Y+Hh*.5);gl.addColorStop(0,'rgba(255,255,255,.25)');gl.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh*.5);x.restore();
       if(on){x.lineWidth=3;x.strokeStyle='rgba(255,255,255,.75)';rrect(x,X+2.5,Y+2.5,W-5,Hh-5,Math.max(0,r-1.5));x.stroke()}ic=dim?'rgba(255,255,255,.5)':'#ffffff';break}
     default:x.fillStyle=on?lin(`hsl(${H} 90% 62%)`,`hsl(${H} 85% 46%)`):lin('#16191e','#060708',`hsl(${H} 85% ${dim?20:44}%)`);x.fill();x.lineWidth=2;x.strokeStyle=on?`hsl(${H} 70% 40%)`:`hsl(${H} 55% ${dim?18:32}%)`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=on?`hsl(${H} 70% 20%)`:`hsl(${H} 85% ${dim?32:60}%)`}
-  const src=genIconSrc(F,g),p=g.per[F.path]||{},cx=w/2,cy=Y+Hh*(g.iy/100);
+  const home=S.layout.slots.some(s=>s.p===F.path),isz=home?g.is:Math.max(14,Math.min(g.is*h/137*1.25,Math.min(w,h)*.62)),src=genIconSrc(F,g),p=g.per[F.path]||{},cx=w/2,cy=home?Y+Hh*(g.iy/100):h/2;
   if(p.ihue!=null&&!on)ic=p.ihue==='white'?(dim?'rgba(255,255,255,.5)':'#ffffff'):`hsl(${p.ihue} 85% ${dim?34:62}%)`;
-  if(src==='orig'){const mk=extractIcon(F);if(mk)drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,mk,X,Y,sz/56,col,gl);return true},cx,cy,g.is,ic,glow)}
-  else if(src==='png'&&p.png){drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,p.png,X,Y,sz/96*1.15,col,gl);return true},cx,cy,g.is,ic,glow)}
-  else drawIcon(x,keyPainter(src),cx,cy,g.is,ic,glow);
+  if(src==='orig'){const mk=extractIcon(F);if(mk)drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,mk,X,Y,sz/56,col,gl);return true},cx,cy,isz,ic,glow)}
+  else if(src==='png'&&p.png){drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,p.png,X,Y,sz/96*1.15,col,gl);return true},cx,cy,isz,ic,glow)}
+  else drawIcon(x,keyPainter(src),cx,cy,isz,ic,glow);
 }
 function genHue(F,g){const p=g.per[F.path]||{};if(p.hue!=null)return p.hue;return g.color==='orig'?origHue(F):g.hue}
 function genTile(F,g){const fr=frames(F),fw=F.w/fr,h=F.h,c=document.createElement('canvas');c.width=F.w;c.height=h;const x=c.getContext('2d');const H=genHue(F,g),bgc=cornerBase(F);
@@ -1946,7 +1952,7 @@ function iconPicker(o){
     const b=e.target.closest('[data-k]');if(!b)return;S.icRedraw=null;o.onPick(b.dataset.k)};
   if(IC.st!==2)icLoad();draw()}
 function setIconStyle(v){const patch=typeof v==='object'?v:v==='fill'?{ifill:true}:{ifill:false,iw:+v};before();if(!S.gen)S.gen=defGen();Object.assign(S.gen,patch);
-  if(S.gen)for(const F of genTargets())buildButton(F);S.genCv=null;for(const p of Object.keys(S.icx||{})){const F=S.lc.get(p.toLowerCase());if(F)icApply(F,S.icx[p],true)}S.ver++;schedule();saveState()}
+  if(S.gen)for(const F of [...genTargets(),...styledOut()])buildButton(F);S.genCv=null;for(const p of Object.keys(S.icx||{})){const F=S.lc.get(p.toLowerCase());if(F)icApply(F,S.icx[p],true)}S.ver++;schedule();saveState()}
 
 /* Poner un icono de la biblioteca en cualquier imagen: se quita el icono viejo rehaciendo el fondo fila a fila
    (con las franjas de los lados, así se conservan degradados y bordes) y se dibuja el nuevo en su sitio, con el color de cada estado. */
@@ -2130,14 +2136,14 @@ function btnTintOps(F,ihue){const o={...defOps(),...(S.ops.file[F.path]||{})};o.
   if(o.bm){for(const k of o.bm)delete o.map[k];delete o.bm}
   if(ihue!=null){const ks=[...stats(F).fam.keys()].filter(k=>k!==13);for(const k of ks)o.map[k]=ihue==='white'?{white:true}:{to:ihue,ts:.82,tl:.56};o.bm=ks}
   if(!Object.keys(o.map).length)delete o.map;setFileOps(F,o)}
-function buildButton(F){const g=S.gen||(S.gen=defGen()),p=g.per[F.path]||{},look=genTargets().includes(F)?btnLook():'orig';
+function buildButton(F){const g=S.gen||(S.gen=defGen()),p=g.per[F.path]||{},look=genTargets().includes(F)?btnLook():(p.look||'orig');
   if(look==='orig'){
     const single=frames(F)<2&&!(p.icon&&p.icon!=='orig');btnTintOps(F,single?p.ihue:null);
     const k=p.icon&&p.icon!=='orig'&&p.icon!=='png'?p.icon:(p.ihue!=null&&!single&&extractIcon(F)?'orig':null);
     if(k){F.rep=null;F.icz=null;icApply(F,{k,col:p.ihue==null?'orig':p.ihue,keepOn:true},true);if(F.rep)F.rep.by='btn';if(S.icx)delete S.icx[F.path];delete S.ex[F.path]}
     else{if(F.rep&&(F.rep.by==='btn'||F.rep.by==='gen'))F.rep=null;if(S.icx)delete S.icx[F.path];if(S.ex[F.path]===true)delete S.ex[F.path]}
     btnHueOps(F,p.hue)}
-  else{btnHueOps(F,null);const c=genTile(F,g),d=c.getContext('2d').getImageData(0,0,F.w,F.h).data,key=new Uint8Array(F.w*F.h);
+  else{btnHueOps(F,null);const c=genTile(F,{...g,style:look}),d=c.getContext('2d').getImageData(0,0,F.w,F.h).data,key=new Uint8Array(F.w*F.h);
     for(let i=0;i<F.w*F.h;i++)if(d[i*4+3]<128)key[i]=1;const q=quantize(d,F.w,F.h,{key,dither:true});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'gen'};S.ex[F.path]=true;if(S.icx)delete S.icx[F.path]}
   F.cv=null}
 function applyButtons(list){if(!S.gen)return;for(const F of list||genTargets())buildButton(F);S.genCv=null;S.ver++;schedule();saveState()}
@@ -2159,14 +2165,22 @@ const ICW={ff:'player-track-next',rew:'player-track-prev',play:'player-play',pau
   map:'map-2',nearby:'map-pin',rvc:'camera',camera:'camera',mvc:'camera-rotate',smartphone:'device-mobile',mobile:'device-mobile',siri:'microphone',antenna:'antenna',fmradio:'radio',radio:'radio',ta:'alert-triangle',
   caution:'alert-triangle',help:'help',info:'info-circle',star:'star',up:'chevron-up',down:'chevron-down',left:'chevron-left',right:'chevron-right',arrow:'arrow-right',dark:'moon',temp:'temperature',blower:'car-fan',
   keyboard:'keyboard',space:'space',changekey:'language',direction:'direction',music:'music',media:'music',vehicle:'car',car:'car',presets:'list-numbers',preset:'list-numbers',contents:'layout-list',office:'building'};
-function icSuggest2(F){const out=[],add=n=>{if(n&&!out.includes(n)&&(IC.st!==2||IC.by.has(n)))out.push(n)};icSuggest(F).forEach(add);
-  const ws=F.name.toLowerCase().replace(/\.bmp$/,'').split(/[_\s\-.0-9]+/).filter(Boolean);for(const w of ws)add(ICW[w]);
-  if(IC.st===2)for(const w of ws){if(out.length>=8)break;if(['btn','icon','img','bg','softkey','common','etc','line','indi','popup','control'].includes(w))continue;for(const n of icSearch(w,'').slice(0,2))add(n)}
+function icSuggest2(F){const out=[],add=n=>{if(n&&!out.includes(n)&&(IC.st!==2||IC.by.has(n)))out.push(n)};
+  // primero lo que hace el botón (ff, play, call…), luego la pantalla a la que pertenece
+  const ws=F.name.toLowerCase().replace(/\.bmp$/,'').split(/[_\s\-.0-9]+/).filter(Boolean),SCR=['fmradio','media','phone','setting','eco','home','navi'];
+  for(const w of ws)if(!SCR.includes(w))add(ICW[w]);if(genTargets().includes(F)||!out.length)icSuggest(F).forEach(add);for(const w of ws)add(ICW[w]);
+  if(IC.st===2)for(const w of ws){if(out.length>=8)break;if(w.length<3||['btn','icon','img','bg','softkey','common','etc','line','indi','popup','control','res'].includes(w))continue;for(const n of icSearch(w,'').slice(0,2))add(n)}
   const fb=['star','circle','square','heart'];for(const n of fb){if(out.length>=6)break;add(n)}return out.slice(0,9)}
 const LOOKS=()=>[['orig','Original de Renault'],...GSTYLES];
 const isBtnLike=F=>{const k=kindOf(F);return k==='btn'||k==='ico'};
+// Botones con estilo propio fuera de Inicio, y los que pueden llevarlo (se saltan barras muy alargadas)
+const styledOut=()=>S.files.filter(F=>((S.gen&&S.gen.per[F.path])||{}).look&&S.gen.per[F.path].look!=='orig');
+const canStyle=F=>{const fr=frames(F);if(fr<2)return false;const r=F.w/fr/F.h;return r>.6&&r<4.6&&F.h>=40};
+const secBtns=F=>S.files.filter(G=>G.sec===F.sec&&kindOf(G)==='btn'&&canStyle(G)&&!genTargets().includes(G));
+// Al cambiar la forma o el estilo del icono se redibujan todos los botones con estilo
+function restyleAll(){applyButtons([...genTargets(),...styledOut()])}
 function btnSheet(F,after){
-  const g=S.gen||(S.gen=defGen()),T=genTargets(),home=T.includes(F),look=home?btnLook():'orig',list=home?T:null,idx=list?list.indexOf(F):-1;S.gsel=F.path;
+  const g=S.gen||(S.gen=defGen()),T=genTargets(),home=T.includes(F),look=home?btnLook():((g.per[F.path]||{}).look||'orig'),list=home?T:null,idx=list?list.indexOf(F):-1;S.gsel=F.path;
   const p=()=>g.per[F.path]||(g.per[F.path]={}),ps=g.per[F.path]||{};const cur=ps.icon||'orig',sug=icSuggest2(F).map(n=>'t:'+n);
   const icons=['orig','mine',...(cur.startsWith('t:')||cur.startsWith('lib:')||cur.startsWith('my:'))&&!sug.includes(cur)?[cur]:[],...sug,'all'];
   if(IC.st!==2){icLoad();S.icRedraw=()=>{if($('#bt-ic'))btnSheet(F,after)}}
@@ -2179,7 +2193,9 @@ function btnSheet(F,after){
     <p class="lbl">Icono</p><div class="hs" id="bt-ic">${icons.map(k=>`<button class="icb${k==='all'||k==='mine'?' all':''}" data-k="${k}" aria-pressed="${cur===k}" title="${esc(icT(k))}"><canvas width="88" height="88"></canvas><span>${esc(icT(k))}</span></button>`).join('')}</div>
     ${frames(F)>1||!F.keyCount?`<p class="lbl">Color del marco</p><div class="hsw" id="bt-fc">${swatches(fsel,{none:look==='orig'?'El original':'Como el resto',white:look==='orig',label:'Color del marco'})}</div>`:''}
     <p class="lbl">Color del icono</p><div class="hsw" id="bt-icc">${swatches(isel,{none:'Como el original',white:true,label:'Color del icono'})}</div>
-    ${home?`<p class="lbl">Estilo <small>· común a los ${T.length} botones de Inicio</small></p><div class="hs" id="bt-lk">${LOOKS().map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${look===k}"><canvas data-lk="${k}"></canvas><span>${l}</span></button>`).join('')}</div>`:''}
+    ${home||canStyle(F)?`<p class="lbl">Estilo <small>· ${home?'común a los '+T.length+' botones de Inicio':'de este botón'}</small></p><div class="hs" id="bt-lk">${LOOKS().map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${look===k}"><canvas data-lk="${k}"></canvas><span>${l}</span></button>`).join('')}</div>
+    ${home?'':`<button class="btn o sm wide" id="bt-all">Usar este estilo en los ${secBtns(F).length} botones de ${esc(SECL.get(F.sec)||F.sec)}</button>`}
+    <p class="lbl">Forma <small>· común a todos los botones con estilo</small></p><div class="chips" id="bt-sh">${GSHAPES.map(([k,l])=>`<button class="chip" data-v="${k}" aria-pressed="${g.shape===k}">${l}</button>`).join('')}</div>`:''}
     <div class="bt-more">${home?`<button class="btn o sm" data-mo="gen">Forma y trazo</button>`:''}<button class="btn o sm" data-mo="edit">Editar a fondo</button><button class="btn o sm" data-mo="reset">Volver al original</button></div>
     <div class="gnav">${list?`<button class="btn o sm" data-mv="-1"${idx<=0?' disabled':''}>‹ Anterior</button>`:'<span></span>'}<button class="btn sm" data-done>Hecho</button>${list?`<button class="btn o sm" data-mv="1"${idx>=list.length-1?' disabled':''}>Siguiente ›</button>`:'<span></span>'}</div>`);
   const bs=$('#bs');bs.onclick=null;const gcv=$('#bt-pv');
@@ -2200,7 +2216,15 @@ function btnSheet(F,after){
     sw.querySelector('[data-pick]').onchange=e=>change(()=>{p()[key]=Math.round(hexHsl(e.target.value)[0])})};
   if($('#bt-fc'))swBind('#bt-fc','hue');swBind('#bt-icc','ihue');
   const lk=$('#bt-lk');if(lk){$$('#bt-lk canvas').forEach(cv=>{const k=cv.dataset.lk;if(k==='orig'){const fr=frames(F),fw=F.w/fr,c=document.createElement('canvas');c.width=fw;c.height=F.h;c.getContext('2d').drawImage(renderOrig(F,false),0,0,fw,F.h,0,0,fw,F.h);putMini(cv,c)}else putMini(cv,miniTile(F,{...g,style:k},0))});
-    lk.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;if(await setLook(b.dataset.v)){$$('#bt-lk .ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));done();pv()}}}
+    lk.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;const v=b.dataset.v;
+      if(home){if(await setLook(v)){$$('#bt-lk .ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));done();pv()}return}
+      if(v!=='orig'&&handRep(F)&&!await confirmBS({title:'Cambiar el estilo',text:'Este botón tiene una imagen que pusiste tú. El estilo la sustituirá. Podrás deshacerlo.',ok:'Cambiar el estilo'}))return btnSheet(F,after);
+      $$('#bt-lk .ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));change(()=>{p().look=v});if($('#bs').hidden||!$('#bt-lk'))btnSheet(F,after)}}
+  const all=$('#bt-all');if(all)all.onclick=async()=>{const v=(g.per[F.path]||{}).look||'orig',L=secBtns(F);if(!L.length)return;
+    const nm=(LOOKS().find(x=>x[0]===v)||['','Original'])[1];
+    if(!await confirmBS({title:`«${nm}» en ${SECL.get(F.sec)||F.sec}`,text:`Se aplicará a los ${L.length} botones de esta pantalla (se saltan las barras alargadas). El icono y el color de cada uno se mantienen. Podrás deshacerlo.`,ok:'Aplicar a todos'}))return btnSheet(F,after);
+    before();for(const G of L){(g.per[G.path]||(g.per[G.path]={})).look=v}toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(L);toast(`${L.length} botones con «${nm}»`,{label:'Deshacer',fn:undo});btnSheet(F,after)};
+  const sh=$('#bt-sh');if(sh)sh.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;before();g.shape=b.dataset.v;sh.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===b));restyleAll();done();pv();$$('#bt-lk canvas').forEach(cv=>{const k=cv.dataset.lk;if(k!=='orig')putMini(cv,miniTile(F,{...g,style:k},0))})};
   $$('[data-mo]').forEach(b=>b.onclick=()=>{const m=b.dataset.mo;
     if(m==='gen'){closeBS();go({n:'gen'})}else if(m==='edit'){closeBS();go({n:'edit',p:F.path})}
     else{change(()=>{delete g.per[F.path]});toast(pretty(F)+' vuelve al original',{label:'Deshacer',fn:undo})}});

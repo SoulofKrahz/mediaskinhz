@@ -54,7 +54,12 @@ const defGen=()=>({look:'orig',style:'glow',shape:'round',r:14,inset:4,corners:'
 function origHue(F){if(F.oh!=null)return F.oh;const cnt=new Uint32Array(256);for(let i=0;i<F.idx.length;i++)cnt[F.idx[i]]++;let sx=0,sy=0;
   for(let i=0;i<F.n;i++){if(!cnt[i])continue;const r=F.pal[i*3],g=F.pal[i*3+1],b=F.pal[i*3+2];if(isKey(r,g,b))continue;const C=(Math.max(r,g,b)-Math.min(r,g,b))/255;if(C<.2)continue;const [h]=rgb2hsl(r,g,b),w=cnt[i]*C*C;sx+=Math.cos(h*Math.PI/180)*w;sy+=Math.sin(h*Math.PI/180)*w}
   F.oh=sx||sy?Math.round(((Math.atan2(sy,sx)*180/Math.PI)+360)%360):210;return F.oh}
-function cornerBase(F){const s=S.layout.slots.find(s=>s.p===F.path),bg=byName('common/home_bg.bmp'),fw=F.w/frames(F),c=document.createElement('canvas');c.width=fw;c.height=F.h;const x=c.getContext('2d');x.fillStyle='#000';x.fillRect(0,0,fw,F.h);
+function borderColor(F){if(F.bdc)return F.bdc;const fw=F.w/frames(F),rs=[],gs=[],bs=[];const add=(x,y)=>{const i=F.idx[y*F.w+x]*3;if(isKey(F.pal[i],F.pal[i+1],F.pal[i+2]))return;rs.push(F.pal[i]);gs.push(F.pal[i+1]);bs.push(F.pal[i+2])};
+  for(let x=0;x<fw;x++){add(x,0);add(x,F.h-1)}for(let y=0;y<F.h;y++){add(0,y);add(fw-1,y)}const m=a=>{a.sort((u,v)=>u-v);return a[a.length>>1]||0},r=m(rs),G=m(gs),B=m(bs);
+  // las pantallas del MediaNav son oscuras: un borde claro o de color es parte del botón, no del fondo
+  F.bdc=(r*.3+G*.59+B*.11)<60?`rgb(${r},${G},${B})`:'#000';return F.bdc}
+function cornerBase(F){const s=S.layout.slots.find(s=>s.p===F.path),bg=byName('common/home_bg.bmp'),fw=F.w/frames(F),c=document.createElement('canvas');c.width=fw;c.height=F.h;const x=c.getContext('2d');
+  if(!s){if(!F.keyCount){x.fillStyle=borderColor(F);x.fillRect(0,0,fw,F.h)}return c}x.fillStyle='#000';x.fillRect(0,0,fw,F.h);
   if(s&&bg)x.drawImage(renderCanvas(bg,false),s.x,s.y,fw,F.h,0,0,fw,F.h);return c}
 function rrect(x,X,Y,W,H,r){r=Math.max(0,Math.min(r,W/2,H/2));x.beginPath();x.moveTo(X+r,Y);x.lineTo(X+W-r,Y);x.arcTo(X+W,Y,X+W,Y+r,r);x.lineTo(X+W,Y+H-r);x.arcTo(X+W,Y+H,X+W-r,Y+H,r);x.lineTo(X+r,Y+H);x.arcTo(X,Y+H,X,Y+H-r,r);x.lineTo(X,Y+r);x.arcTo(X,Y,X+r,Y,r);x.closePath()}
 const gRad=(g,h)=>g.shape==='rect'?0:g.shape==='pill'?(h-2*g.inset)/2:g.r;
@@ -99,11 +104,11 @@ function drawState(x,F,w,h,s,H,g,bgc){
       x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const gl=x.createLinearGradient(0,Y,0,Y+Hh*.5);gl.addColorStop(0,'rgba(255,255,255,.25)');gl.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh*.5);x.restore();
       if(on){x.lineWidth=3;x.strokeStyle='rgba(255,255,255,.75)';rrect(x,X+2.5,Y+2.5,W-5,Hh-5,Math.max(0,r-1.5));x.stroke()}ic=dim?'rgba(255,255,255,.5)':'#ffffff';break}
     default:x.fillStyle=on?lin(`hsl(${H} 90% 62%)`,`hsl(${H} 85% 46%)`):lin('#16191e','#060708',`hsl(${H} 85% ${dim?20:44}%)`);x.fill();x.lineWidth=2;x.strokeStyle=on?`hsl(${H} 70% 40%)`:`hsl(${H} 55% ${dim?18:32}%)`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=on?`hsl(${H} 70% 20%)`:`hsl(${H} 85% ${dim?32:60}%)`}
-  const src=genIconSrc(F,g),p=g.per[F.path]||{},cx=w/2,cy=Y+Hh*(g.iy/100);
+  const home=S.layout.slots.some(s=>s.p===F.path),isz=home?g.is:Math.max(14,Math.min(g.is*h/137*1.25,Math.min(w,h)*.62)),src=genIconSrc(F,g),p=g.per[F.path]||{},cx=w/2,cy=home?Y+Hh*(g.iy/100):h/2;
   if(p.ihue!=null&&!on)ic=p.ihue==='white'?(dim?'rgba(255,255,255,.5)':'#ffffff'):`hsl(${p.ihue} 85% ${dim?34:62}%)`;
-  if(src==='orig'){const mk=extractIcon(F);if(mk)drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,mk,X,Y,sz/56,col,gl);return true},cx,cy,g.is,ic,glow)}
-  else if(src==='png'&&p.png){drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,p.png,X,Y,sz/96*1.15,col,gl);return true},cx,cy,g.is,ic,glow)}
-  else drawIcon(x,keyPainter(src),cx,cy,g.is,ic,glow);
+  if(src==='orig'){const mk=extractIcon(F);if(mk)drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,mk,X,Y,sz/56,col,gl);return true},cx,cy,isz,ic,glow)}
+  else if(src==='png'&&p.png){drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,p.png,X,Y,sz/96*1.15,col,gl);return true},cx,cy,isz,ic,glow)}
+  else drawIcon(x,keyPainter(src),cx,cy,isz,ic,glow);
 }
 function genHue(F,g){const p=g.per[F.path]||{};if(p.hue!=null)return p.hue;return g.color==='orig'?origHue(F):g.hue}
 function genTile(F,g){const fr=frames(F),fw=F.w/fr,h=F.h,c=document.createElement('canvas');c.width=F.w;c.height=h;const x=c.getContext('2d');const H=genHue(F,g),bgc=cornerBase(F);
