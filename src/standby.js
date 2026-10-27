@@ -5,6 +5,7 @@
    de la radio se sigue aplicando encima. Ese fondo también sale detrás del código de la radio y de algunos avisos. */
 const STBF='common/etc_bg.bmp';
 const STFONTS=[['Inter','600 {s}px Inter, sans-serif','Moderna'],['serif','600 {s}px Newsreader, Georgia, serif','Clásica'],['radio','bold {s}px Tahoma, Verdana, sans-serif','Como la radio'],['black','900 {s}px "Arial Black", Impact, sans-serif','Gruesa'],['mono','bold {s}px "Courier New", monospace','Máquina']];
+const STCLK=['etc/etc_clock_font.bmp','etc/etc_clock_font_colon.bmp','etc/etc_clock_font_ampm.bmp'];
 const STPOS=[['top','Arriba'],['above','Sobre el reloj'],['below','Bajo el reloj'],['bottom','Abajo']];
 const stDef=()=>({l1:'',l2:'',font:'Inter',size:36,hue:'white',pos:'below',glow:true,caps:false,sp:2});
 const stCol=h=>h==='white'?'#ffffff':`hsl(${h} 85% 62%)`;
@@ -18,8 +19,8 @@ function stDraw(x,st){const l1=(st.caps?st.l1.toUpperCase():st.l1).trim(),l2=(st
   if(l2){x.font=f.replace('{s}',s2);x.globalAlpha=.85;x.fillText(l2,400,y,760)}x.restore()}
 let stT=0;
 function stApply(st,now){clearTimeout(stT);const run=()=>{const F=byName(STBF);if(!F)return;
-  if(!st||!(st.l1.trim()||st.l2.trim())){S.stby=st&&{...st};if(F.rep&&F.rep.by==='stby'){F.rep=null;if(S.ex[F.path]===false)delete S.ex[F.path]}F.cv=null;bump();return}
-  S.stby={...st};const c=document.createElement('canvas');c.width=F.w;c.height=F.h;const x=c.getContext('2d');x.drawImage(renderOrig(F,false),0,0);stDraw(x,st);
+  if(!st||!(st.l1.trim()||st.l2.trim())){S.stby=st&&{...st,clk:S.stby&&S.stby.clk};if(F.rep&&F.rep.by==='stby'){F.rep=null;if(S.ex[F.path]===false)delete S.ex[F.path]}F.cv=null;bump();return}
+  S.stby={...st,clk:S.stby&&S.stby.clk};const c=document.createElement('canvas');c.width=F.w;c.height=F.h;const x=c.getContext('2d');x.drawImage(renderOrig(F,false),0,0);stDraw(x,st);
   const d=x.getImageData(0,0,F.w,F.h).data,q=quantize(d,F.w,F.h,{key:new Uint8Array(F.w*F.h),dither:true});
   F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'stby'};S.ex[F.path]=false;F.cv=null;bump()};if(now)run();else stT=setTimeout(run,320)}
 // Vista previa: el fondo como quedará y, encima, el reloj con la hora de ahora (la radio lo dibuja con su propia letra)
@@ -31,7 +32,7 @@ function drawStandby(c,orig){const x=c.getContext('2d'),F=byName(STBF);x.fillSty
   x.save();x.font='600 17px Tahoma, Inter, sans-serif';x.fillStyle='#fff';x.textAlign='center';x.fillText('16°C',740,48);x.restore()}
 function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La negra con el reloj');
   if(!F){v.innerHTML='<p class="empty">Este backup no tiene el fondo de la pantalla de reposo (COMMON/ETC_BG.BMP).</p>';return}
-  const st={...stDef(),...(S.stby||{})};
+  const st={...stDef(),...(S.stby||{})};delete st.clk;
   v.innerHTML=`<div class="two"><div class="stick sticky-pv">${pvBlock('pv')}<div class="e-bar"><div class="seg" id="st-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="true">Ahora</button><button data-v="orig" aria-pressed="false">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">El reloj y la temperatura los pone la radio</span></div></div>
     <div class="stack"><div class="card"><h3>Tu texto</h3>
       <label class="field"><span class="lbl">Línea principal</span><input class="ipq" id="st-l1" maxlength="28" placeholder="Tu nombre" value="${esc(st.l1)}" autocomplete="off"></label>
@@ -42,7 +43,9 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
       <p class="lbl">Color</p><div class="hsw" id="st-col">${swatches(st.hue,{white:true,label:'Color del texto'})}</div>
       <label class="swrow" for="st-glow"><span>Brillo alrededor</span><input class="sw" type="checkbox" id="st-glow"${st.glow?' checked':''}></label>
       <label class="swrow" for="st-caps"><span>En mayúsculas</span><input class="sw" type="checkbox" id="st-caps"${st.caps?' checked':''}></label>
-      <button class="btn o wide" id="st-del">Quitar el texto</button>
+      <button class="btn o wide" id="st-del">Quitar el texto</button></div>
+      <div class="card"><h3>Color del reloj</h3><div class="hsw" id="st-clk">${swatches(S.stby&&S.stby.clk!=null?S.stby.clk:'none',{none:'Blanco (original)',label:'Color del reloj'})}</div>
+      <p class="note">Tiñe los números, los dos puntos y el AM/PM del reloj de reposo (son imágenes de la radio: ETC/etc_clock_font…). El reloj pequeño de la barra de arriba está en Común → Barra de arriba.</p>
       <p class="note">Se guarda en la imagen del fondo de reposo y sale en la exportación como cualquier otra. Ese mismo fondo aparece detrás de la pantalla del código de la radio y de algunos avisos.</p></div>
       <div class="card"><h3>El fondo</h3><div class="list">${fileRow(F,'Fondo de reposo · 800×480')}</div><p class="note">Tócalo para cambiar sus colores o sustituirlo por una foto; el texto se mantiene encima.</p></div></div></div>`;
   const c=$('#pv');let orig=false;const draw=()=>drawStandby(c,orig);S.live=draw;draw();
@@ -55,4 +58,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
   sw.querySelector('[data-pick]').onchange=e=>{st.hue=Math.round(hexHsl(e.target.value)[0]);upd(true)};
   $('#st-glow').onchange=e=>{st.glow=e.target.checked;upd(true)};$('#st-caps').onchange=e=>{st.caps=e.target.checked;upd(true)};
   $('#st-del').onclick=()=>{before();$('#st-l1').value='';$('#st-l2').value='';st.l1='';st.l2='';stApply(st,true);toast('Texto quitado',{label:'Deshacer',fn:undo})};
+  const setClk=h=>{before();for(const n of STCLK){const G=byName(n);if(G)btnTintOps(G,h)}S.stby={...(S.stby||stDef()),clk:h};bump();toast(h==null?'Reloj en blanco original':'Color del reloj cambiado',{label:'Deshacer',fn:undo})};
+  const ck=$('#st-clk .swg');ck.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;ck.querySelectorAll('.swc').forEach(q=>q.setAttribute('aria-pressed',q===b));setClk(b.dataset.h==='none'?null:+b.dataset.h)};
+  ck.querySelector('[data-pick]').onchange=e=>setClk(Math.round(hexHsl(e.target.value)[0]));
   $('#st-cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;orig=b.dataset.v==='orig';$$('#st-cmp button').forEach(q=>q.setAttribute('aria-pressed',q===b));draw()}}
