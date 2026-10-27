@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-27-9';
+const VER='2026-10-27-10';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,7 +11,10 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Corregido el orden al terminar la instalación automática: primero ACEPTAR y, cuando la pantalla se apague, sacar el USB (al revés se quedaba la pantalla en negro). El reinicio ya no depende del USB: REINICIAR.exe se copia antes a la memoria de la radio',
+  [VER,['Importar diseños: Ajustes e historial → Mis diseños → «Importar un diseño». Vale un archivo .mskz o el ZIP que exportaste para la radio (lleva su diseño dentro). También arrastrándolo a la ventana, o con «Cargar»',
+    'Cada diseño de Mis diseños se puede exportar a un archivo .mskz para llevarlo a otro aparato (del PC al móvil, por ejemplo). Lleva colores, estilos, iconos, imágenes sustituidas y tus iconos propios',
+    'Corregido: los diseños guardados y el diseño en curso perdían el estilo de los botones de dentro, el color del icono y el tamaño de los iconos al recargar la página']],
+  ['2026-10-27-9',['Corregido el orden al terminar la instalación automática: primero ACEPTAR y, cuando la pantalla se apague, sacar el USB (al revés se quedaba la pantalla en negro). El reinicio ya no depende del USB: REINICIAR.exe se copia antes a la memoria de la radio',
     'Ventana de progreso durante la instalación: paso 1 de 2 (copia de seguridad) y paso 2 de 2 (instalar y comprobar), con barra y recuento de imágenes',
     'Mensajes más claros: nombre del diseño, número de imágenes y fecha del paquete; mensaje final grande',
     'Si la radio vuelve a arrancar con el USB puesto, ya no ofrece reinstalar: dice que está instalado y deja elegir entre reiniciar o abrir Total Commander']],

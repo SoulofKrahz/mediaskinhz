@@ -165,6 +165,11 @@ async function run(browser, label, viewport, mobile) {
     A.path = '__a'; B.path = '__b'; A.fdef = 4; B.fdef = 4; const c = { getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 480 }) };
     const h = vwHit(V, c, { clientX: 20, clientY: 20 }); S.lc = save; S.frames = fr; return h.F === A; }), 'en las vistas se toca la pieza pequeña, no la barra de encima');
   ok(await p.evaluate(() => /Tecla 3 del teclado 2/.test(pretty({ name: 'phone_keyboard2_3_btn' })) && /fila pulsada/.test(pretty({ name: 'phone_keyboard_list_press' }))), 'las teclas del teléfono tienen nombres que se entienden');
+  // Los diseños guardados conservan todo lo de cada botón (estilo de dentro, color del icono, tamaño) y se pueden llevar a un archivo
+  ok(await p.evaluate(async () => { const g = S.gen || (S.gen = defGen()); const F = S.files.find(f => kindOf(f) === 'btn'); g.per[F.path] = { look: 'chamfer', ihue: 'white', rs: 1, hue: 2 };
+    const pk = packGen().per[F.path]; const b = await designFile({ label: 'Prueba', n: 1, st: packState() }); const L = await readZip(await b.arrayBuffer(), () => true);
+    const j = JSON.parse(new TextDecoder().decode(L.find(x => x.path === 'diseno.json').buf)); delete g.per[F.path];
+    return pk.look === 'chamfer' && pk.ihue === 'white' && pk.rs === 1 && j.app === 'Mediaskinhz' && j.st.gen.per[F.path].look === 'chamfer'; }), 'los diseños guardan todo lo de cada botón y se exportan a .mskz');
   // Ventana de cada pantalla y «Común»: abren y enseñan sus bloques
   for (const sc of ['radio', 'media', 'phone', 'eco', 'setting', 'common']) {
     await p.evaluate(s => go({ n: 'scr', s }), sc); await p.waitForTimeout(400);

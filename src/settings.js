@@ -13,8 +13,10 @@ function confirmBS(o){return new Promise(res=>{
   $('#bs').onclick=e=>{const x=e.target.closest('[data-c]');if(!x)return;S.bsCancel=null;closeBS();res(x.dataset.c==='1')}})}
 const sig=()=>S.root+':'+S.files.length;
 async function getList(k){try{return (await idb.get(k))||[]}catch(_){return []}}
+// Datos de los botones para guardar: todo menos la imagen PNG en memoria (p.png)
+function packGen(){if(!S.gen)return null;const gen={...S.gen,per:{}};for(const [k,p] of Object.entries(S.gen.per||{})){const {png,...r}=p;gen.per[k]={...r,icon:p.icon==='png'?undefined:p.icon}}return structuredClone(gen)}
 function packState(){const reps={};for(const F of S.files)if(F.rep)reps[F.path]={pal:F.rep.pal,idx:F.rep.idx,keyIdx:F.rep.keyIdx};
-  let gen=null;if(S.gen){gen={...S.gen,per:{}};for(const [k,p] of Object.entries(S.gen.per||{}))gen.per[k]={icon:p.icon==='png'?undefined:p.icon,hue:p.hue}}
+  const gen=packGen();
   return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen,reps,icx:structuredClone(S.icx||{})}}
 // Miniatura de la pantalla de Inicio para reconocer cada diseño
 function designThumb(){try{const c=document.createElement('canvas');c.width=800;c.height=480;drawPreview(c,{scr:'home'});const t=document.createElement('canvas');t.width=240;t.height=144;const x=t.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(c,0,0,240,144);return t.toDataURL('image/jpeg',.8)}catch(_){return null}}
@@ -68,10 +70,10 @@ async function scrSettings(v){
         <details><summary>Ver archivos</summary><div class="hx-f">${x.files.map(f=>`<span>${esc(f)}</span>`).join('')}</div></details></div>`).join('')}</div>
       <p class="note">«Deshacer en el coche» baja un ZIP con solo los originales de esa exportación, listo para copiar igual que la exportación.</p>`:'<p class="note">Aún no has exportado nada. Cada exportación quedará aquí, con un botón para deshacerla en el coche.</p>'}</div>
     <div class="card" id="s-des"><h3>Mis diseños</h3>
-      ${S.demo?'<p class="note">Carga tu backup para guardar diseños.</p>':`<button class="btn wide" id="s-pt">Guardar el diseño actual</button>`}
+      ${S.demo?'<p class="note">Carga tu backup para guardar diseños.</p>':`<button class="btn wide" id="s-pt">Guardar el diseño actual</button><button class="btn o wide" id="s-imp">Importar un diseño</button><p class="note">Vale un archivo <b>.mskz</b> (botón ${ic('M12 3v12M7 10l5 5 5-5M5 21h14')} de cada diseño) o el <b>ZIP que exportaste para la radio</b>: lleva su diseño dentro. También puedes arrastrarlo a la ventana.</p>`}
       ${D.length?`<div class="dsg">${D.map(p=>`<div class="dsc${S.curDesign===p.id?' on':''}" data-d="${p.id}"><button class="dsi" data-a="load" aria-label="Cargar ${esc(p.label)}">${p.thumb?`<img src="${p.thumb}" alt="">`:'<span class="dsn">Sin vista previa</span>'}${S.curDesign===p.id?'<span class="pill p-col">Cargado</span>':''}</button>
         <div class="dst"><b>${esc(p.label)}</b><small>${fdt(p.t)} · ${p.n} ${p.n===1?'imagen':'imágenes'}</small></div>
-        <div class="dsa"><button class="btn o sm" data-a="load">Cargar</button><button class="ib" data-a="ren" aria-label="Cambiar el nombre" title="Cambiar el nombre">${ic('M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4')}</button><button class="ib dgi" data-a="del" aria-label="Borrar" title="Borrar">${ic('M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3')}</button></div></div>`).join('')}</div>`:'<p class="note">Guarda aquí los diseños que te gusten, con su nombre, para cambiar entre ellos o volver atrás.</p>'}
+        <div class="dsa"><button class="btn o sm" data-a="load">Cargar</button><button class="ib" data-a="exp" aria-label="Exportar a un archivo" title="Exportar a un archivo (.mskz) para llevarlo a otro aparato">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}</button><button class="ib" data-a="ren" aria-label="Cambiar el nombre" title="Cambiar el nombre">${ic('M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4')}</button><button class="ib dgi" data-a="del" aria-label="Borrar" title="Borrar">${ic('M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3')}</button></div></div>`).join('')}</div>`:'<p class="note">Guarda aquí los diseños que te gusten, con su nombre, para cambiar entre ellos o volver atrás.</p>'}
       ${A.length?`<details class="isd"><summary><span>Copias automáticas<small>Antes de cada cambio grande y en cada exportación</small></span><b>${A.length}</b></summary><div class="isb"><div class="hl">${A.map(p=>`<div class="hx"><div class="hx-h"><span class="tx"><b>${esc(p.label)}</b><small>${fdt(p.t)} · ${p.n} ${p.n===1?'imagen cambiada':'imágenes cambiadas'}</small></span></div>
         <div class="hx-a"><button class="btn o sm" data-p="${p.id}">Volver a este</button><button class="btn dg sm" data-pd="${p.id}">Borrar</button></div></div>`).join('')}</div></div></details>`:''}</div>
   </div><div class="stack">
@@ -102,8 +104,10 @@ async function scrSettings(v){
   segOn('#s-th',x=>{SET.theme=x;saveSet();try{if(x==='auto'){localStorage.removeItem('skinhz-theme');delete document.documentElement.dataset.theme}else{localStorage.setItem('skinhz-theme',x);document.documentElement.dataset.theme=x}}catch(_){}});
   $('#s-cf').onchange=e=>{SET.confirm=e.target.checked;saveSet()};$('#s-au').onchange=e=>{SET.auto=e.target.checked;saveSet()};$('#s-xo').onchange=e=>{SET.xorig=e.target.checked;saveSet()};
   const sp=$('#s-pt');if(sp)sp.onclick=async()=>{await saveDesign();render(true)};
+  const si=$('#s-imp');if(si)si.onclick=pickDesignFile;
   $$('.dsc',v).forEach(el=>el.onclick=async e=>{const b=e.target.closest('[data-a]');if(!b)return;const id=el.dataset.d,a=b.dataset.a,L=await getList('points'),p=L.find(x=>x.id===id);if(!p)return;
     if(a==='load')return restorePoint(id);
+    if(a==='exp')return exportDesign(p);
     if(a==='ren'){const nm=await promptBS({title:'Cambiar el nombre',value:p.label,ok:'Guardar'});if(!nm)return;p.label=nm;try{await idb.set('points',L)}catch(_){}render(true);return}
     if(a==='del'){if(!await confirmBS({title:'Borrar «'+esc(p.label)+'»',text:'El diseño guardado se borrará. Lo que tienes ahora en pantalla no cambia.',ok:'Borrar',danger:true}))return;try{await idb.set('points',L.filter(x=>x.id!==id))}catch(_){}if(S.curDesign===id)S.curDesign=null;render(true);toast('Diseño borrado')}});
   $$('[data-p]',v).forEach(b=>b.onclick=()=>restorePoint(b.dataset.p));
@@ -141,3 +145,28 @@ function settingsTabs(v){if(S.focus==='s-des')S.stab='des';const cur=S.stab||(S.
   for(const el of box.querySelectorAll('[data-sp]'))el.hidden=el.dataset.sp!==cur;
   v.innerHTML='';v.appendChild(box);
   bar.onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;S.stab=b.dataset.t;bar.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));box.querySelectorAll('[data-sp]').forEach(el=>el.hidden=el.dataset.sp!==S.stab);scrollTo(0,0)}}
+
+/* ============ diseños en archivo (.mskz) ============
+   Para llevar un diseño de un aparato a otro (p. ej. del PC al móvil). Es un ZIP con diseno.json (colores, estilos, iconos, distribución,
+   tus iconos usados) y reps/*.bin (las imágenes sustituidas, en índices de color). Cada exportación para la radio lleva el suyo dentro. */
+const slugN=s=>String(s||'diseno').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40)||'diseno';
+async function designFile(p){const st=p.st,ents=[],reps={};let i=0;
+  for(const [path,r] of Object.entries(st.reps||{})){if(!r||!r.idx)continue;const k='r'+(i++)+'.bin';reps[path]={pal:Array.from(r.pal),keyIdx:r.keyIdx,by:r.by,f:k};ents.push({name:'reps/'+k,data:r.idx instanceof Uint8Array?r.idx:new Uint8Array(r.idx)})}
+  const used=new Set([...JSON.stringify([st.gen||{},st.icx||{}]).matchAll(/my:([A-Za-z0-9_-]+)/g)].map(m=>m[1]));
+  const my=MY.list.filter(m=>used.has(m.id)).map(({mk,...r})=>r);
+  const {reps:_r,...rest}=st;const meta={app:'Mediaskinhz',v:1,name:p.label,t:p.t||Date.now(),n:p.n,root:S.root,ver:VER,st:rest,reps,my,thumb:p.thumb||null};
+  ents.unshift({name:'diseno.json',data:new TextEncoder().encode(JSON.stringify(meta))});return makeZip(ents)}
+async function exportDesign(p){toast('Preparando el archivo…',{ms:20000});try{const b=await designFile(p);await saveBlob(b,slugN(p.label)+'.mskz')}catch(e){toast('No se ha podido crear el archivo del diseño')}}
+async function importDesign(blob,fname){
+  if(S.demo){toast('Carga primero tu backup (la carpeta M1): el diseño se aplica sobre sus imágenes',{ms:6000});return}
+  let meta,files;
+  try{const L=await readZip(await blob.arrayBuffer(),()=>true),j=L.find(x=>/(^|\/)diseno\.json$/.test(x.path));if(!j)throw 0;meta=JSON.parse(new TextDecoder().decode(j.buf));files=new Map(L.map(x=>[x.path,x.buf]))}catch(_){toast('Este archivo no es un diseño de Mediaskinhz');return}
+  if(meta.app!=='Mediaskinhz'||!meta.st){toast('Este archivo no es un diseño de Mediaskinhz');return}
+  const reps={};let miss=0;for(const [path,r] of Object.entries(meta.reps||{})){const b=files.get('reps/'+r.f),F=S.lc.get(path.toLowerCase());if(!b||!F||b.byteLength!==F.w*F.h){miss++;continue}reps[path]={pal:Uint8Array.from(r.pal),idx:new Uint8Array(b),keyIdx:r.keyIdx,by:r.by}}
+  const nm=String(meta.name||'Diseño importado');
+  if(!await confirmBS({title:`Importar «${esc(nm)}»`,text:`${meta.n||0} ${meta.n===1?'imagen cambiada':'imágenes cambiadas'}${meta.t?' · guardado el '+fdt(meta.t):''}.${miss?` ${miss} ${miss===1?'imagen no encaja':'imágenes no encajan'} con este backup y se ${miss===1?'salta':'saltan'}.`:''} Lo que tienes ahora se guarda antes como copia automática, y el diseño se añade a Mis diseños.`,ok:'Importar',always:true}))return;
+  let addI=0;for(const m of meta.my||[])if(m&&m.id&&!MY.by.has(m.id)){MY.list.push(m);addI++}if(addI){myIndex();await mySave()}
+  await addPoint('Antes de importar «'+nm+'»','auto');before();for(const F of S.files){F.rep=null;F.ico=undefined;F.icz=null}S.src=new Map();S.ops={global:null,sec:{},file:{}};S.ex={};S.frames={};S.gen=null;S.icx={};
+  applyState({...meta.st,reps});if(S.gen&&!S.gen.look)migrateLook(meta.st);bump();
+  const id=await addPoint(nm,'manual');if(id){S.curDesign=id;S.curDesignName=nm}render(true);toast(`«${nm}» importado`+(addI?` con ${addI} ${addI===1?'icono tuyo':'iconos tuyos'}`:''),{label:'Deshacer',fn:undo})}
+function pickDesignFile(){const i=document.createElement('input');i.type='file';i.accept='.mskz,.zip,application/zip';i.onchange=()=>{const f=i.files[0];if(f)importDesign(f,f.name)};i.click()}

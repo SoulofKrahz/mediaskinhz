@@ -142,6 +142,10 @@ async function ingest(list,opts){
 async function fromFileList(fl){
   const arr=[...fl];if(!arr.length)return;
   if(arr.length===1&&/\.rar$/i.test(arr[0].name)){toast('El navegador no puede abrir .rar. Descomprímelo y elige la carpeta, o comprímelo como .zip.',{ms:7000});return}
+  // un diseño (.mskz) o un ZIP exportado para la radio (lleva su diseño dentro): se importa el diseño, no se cambia de backup
+  if(arr.length===1&&/\.mskz$/i.test(arr[0].name))return importDesign(arr[0],arr[0].name);
+  if(arr.length===1&&/\.zip$/i.test(arr[0].name)){let m=[];try{m=await readZip(await arr[0].arrayBuffer(),n=>/(^|\/)diseno\.mskz$/i.test(n))}catch(_){}
+    if(m.length)return importDesign(new Blob([m[0].buf]),arr[0].name)}
   if(!S.demo){const n=S.files.filter(changed).length;if(n){if(!await confirmBS({title:'Cargar otro backup',text:`Sustituirá el backup actual y su diseño (${n} ${n===1?'imagen cambiada':'imágenes cambiadas'}). Se guardará antes un copia automática, que volverá a aparecer si cargas este mismo backup.`,ok:'Cargar el nuevo',danger:true}))return;await addPoint('Antes de cargar otro backup','auto')}}
   const z=arr.find(f=>/\.zip$/i.test(f.name));closeBS();toast('Leyendo tu backup…',{ms:90000});
   try{let list,png=0;
@@ -183,7 +187,7 @@ const idb={db:null,open(){if(this.db)return Promise.resolve(this.db);return new 
   get(k){return this.tx('readonly',s=>s.get(k))},set(k,v){return this.tx('readwrite',s=>s.put(v,k))},del(k){return this.tx('readwrite',s=>s.delete(k))}};
 let saveT=0;
 function saveState(now){if(S.demo)return Promise.resolve();clearTimeout(saveT);const run=()=>{const reps={};for(const F of S.files)if(F.rep)reps[F.path]={pal:F.rep.pal,idx:F.rep.idx,keyIdx:F.rep.keyIdx,by:F.rep.by};
-  let gen=null;if(S.gen){gen={...S.gen,per:{}};for(const [k,p] of Object.entries(S.gen.per||{}))gen.per[k]={icon:p.icon==='png'?undefined:p.icon,hue:p.hue}}
+  const gen=packGen();
   return idb.set('state',{v:2,ops:S.ops,ex:S.ex,frames:S.frames,layout:S.layout,reps,gen,icx:S.icx||{}}).catch(()=>{})};if(now)return run();saveT=setTimeout(run,600)}
 function applyState(st){if(!st)return;S.ops=st.ops||S.ops;S.icx=st.icx||{};if(st.gen)S.gen=st.gen;S.ex=st.ex||{};S.frames=st.frames||{};if(st.layout&&!(st.layout.slots&&st.layout.slots[0]&&st.layout.slots[0].x===75&&st.layout.slots[0].y===134))S.layout=st.layout;
   for(const [p,r] of Object.entries(st.reps||{})){const F=S.lc.get(p.toLowerCase());if(F&&r.idx&&r.idx.length===F.w*F.h){F.rep={pal:r.pal,idx:r.idx,keyIdx:r.keyIdx,by:r.by};if(r.exempt&&S.ex[F.path]===undefined)S.ex[F.path]=true}}migrateLook(st);S.ver++}
@@ -682,6 +686,7 @@ function scrExport(v){
       else if(S.xmode==='auto'){ents=autoEntries(rs,inc,{boot:SET.xboot!==false,name:S.curDesignName||designName()}).ents}
       else{ents=rs.map(r=>({name:S.root+'/'+r.F.path,data:r.u}));if(inc)for(const r of rs)ents.push({name:'ORIGINALES/'+S.root+'/'+r.F.path,data:new Uint8Array(r.F.buf)})}
       const d=new Date(),stamp=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      if(!S.demo){try{const dn=S.curDesignName||designName();ents.push({name:'Mediaskinhz/diseno.mskz',data:new Uint8Array(await (await designFile({label:dn,t:Date.now(),n:S.files.filter(changed).length,st:packState(),thumb:designThumb()})).arrayBuffer())})}catch(_){}}
       ents.push({name:'LEEME.txt',data:new TextEncoder().encode(readme(rs,inc,stamp,lgu?'lgu':S.xmode==='auto'?'auto':'tc'))});const zb=await makeZip(ents),zn=`skin-medianav-${stamp}${lgu?'-actualizacion':S.xmode==='auto'?'-automatico':''}${rs.length<fs.length?'-'+rs.length+'-imagenes':''}.zip`;
       if(await saveBlob(zb,zn)){await recordExport({mode:lgu?'lgu':S.xmode==='auto'?'auto':'tc',boot:S.xmode==='auto'&&SET.xboot!==false,hw:ulc2?2:1,inc,files:rs.map(r=>r.F.path),name:zn,blob:zb,count:rs.length});if(!S.demo)setTimeout(()=>toast('Exportación guardada en el historial',{label:'Ver',fn:()=>go({n:'settings'})}),2700)}}
     catch(err){toast(err.message||'No se pudo crear el ZIP',{ms:6000})}finally{upd()}};
@@ -699,7 +704,7 @@ function readme(res,inc,stamp,mode){const R=S.root,lgu=mode==='lgu';const head=[
     '2. Arranca el MediaNav con el USB y abre Total Commander.','3. Toca una vez MortScript.exe (prepara la radio para abrir scripts) y después Mediaskinhz\\instalar.mscr.',
     '4. Acepta. El script guarda en Mediaskinhz\\antes-de-instalar lo que hay ahora en la radio, copia las imágenes, comprueba el tamaño de cada una y, si alguna falla, deja la radio como estaba.','5. Al terminar ofrece reiniciar. Lo que ha hecho queda en Mediaskinhz\\registro.txt.',
     '6. Para deshacer: Mediaskinhz\\deshacer.mscr.','','Modo nuevo, sin probar todavía en el coche: la primera vez, con un cambio pequeño. Si el script no arranca, puedes copiar a mano Mediaskinhz\\archivos\\'+R+' como siempre.'];
-  return [...head,...(lgu?up:mode==='auto'?(SET.xboot!==false?ab:au):tc),'','Este ZIP solo contiene las imágenes listadas arriba; el resto del equipo no se toca.','Todos los BMP mantienen el nombre, el tamaño en píxeles y el formato de 8 bits del original.'].join('\r\n')}
+  return [...head,...(lgu?up:mode==='auto'?(SET.xboot!==false?ab:au):tc),'','Este ZIP solo contiene las imágenes listadas arriba; el resto del equipo no se toca.','Mediaskinhz\\diseno.mskz es tu diseño: arrástralo (o este ZIP entero) a Mediaskinhz en otro aparato para seguir editándolo.','Todos los BMP mantienen el nombre, el tamaño en píxeles y el formato de 8 bits del original.'].join('\r\n')}
 async function saveBlob(blob,name){
   if(DL){try{await DL.save({filename:name,data:blob});toast('ZIP guardado');return true}catch(e){if(e&&e.code==='declined'){toast('Descarga cancelada');return false}if(e&&e.code==='rate_limited'){toast('Ya hay una descarga pendiente de confirmar');return false}}}
   const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
