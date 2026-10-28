@@ -7,7 +7,7 @@
 name: Publicar en Cloudflare Pages
 on:
   push:
-    branches: [main]
+    branches: [main, pruebas]
     paths: ['site/**', 'src/**', 'tests/**', 'build.py', '.github/workflows/deploy.yml']
   workflow_dispatch:
 concurrency:
@@ -51,4 +51,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy site --project-name=${{ vars.CF_PROJECT }} --branch=main --commit-dirty=true
+          command: pages deploy site --project-name=${{ vars.CF_PROJECT }} --branch=${{ github.ref_name }} --commit-dirty=true

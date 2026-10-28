@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-28-13';
+const VER='2026-10-29-1';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,7 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-1',['En pruebas: USB completo con menú al arrancar (Exportar → «Preparar el USB completo»). Cambiar de diseño, copia de seguridad de la radio (solo imágenes o todo System) en el USB, informe del sistema, Total Commander, reiniciar o volver a la radio. El menú vuelve a salir después de cada herramienta']],
   ['2026-10-28-13',['La pestaña Tema pasa a ser Diseños, con tres partes: Listos (los diseños completos), Mis diseños (cargar con un toque, guardar, importar) y Crear el tuyo (estilo de los botones, color de toda la radio o de cada sección, colores concretos y ajustes finos)',
     'Pantalla más limpia: sin el bloque de diseños listos ni el color de toda la radio (están en Diseños)',
     'Exportar: la instalación automática es la de por defecto; Total Commander y la actualización oficial quedan plegados en «Otros modos»',

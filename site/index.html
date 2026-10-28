@@ -1232,7 +1232,7 @@ function scrExport(v){
       <label class="swrow" for="x-boot" id="x-bootrow"${S.xmode==='auto'?'':' hidden'}><span>Que se instale solo al arrancar<small>Para tu USB con ULC2_recovery: al arrancar pregunta si instalar (con el dedo, sin Total Commander). Si dices que no, abre Total Commander como siempre</small></span><input class="sw" type="checkbox" id="x-boot"${SET.xboot!==false?' checked':''}></label>
       <div id="x-kit"${S.xmode==='auto'?'':' hidden'}></div>
       <label class="swrow" for="x-orig"><span>Incluir los originales<small>Carpeta ORIGINALES con solo estos archivos, para deshacer</small></span><input class="sw" type="checkbox" id="x-orig"${SET.xorig?' checked':''}></label>
-      <button class="btn wide" id="x-go" disabled>Descargar ZIP</button>${S.demo?'':`<button class="btn o wide" id="x-sel" style="margin-top:8px">${ic('M4 6h16M4 12h16M4 18h10')}Varios diseños en el USB</button><p class="note" style="margin-top:4px">Un selector: al arrancar con el USB eliges en la radio cuál poner.</p>`}</div>
+      <button class="btn wide" id="x-go" disabled>Descargar ZIP</button>${S.demo?'':`<button class="btn o wide" id="x-sel" style="margin-top:8px">${ic('M4 6h16M4 12h16M4 18h10')}Preparar el USB completo</button><p class="note" style="margin-top:4px">Menú al arrancar: varios diseños para elegir, copia de seguridad de la radio e informe del sistema.</p>`}</div>
     <div class="card"><h3>Archivos</h3><div class="fl" id="x-list"><p class="note">Comprobando…</p></div></div></div>
     <div class="stack"><div class="card"><h3>Cómo instalarlo</h3><div id="x-steps"></div></div></div></div>`;
   {const xs=$('#x-sel');if(xs)xs.onclick=selectorSheet}
@@ -2358,27 +2358,28 @@ async function selectorZip(list,onp){await loadVistas().catch(()=>{});
     ents.push({name:`Mediaskinhz/disenos/${dir}/instalar.mscr`,data:ansi(mortInstall(R,items,id+'-'+k,when,{name,undo,sel:true}))});skins.push({dir,name})};
   list.forEach((x,i)=>add(x.name,maps[i],false));add('Original de Renault',null,true);
   const kit=SET.xkit!==false?await usbKit():null;
-  ents.unshift({name:'Medianav.mscr',data:ansi(mortSelect(skins,id,when))},{name:'Mediaskinhz/Medianav-original.mscr',data:kitOrig(kit)});
-  ents.push({name:'LEEME.txt',data:new TextEncoder().encode(['Mediaskinhz · selector de diseños en el USB','',`Diseños: ${skins.map(s=>s.name).join(' · ')}`,`Archivos por diseño: ${U.length}`,'',
+  ents.unshift({name:'Medianav.mscr',data:ansi(mortMenu(skins,id,when))},{name:'Mediaskinhz/Medianav-original.mscr',data:kitOrig(kit)},{name:'Mediaskinhz/copia.mscr',data:ansi(mortCopia())},{name:'Mediaskinhz/informe.mscr',data:ansi(mortInforme())});
+  ents.push({name:'LEEME.txt',data:new TextEncoder().encode(['Mediaskinhz · USB completo: menú al arrancar','','Menú: Cambiar de diseño · Copia de seguridad de la radio · Informe del sistema · Total Commander · Reiniciar · Volver a la radio','',`Diseños: ${skins.map(s=>s.name).join(' · ')}`,`Archivos por diseño: ${U.length}`,'',
     '1. Descomprime este ZIP en la raíz de tu USB de siempre (el de ULC2_recovery, MortScript y Total Commander) y acepta sobrescribir.','   Tu Medianav.mscr de antes queda en Mediaskinhz\\Medianav-original.mscr.',
-    '2. Arranca la radio con el USB como para entrar a Total Commander. A los 25 s sale la lista de diseños.','3. Toca el que quieras y pulsa Aceptar. Se guarda una copia, se instala, se comprueba y, si falla, la radio vuelve a como estaba.',
-    '4. Al terminar: primero ACEPTAR y, cuando la pantalla se apague, saca el USB.','','Para cambiar otro día de diseño, vuelve a arrancar con el USB y elige otro. «Original de Renault» deja todo como de fábrica.'].join('\r\n'))});
+    '2. Arranca la radio con el USB como para entrar a Total Commander. A los 25 s sale el menú.','3. «Cambiar de diseño»: toca el que quieras y pulsa Aceptar. Se guarda una copia, se instala, se comprueba y, si falla, la radio vuelve a como estaba.',
+    '4. Al terminar: primero ACEPTAR y, cuando la pantalla se apague, saca el USB.','','Para cambiar otro día de diseño, vuelve a arrancar con el USB y elige otro. «Original de Renault» deja todo como de fábrica.','','«Copia de seguridad» guarda en Mediaskinhz\\copias las imágenes de la radio (o todo System). «Informe del sistema» escribe Mediaskinhz\\informe.txt.'].join('\r\n'))});
   return {zip:await makeZip(withKit(ents,kit,true)),n:U.length,skins}}
 async function selectorSheet(){if(S.demo){toast('Carga tu backup para preparar el selector');return}
   const ds=(await listPoints()).filter(p=>p.kind==='manual'),cur=S.files.some(changed);
   const row=(v,t,sub,on)=>`<label class="ck" style="display:flex;gap:10px;align-items:center;padding:8px 2px"><input type="checkbox" value="${esc(v)}"${on?' checked':''}><span><b>${esc(t)}</b>${sub?`<br><small class="note">${esc(sub)}</small>`:''}</span></label>`;
-  openBS(`<h2>Selector de diseños en el USB</h2><p class="note">Elige hasta 8. Al arrancar con el USB, la radio te enseña la lista y eliges con el dedo cuál poner. Siempre se añade «Original de Renault».</p>
+  openBS(`<h2>Preparar el USB completo</h2><p class="note">Al arrancar con el USB sale un menú: cambiar de diseño, copia de seguridad de la radio, informe del sistema, Total Commander o reiniciar. Elige hasta 8 diseños; siempre se añade «Original de Renault».</p>
     <div id="sel-l" style="max-height:46vh;overflow:auto">${cur?row('cur','Lo que tienes ahora',S.curDesignName?'«'+S.curDesignName+'» con tus cambios':'Sin guardar',true):''}
     ${ds.length?'<p class="lbl">Mis diseños</p>'+ds.map(p=>row('d:'+p.id,p.label,p.n+' imágenes',false)).join(''):''}
     <p class="lbl">Diseños listos <small>· sobre lo que tienes ahora</small></p>${PRESETS.map(P=>row('p:'+P.id,P.name,'',false)).join('')}</div>
-    <p class="note" id="sel-n"></p><div class="stack" style="gap:8px;margin-top:8px"><button class="btn wide" id="sel-go">Descargar el selector</button><button class="btn o wide" id="sel-x">Cancelar</button></div>`);
+    <p class="note" id="sel-n"></p><div class="stack" style="gap:8px;margin-top:8px"><p class="note" id="sel-kit"></p><button class="btn wide" id="sel-go">Descargar el USB completo</button><button class="btn o wide" id="sel-x">Cancelar</button></div>`);
   const bs=$('#bs'),cnt=()=>{const n=bs.querySelectorAll('#sel-l input:checked').length;bs.querySelector('#sel-n').textContent=n?`${n} ${n===1?'diseño':'diseños'} + Original de Renault`+(n>8?' · demasiados: quita alguno':''):'Marca al menos uno';bs.querySelector('#sel-go').disabled=!n||n>8};cnt();
+  usbKit().then(k=>{const el=bs.querySelector('#sel-kit');if(el)el.innerHTML=k&&SET.xkit!==false?`Lleva también tu lanzador (${k.n} archivos): vale para un USB nuevo.`:k?'Sin el lanzador (desactivado en Exportar): descomprímelo encima de tu USB de siempre.':'Sin el lanzador: descomprímelo encima de tu USB de siempre. Para un USB nuevo, guarda antes tu USB en Exportar.'});
   bs.querySelector('#sel-l').onchange=cnt;bs.querySelector('#sel-x').onclick=()=>closeBS();
   bs.querySelector('#sel-go').onclick=async()=>{const vs=[...bs.querySelectorAll('#sel-l input:checked')].map(i=>i.value),list=[];
     for(const v of vs){if(v==='cur')list.push({name:S.curDesignName||'Mi diseño actual',cur:true});else if(v.startsWith('d:')){const p=await getPoint(v.slice(2));if(p)list.push({name:p.label,st:p.st})}else{const P=PRESETS.find(x=>x.id===v.slice(2));if(P)list.push({name:P.name,preset:P})}}
-    closeBS();toast('Preparando el selector…',{ms:120000});
-    try{const r=await selectorZip(list,(i,n)=>toast(`Preparando el selector… ${i+1} de ${n}`,{ms:120000}));const d=new Date();await saveBlob(r.zip,`mediaskinhz-selector-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.zip`);
-      toast(`Selector listo: ${r.skins.length} opciones, ${r.n} imágenes cada una`)}catch(e){console.error(e);toast('No se ha podido preparar el selector')}}}
+    closeBS();toast('Preparando el USB…',{ms:120000});
+    try{const r=await selectorZip(list,(i,n)=>toast(`Preparando el USB… diseño ${i+1} de ${n}`,{ms:120000}));const d=new Date();await saveBlob(r.zip,`mediaskinhz-usb-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.zip`);
+      toast(`USB listo: menú con ${r.skins.length} diseños, copia de seguridad e informe`)}catch(e){console.error(e);toast('No se ha podido preparar el USB')}}}
 
 /* ============ lanzador del USB ============
    Para preparar un USB nuevo de una vez: guardas una vez el contenido de tu USB de siempre (ULC2_recovery, MortScript, Total Commander, REINICIAR…)
@@ -2416,6 +2417,109 @@ async function kitUI(el){if(!el||S.demo){if(el)el.hidden=true;return}const kit=a
   const c=el.querySelector('#x-kitc');if(c)c.onchange=e=>{SET.xkit=e.target.checked;saveSet()};
   const r=el.querySelector('#x-kitr');if(r)r.onclick=e=>{e.preventDefault();pickUsbKit(()=>kitUI(el))};
   const sv=el.querySelector('#x-kits');if(sv)sv.onclick=()=>pickUsbKit(()=>kitUI(el))}
+
+/* ============ USB completo: menú al arrancar ============
+   Medianav.mscr enseña un menú (Choice) que vuelve a salir tras cada herramienta:
+     Cambiar de diseño (lista de diseños del USB) · Copia de seguridad de la radio · Informe del sistema · Abrir Total Commander · Reiniciar · Volver a la radio.
+   El menú solo usa órdenes ya probadas en el coche (y Choice). Las herramientas van en scripts aparte (copia.mscr, informe.mscr):
+   si alguna orden suya no existiera en este MortScript, falla esa herramienta, no el menú. */
+function mortMenu(skins,id,when){const L=[],w=x=>L.push(x);
+  w(`# Mediaskinhz · menú del USB · paquete ${id} (${when})`);
+  w('# Sustituye a Medianav.mscr (lo abre ULC2_recovery.mscr). El de antes está en Mediaskinhz\\Medianav-original.mscr.');
+  w('ErrorLevel( "off" )');
+  w('Run( "\\Storage Card\\System\\MicomManager.exe" )');
+  w('Sleep( 20000 )');
+  w('Close( ActiveWindow() )');
+  w('Sleep( 2000 )');
+  w('usb = SystemPath( "ScriptPath" )');
+  w('If ( not FileExists( usb \\ "Medianav.mscr" ) )');
+  w('  usb = "\\MD"');
+  w('EndIf');
+  w('mz = usb \\ "Mediaskinhz"');
+  w('ms = usb \\ "MortScript.exe"');
+  w('rb = usb \\ "REINICIAR.exe"');
+  w('parado = 0');
+  w('seguir = 1');
+  w('While ( seguir = 1 )');
+  w('  actual = "no instalado desde este USB"');
+  w('  If ( FileExists( mz \\ "actual.txt" ) )');
+  w('    actual = ReadFile( mz \\ "actual.txt" )');
+  w('  EndIf');
+  w('  op = Choice( "Mediaskinhz", "Diseño en la radio: " & actual, 0, 0, "Cambiar de diseño", "Copia de seguridad de la radio", "Informe del sistema", "Abrir Total Commander", "Reiniciar la radio", "Volver a la radio sin hacer nada" )');
+  w('  If ( op = 1 )');
+  w(`    sel = Choice( "Mediaskinhz · Diseños", "Ahora en la radio: " & actual & "^NL^Toca uno y pulsa Aceptar. Se guarda una copia antes de instalar.", 0, 0, ${skins.map(k=>qs(k.name)).join(', ')}, "Volver al menú" )`);
+  skins.forEach((k,i)=>{w(`    If ( sel = ${i+1} )`);
+    w(`      dir = mz \\ ${qs('disenos\\'+k.dir)}`);
+    w('      If ( FileExists( dir \\ "instalar.mscr" ) and FileExists( ms ) )');
+    w('        Kill( "nngnavi.exe" )');
+    w('        Sleep( 3000 )');
+    w('        Kill( "AppMain.exe" )');
+    w('        Sleep( 5000 )');
+    w('        parado = 1');
+    w('        Delete( dir \\ "resultado-ok.txt" )');
+    w('        WriteFile( dir \\ "desde-arranque.tmp", mz )');
+    w('        RunWait( ms, dir \\ "instalar.mscr" )');
+    w('        If ( FileExists( dir \\ "resultado-ok.txt" ) )');
+    w('          Exit');
+    w('        EndIf');
+    w(`        Message( "No se ha completado la instalación de ${String(k.name).replace(/"/g,"'")}. La radio se ha dejado como estaba.^NL^^NL^El detalle está en Mediaskinhz\\disenos\\${k.dir}\\registro.txt, en el USB.", "Mediaskinhz" )`);
+    w('      Else');
+    w('        Message( "Falta la carpeta de este diseño en el USB. Descomprime el ZIP completo en la raíz del USB.", "Mediaskinhz" )');
+    w('      EndIf');
+    w('    EndIf')});
+  w('  EndIf');
+  w('  If ( op = 2 )');
+  w('    RunWait( ms, mz \\ "copia.mscr" )');
+  w('  EndIf');
+  w('  If ( op = 3 )');
+  w('    RunWait( ms, mz \\ "informe.mscr" )');
+  w('  EndIf');
+  w('  If ( op = 4 or op = 0 )');
+  w('    seguir = 0');
+  w('  EndIf');
+  w('  If ( op = 5 or ( op = 6 and parado = 1 ) )');
+  w('    If ( FileExists( rb ) )');
+  mortReboot(w,'      ');
+  w('      BigMessage( "La radio se va a reiniciar.^NL^^NL^Pulsa ACEPTAR y, cuando la pantalla se apague, saca el USB.", "Mediaskinhz" )');
+  w('      Run( rb2 )');
+  w('      Exit');
+  w('    EndIf');
+  w('    seguir = 0');
+  w('  EndIf');
+  w('  If ( op = 6 and parado = 0 )');
+  w('    Exit');
+  w('  EndIf');
+  w('EndWhile');
+  w('# Total Commander, como el original');
+  w('Run( "\\Windows\\explorer.exe" )');
+  w('Kill( "nngnavi.exe" )');
+  w('Sleep( 5000 )');
+  w('Kill( "AppMain.exe" )');
+  w('Sleep( 5000 )');
+  w('Run( usb \\ "TTCMD\\ttcmd.exe" )');
+  return L.join('\n')+'\n'}
+function mortCopia(){return ['# Mediaskinhz · copia de seguridad de la radio en el USB (no cambia nada en la radio)','ErrorLevel( "off" )',
+  'base = SystemPath( "ScriptPath" )','If ( not FileExists( base \\ "copia.mscr" ) )','  base = "\\MD\\Mediaskinhz"','EndIf',
+  'q = Choice( "Mediaskinhz · Copia de seguridad", "Se copia al USB, en Mediaskinhz\\copias. En la radio no se cambia nada.", 0, 0, "Solo las imágenes (rápida; se puede cargar en Mediaskinhz)", "Todo System: imágenes, ajustes y programas (puede tardar minutos)", "Volver" )',
+  'If ( q = 1 or q = 2 )','  src = "\\Storage Card\\System\\Img"','  If ( q = 2 )','    src = "\\Storage Card\\System"','  EndIf',
+  '  MkDir( base \\ "copias" )','  d = base \\ "copias\\" & FormatTime( "Ymd-His" )','  MkDir( d )',
+  '  StatusType( ST_MESSAGE )','  StatusInfo( "Mediaskinhz", "Copia de seguridad" )','  StatusMessage( "Copiando " & src & "^NL^^NL^Puede tardar. No apagues la radio ni saques el USB." )',
+  '  XCopy( src \\ "*.*", d, 1, 1 )','  StatusType( ST_HIDDEN )',
+  '  WriteFile( d \\ "copia.txt", "Copia de " & src & " hecha el " & FormatTime( "d/m/Y H:i:s" ) & "^NL^" )',
+  '  ok = DirExists( d \\ "M1" ) or DirExists( d \\ "Img" )',
+  '  If ( ok )','    Message( "Copia terminada.^NL^^NL^Está en el USB: Mediaskinhz\\copias\\" & FormatTime( "Ymd" ) & "-…^NL^^NL^Para cargarla en Mediaskinhz, elige su carpeta M1 (o un ZIP de ella) en «Cargar otro backup».", "Mediaskinhz" )',
+  '  Else','    Message( "La copia no parece completa (¿USB lleno?). Revisa la carpeta Mediaskinhz\\copias en el USB.", "Mediaskinhz" )','  EndIf','EndIf'].join('\n')+'\n'}
+function mortInforme(){return ['# Mediaskinhz · informe del sistema (solo lee; escribe Mediaskinhz\\informe.txt en el USB)','ErrorLevel( "off" )',
+  'base = SystemPath( "ScriptPath" )','If ( not FileExists( base \\ "informe.mscr" ) )','  base = "\\MD\\Mediaskinhz"','EndIf','f = base \\ "informe.txt"',
+  'WriteFile( f, "Mediaskinhz · informe del sistema · " & FormatTime( "d/m/Y H:i:s" ) & "^NL^^NL^" )',
+  'WriteFile( f, "Memoria libre: " & FreeMemory() & " de " & TotalMemory() & "^NL^", 1 )',
+  'WriteFile( f, "Storage Card libre: " & FreeDiskSpace( "\\Storage Card" ) & " de " & TotalDiskSpace( "\\Storage Card" ) & "^NL^", 1 )',
+  'WriteFile( f, "USB libre: " & FreeDiskSpace( base ) & "^NL^", 1 )',
+  ...['\\Storage Card\\System\\Img\\M1','\\Storage Card\\System\\Img\\M0','\\Storage Card\\System\\Img\\M1_INV','\\Storage Card\\NaviFolder','\\Storage Card\\System\\Sound','\\Storage Card\\System\\Font','\\Temp']
+    .map(d=>`WriteFile( f, ${qs(d)} & ": " & DirExists( ${qs(d)} ) & "^NL^", 1 )`),
+  'WriteFile( f, "^NL^Versión de Windows CE: " & SystemVersion() & "^NL^", 1 )',
+  'WriteFile( f, "Pantalla: " & ScreenWidth() & "^NL^", 1 )',
+  'Message( "Informe guardado en el USB: Mediaskinhz\\informe.txt", "Mediaskinhz" )'].join('\n')+'\n'}
 
 /* ============ biblioteca de iconos (Tabler Icons, MIT) ============
    site/iconos.json se descarga la primera vez que hace falta (≈300 KB) y el service worker lo guarda aparte.
@@ -3139,7 +3243,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-28-13';
+const VER='2026-10-29-1';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3147,6 +3251,7 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-1',['En pruebas: USB completo con menú al arrancar (Exportar → «Preparar el USB completo»). Cambiar de diseño, copia de seguridad de la radio (solo imágenes o todo System) en el USB, informe del sistema, Total Commander, reiniciar o volver a la radio. El menú vuelve a salir después de cada herramienta']],
   ['2026-10-28-13',['La pestaña Tema pasa a ser Diseños, con tres partes: Listos (los diseños completos), Mis diseños (cargar con un toque, guardar, importar) y Crear el tuyo (estilo de los botones, color de toda la radio o de cada sección, colores concretos y ajustes finos)',
     'Pantalla más limpia: sin el bloque de diseños listos ni el color de toda la radio (están en Diseños)',
     'Exportar: la instalación automática es la de por defecto; Total Commander y la actualización oficial quedan plegados en «Otros modos»',
