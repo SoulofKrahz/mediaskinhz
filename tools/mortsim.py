@@ -67,6 +67,10 @@ class Run:
         if f == 'activewindow': return 'ventana'
         if f in ('statustype', 'statusinfo'): F.ran.append(f + ' ' + ' | '.join(map(str, a))); return 0
         if f == 'statusmessage': F.status = getattr(F, 'status', []) + [a[0].replace('^NL^', ' ')]; return 0
+        if f == 'choice':
+            F.msgs.append('[elige] ' + str(a[0]) + ' :: ' + ' / '.join(map(str, a[4:]))); ch = getattr(F, 'choices', None); return ch.pop(0) if ch else 1
+        if f == 'readfile':
+            r = F.real(a[0]); return open(r, encoding='cp1252').read() if os.path.isfile(r) else ''
         if f == 'bigmessage': F.msgs.append('[grande] ' + a[0].replace('^NL^', ' | ')); return 0
         raise NameError('función desconocida ' + f)
     # expresiones: or > and > not > comparación > + - & \ > átomo

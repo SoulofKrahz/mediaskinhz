@@ -643,7 +643,8 @@ function scrExport(v){
       <label class="swrow" for="x-orig"><span>Incluir los originales<small>Carpeta ORIGINALES con solo estos archivos, para deshacer</small></span><input class="sw" type="checkbox" id="x-orig"${SET.xorig?' checked':''}></label>
       <button class="btn wide" id="x-go" disabled>Descargar ZIP</button></div>
     <div class="card"><h3>Archivos</h3><div class="fl" id="x-list"><p class="note">Comprobando…</p></div></div></div>
-    <div class="stack"><div class="card"><h3>Cómo instalarlo</h3><div id="x-steps"></div></div></div></div>`;
+    <div class="stack">${S.demo?'':`<div class="list"><button class="li" id="x-sel"><span class="ic">${ic('M4 6h16M4 12h16M4 18h10')}</span><span class="tx"><b>Varios diseños en el USB</b><small>Un selector: al arrancar eliges en la radio cuál poner</small></span>${CHEV}</button></div>`}<div class="card"><h3>Cómo instalarlo</h3><div id="x-steps"></div></div></div></div>`;
+  {const xs=$('#x-sel');if(xs)xs.onclick=selectorSheet}
   const R0=esc(S.root);
   const stepsHTML=()=>S.xmode==='auto'&&SET.xboot!==false?`<ol class="steps">
       <li>Descomprime el ZIP en la raíz de tu USB de siempre (el de <code>ULC2_recovery</code>, MortScript y Total Commander) y acepta sobrescribir. Cambia <code>Medianav.mscr</code> y añade la carpeta <code>Mediaskinhz</code>. Tu <code>Medianav.mscr</code> de antes queda en <code>Mediaskinhz\\Medianav-original.mscr</code>.</li>

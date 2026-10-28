@@ -41,6 +41,7 @@ function mortInstall(R,items,id,when,o){o=o||{};
   w('# Lanzado por Medianav.mscr al arrancar: ya se ha preguntado y la radio ya está preparada');
   w('desde = FileExists( base \\ "desde-arranque.tmp" )');
   w('If ( desde )');
+  if(o.sel)w('  selmz = ReadFile( base \\ "desde-arranque.tmp" )');
   w('  Delete( base \\ "desde-arranque.tmp" )');
   w('EndIf');
   w('rb = base \\ "REINICIAR.exe"');
@@ -109,6 +110,7 @@ function mortInstall(R,items,id,when,o){o=o||{};
   w('EndIf');
   w(`WriteFile( marca, "Instalado el " & FormatTime( "d/m/Y H:i:s" ) & "^NL^" )`);
   w('WriteFile( base \\ "resultado-ok.txt", "ok" )');
+  if(o.sel){w('If ( desde )');w(`  WriteFile( selmz \\ "actual.txt", ${qs(nm)} )`);w('EndIf')}
   w(`WriteFile( reg, "Correcto: ${n} imágenes copiadas y comprobadas.^NL^", 1 )`);
   w('StatusType( ST_HIDDEN )');
   w('# 3. Reiniciar. Orden: primero ACEPTAR, después (con la pantalla apagada) sacar el USB');
@@ -255,3 +257,103 @@ function autoEntries(rs,inc,o){o=o||{};
   if(inc)for(const r of rs)e.push({name:`Mediaskinhz/originales/${R}/${r.F.path}`,data:new Uint8Array(r.F.buf)});
   return {ents:e,id};
 }
+
+/* ============ selector de diseños en el USB ============
+   Varios diseños en el mismo USB. Al arrancar con él, Medianav.mscr enseña una lista (Choice de MortScript) con los diseños,
+   «Original de Renault», «Abrir Total Commander» y «Reiniciar sin cambiar nada». El elegido se instala con su instalar.mscr
+   (copia de seguridad, comprobación y vuelta atrás si falla) y la radio se reinicia.
+   Todos los diseños llevan el mismo juego de archivos (la suma de lo que cambia cualquiera de ellos; donde uno no cambia nada va el original),
+   así pasar de uno a otro no deja restos del anterior. */
+function mortSelect(skins,id,when){const L=[],w=x=>L.push(x),n=skins.length;
+  w(`# Mediaskinhz · selector de diseños · paquete ${id} (${when})`);
+  w('# Sustituye a Medianav.mscr (lo abre ULC2_recovery.mscr). El de antes está en Mediaskinhz\\Medianav-original.mscr.');
+  w('ErrorLevel( "off" )');
+  w('Run( "\\Storage Card\\System\\MicomManager.exe" )');
+  w('Sleep( 20000 )');
+  w('Close( ActiveWindow() )');
+  w('Sleep( 2000 )');
+  w('usb = SystemPath( "ScriptPath" )');
+  w('If ( not FileExists( usb \\ "Medianav.mscr" ) )');
+  w('  usb = "\\MD"');
+  w('EndIf');
+  w('mz = usb \\ "Mediaskinhz"');
+  w('ms = usb \\ "MortScript.exe"');
+  w('rb = usb \\ "REINICIAR.exe"');
+  w('actual = "no instalado desde este USB"');
+  w('If ( FileExists( mz \\ "actual.txt" ) )');
+  w('  actual = ReadFile( mz \\ "actual.txt" )');
+  w('EndIf');
+  w(`sel = Choice( "Mediaskinhz · Elige el diseño", "Ahora en la radio: " & actual & "^NL^Toca uno y pulsa Aceptar. Se guarda una copia antes de instalar.", 0, 0, ${skins.map(s=>qs(s.name)).join(', ')}, "Abrir Total Commander", "Reiniciar sin cambiar nada" )`);
+  w(`If ( sel = ${n+2} )`);
+  w('  If ( FileExists( rb ) )');
+  mortReboot(w,'    ');
+  w('    Run( rb2 )');
+  w('    Exit');
+  w('  EndIf');
+  w('EndIf');
+  skins.forEach((k,i)=>{w(`If ( sel = ${i+1} )`);
+    w(`  dir = mz \\ ${qs('disenos\\'+k.dir)}`);
+    w('  If ( FileExists( dir \\ "instalar.mscr" ) and FileExists( ms ) )');
+    w('    Kill( "nngnavi.exe" )');
+    w('    Sleep( 3000 )');
+    w('    Kill( "AppMain.exe" )');
+    w('    Sleep( 5000 )');
+    w('    Delete( dir \\ "resultado-ok.txt" )');
+    w('    WriteFile( dir \\ "desde-arranque.tmp", mz )');
+    w('    RunWait( ms, dir \\ "instalar.mscr" )');
+    w('    If ( FileExists( dir \\ "resultado-ok.txt" ) )');
+    w('      Exit');
+    w('    EndIf');
+    w(`    Message( "No se ha completado la instalación de ${String(k.name).replace(/"/g,"'")}. La radio se ha dejado como estaba.^NL^^NL^El detalle está en Mediaskinhz\\disenos\\${k.dir}\\registro.txt, en el USB. Ahora se abre Total Commander.", "Mediaskinhz" )`);
+    w('  Else');
+    w('    Message( "Falta la carpeta de este diseño en el USB. Descomprime el ZIP completo en la raíz del USB.", "Mediaskinhz" )');
+    w('  EndIf');
+    w('EndIf')});
+  w('# Total Commander, como el original');
+  w('Run( "\\Windows\\explorer.exe" )');
+  w('Kill( "nngnavi.exe" )');
+  w('Sleep( 5000 )');
+  w('Kill( "AppMain.exe" )');
+  w('Sleep( 5000 )');
+  w('Run( usb \\ "TTCMD\\ttcmd.exe" )');
+  return L.join('\n')+'\n'}
+// Bytes de todo lo que cambia el estado cargado ahora (con las imágenes gemelas)
+function curBytes(){S.ver++;for(const F of S.files)F.cv=null;const rs=withTwins(S.files.filter(changed).map(F=>({F,u:outBytes(F)})));return new Map(rs.map(r=>[r.F.path,r.u]))}
+function blankState(){for(const F of S.files){F.rep=null;F.cv=null}S.src=new Map();S.ops={global:null,sec:{},file:{}};S.ex={};S.frames={};S.icx={};S.stby=null}
+// list: [{name, cur:true} | {name, st} | {name, preset:P}]
+async function selectorZip(list,onp){await loadVistas().catch(()=>{});
+  const keep=snap(),src0=S.src,kd=[S.curDesign,S.curDesignName],maps=[];
+  const back=()=>{Object.assign(S,{ops:structuredClone(keep.ops),ex:{...keep.ex},frames:{...keep.frames},layout:structuredClone(keep.layout),gen:genCopy(keep.gen),icx:structuredClone(keep.icx||{}),stby:keep.stby?{...keep.stby}:null});
+    for(const F of S.files){F.rep=null;F.cv=null}for(const [F,r] of keep.reps)F.rep=r;S.src=src0;S.ver++};
+  try{for(const [i,d] of list.entries()){onp&&onp(i,list.length);await new Promise(r=>setTimeout(r,20));
+      if(d.cur){back();maps.push(curBytes());continue}
+      if(d.preset){back();const {T,L}=presetSet(d.preset);for(const F of [...T,...L])buildButton(F);maps.push(curBytes());continue}
+      blankState();const g0=S.gen;applyState(d.st);if(!d.st.gen)S.gen=null;else if(!S.gen.look)migrateLook(d.st);maps.push(curBytes())}}
+  finally{back();S.curDesign=kd[0];S.curDesignName=kd[1];S.genCv=null;bump()}
+  const U=[...new Set(maps.flatMap(m=>[...m.keys()]))],FF=new Map(U.map(p=>[p,S.files.find(F=>F.path===p)]));
+  const R=S.root,d=new Date(),z=x=>String(x).padStart(2,'0'),id=`${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}${z(d.getSeconds())}`,when=`${z(d.getDate())}/${z(d.getMonth()+1)}/${d.getFullYear()} ${z(d.getHours())}:${z(d.getMinutes())}`;
+  const ents=[],skins=[];const add=(name,m,undo)=>{const k=skins.length+1,dir=z(k)+'-'+name.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,24),items=[];
+    for(const p of U){const F=FF.get(p);if(!F)continue;const u=(m&&m.get(p))||new Uint8Array(F.buf);items.push({path:p,size:u.length});ents.push({name:`Mediaskinhz/disenos/${dir}/archivos/${R}/${p}`,data:u})}
+    ents.push({name:`Mediaskinhz/disenos/${dir}/instalar.mscr`,data:ansi(mortInstall(R,items,id+'-'+k,when,{name,undo,sel:true}))});skins.push({dir,name})};
+  list.forEach((x,i)=>add(x.name,maps[i],false));add('Original de Renault',null,true);
+  ents.unshift({name:'Medianav.mscr',data:ansi(mortSelect(skins,id,when))},{name:'Mediaskinhz/Medianav-original.mscr',data:ansi(MEDIANAV_ORIG)});
+  ents.push({name:'LEEME.txt',data:new TextEncoder().encode(['Mediaskinhz · selector de diseños en el USB','',`Diseños: ${skins.map(s=>s.name).join(' · ')}`,`Archivos por diseño: ${U.length}`,'',
+    '1. Descomprime este ZIP en la raíz de tu USB de siempre (el de ULC2_recovery, MortScript y Total Commander) y acepta sobrescribir.','   Tu Medianav.mscr de antes queda en Mediaskinhz\\Medianav-original.mscr.',
+    '2. Arranca la radio con el USB como para entrar a Total Commander. A los 25 s sale la lista de diseños.','3. Toca el que quieras y pulsa Aceptar. Se guarda una copia, se instala, se comprueba y, si falla, la radio vuelve a como estaba.',
+    '4. Al terminar: primero ACEPTAR y, cuando la pantalla se apague, saca el USB.','','Para cambiar otro día de diseño, vuelve a arrancar con el USB y elige otro. «Original de Renault» deja todo como de fábrica.'].join('\r\n'))});
+  return {zip:await makeZip(ents),n:U.length,skins}}
+async function selectorSheet(){if(S.demo){toast('Carga tu backup para preparar el selector');return}
+  const ds=(await listPoints()).filter(p=>p.kind==='manual'),cur=S.files.some(changed);
+  const row=(v,t,sub,on)=>`<label class="ck" style="display:flex;gap:10px;align-items:center;padding:8px 2px"><input type="checkbox" value="${esc(v)}"${on?' checked':''}><span><b>${esc(t)}</b>${sub?`<br><small class="note">${esc(sub)}</small>`:''}</span></label>`;
+  openBS(`<h2>Selector de diseños en el USB</h2><p class="note">Elige hasta 8. Al arrancar con el USB, la radio te enseña la lista y eliges con el dedo cuál poner. Siempre se añade «Original de Renault».</p>
+    <div id="sel-l" style="max-height:46vh;overflow:auto">${cur?row('cur','Lo que tienes ahora',S.curDesignName?'«'+S.curDesignName+'» con tus cambios':'Sin guardar',true):''}
+    ${ds.length?'<p class="lbl">Mis diseños</p>'+ds.map(p=>row('d:'+p.id,p.label,p.n+' imágenes',false)).join(''):''}
+    <p class="lbl">Diseños listos <small>· sobre lo que tienes ahora</small></p>${PRESETS.map(P=>row('p:'+P.id,P.name,'',false)).join('')}</div>
+    <p class="note" id="sel-n"></p><div class="stack" style="gap:8px;margin-top:8px"><button class="btn wide" id="sel-go">Descargar el selector</button><button class="btn o wide" id="sel-x">Cancelar</button></div>`);
+  const bs=$('#bs'),cnt=()=>{const n=bs.querySelectorAll('#sel-l input:checked').length;bs.querySelector('#sel-n').textContent=n?`${n} ${n===1?'diseño':'diseños'} + Original de Renault`+(n>8?' · demasiados: quita alguno':''):'Marca al menos uno';bs.querySelector('#sel-go').disabled=!n||n>8};cnt();
+  bs.querySelector('#sel-l').onchange=cnt;bs.querySelector('#sel-x').onclick=()=>closeBS();
+  bs.querySelector('#sel-go').onclick=async()=>{const vs=[...bs.querySelectorAll('#sel-l input:checked')].map(i=>i.value),list=[];
+    for(const v of vs){if(v==='cur')list.push({name:S.curDesignName||'Mi diseño actual',cur:true});else if(v.startsWith('d:')){const p=await getPoint(v.slice(2));if(p)list.push({name:p.label,st:p.st})}else{const P=PRESETS.find(x=>x.id===v.slice(2));if(P)list.push({name:P.name,preset:P})}}
+    closeBS();toast('Preparando el selector…',{ms:120000});
+    try{const r=await selectorZip(list,(i,n)=>toast(`Preparando el selector… ${i+1} de ${n}`,{ms:120000}));const d=new Date();await saveBlob(r.zip,`mediaskinhz-selector-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.zip`);
+      toast(`Selector listo: ${r.skins.length} opciones, ${r.n} imágenes cada una`)}catch(e){console.error(e);toast('No se ha podido preparar el selector')}}}

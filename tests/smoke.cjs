@@ -128,6 +128,10 @@ async function run(browser, label, viewport, mobile) {
     const T = genTargets(), L = presetInside(), ap = S.gen.look === PRESETS[1].look && T.every(F => F.rep && F.rep.by === 'gen') && L.every(F => S.gen.per[F.path].look === PRESETS[1].look) && S.ops.global.tA === 100 && [...SCRBG.values()].map(byName).filter(Boolean).every(B => B.rep && B.rep.by === 'preset');
     undo(); return { bad, pv, sw, back, ap, nL: L.length }; });
   ok(!pre.bad.length && pre.pv && pre.sw && pre.back && pre.ap, `diseños listos: vista previa, cambiar, cancelar sin dejar rastro y aplicar a Inicio, ${pre.nL} botones de dentro y el color de la radio` + (pre.ap && pre.back ? "" : JSON.stringify(pre)));
+  const sel = await p.evaluate(async () => { S.ops.global = { ...defOps(), tH: 200, tA: 100 }; bump(); const n0 = S.files.filter(changed).length, g0 = JSON.stringify(S.ops.global);
+    const r = await selectorZip([{ name: 'Actual', cur: true }, { name: PRESETS[0].name, preset: PRESETS[0] }]); const txt = mortSelect(r.skins, 'x', 'y');
+    return { ok: r.zip.size > 1000 && r.skins.length === 3 && S.files.filter(changed).length === n0 && JSON.stringify(S.ops.global) === g0 && /Choice\(/.test(txt) && txt.split('\n').filter(l => /^\s*If /.test(l)).length === txt.split('\n').filter(l => /^\s*EndIf/.test(l)).length }; });
+  ok(sel.ok, 'el selector de diseños del USB se prepara (2 diseños + original) sin tocar lo que tienes');
   ok(sty.n >= 47 && !sty.bad.length, `los ${sty.n} estilos de botón se dibujan` + (sty.bad.length ? ': fallan ' + sty.bad.join(', ') : ''));
   // Diálogo para poner nombre (lo usan «Mis diseños»)
   const nm = p.evaluate(() => promptBS({ title: 'Prueba', value: 'Mi diseño' })); await p.waitForTimeout(300);
