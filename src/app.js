@@ -31,6 +31,17 @@ const ic=(d,c='i')=>`<svg class="${c}" viewBox="0 0 24 24"><path d="${d}"/></svg
 const CHEV=ic('M9 6l6 6-6 6','i ch');
 let DL=null;try{if(window.claude&&window.claude.use)window.claude.use('downloads').then(d=>{DL=d}).catch(()=>{})}catch(_){}
 
+/* Imágenes gemelas: en algunas versiones de la radio una pantalla usa la imagen de otra carpeta. La casa de Driving eco puede
+   salir de 4WD (las dos son verde lima y miden lo mismo): al exportar la de Eco, la de 4WD se exporta igual. */
+const TWINS={'eco/eco_softkey_home_btn.bmp':'4wd/4wd_softkey_home_btn.bmp'};
+// La gemela se dibuja con la imagen final de la original, estado a estado, adaptada a su ancho (p. ej. 108 → 109 px por estado)
+function twinBytes(F,T){const fr=frames(F),ft=frames(T),fw=F.w/fr,tw=T.w/ft,src=renderCanvas(F,false),c=document.createElement('canvas');c.width=T.w;c.height=T.h;const x=c.getContext('2d');x.imageSmoothingQuality='high';
+  for(let s=0;s<ft;s++)x.drawImage(src,Math.min(s,fr-1)*fw,0,fw,F.h,s*tw,0,tw,T.h);
+  const d=x.getImageData(0,0,T.w,T.h).data,key=new Uint8Array(T.w*T.h);for(let i=0;i<T.w*T.h;i++)if(d[i*4+3]<128)key[i]=1;
+  const q=quantize(d,T.w,T.h,{key,dither:true});return new Uint8Array(encodeBMP8(T.w,T.h,q.idx,q.pal,T))}
+function withTwins(L){const out=[...L],has=new Set(L.map(r=>r.F.lc));for(const r of L){const t=TWINS[r.F.lc],T=t&&byName(t);
+  if(!T||has.has(T.lc)||T.h!==r.F.h||frames(T)!==frames(r.F))continue;let u=r.u;if(T.w!==r.F.w){try{u=twinBytes(r.F,T)}catch(_){continue}}
+  out.push({...r,F:T,u,twin:r.F});has.add(T.lc)}return out}
 /* ============ archivos ============ */
 // Estados de las imágenes que no siguen la regla de «4 estados si es un botón»: los da el programa de la radio (ancho de la imagen / ancho con que la dibuja).
 // p. ej. el botón de llamar tiene 8: llamar (4) y colgar (4). Sale de tools/vistas.py con el análisis de MediaNav-to-Evolution-Upgrade.
@@ -660,7 +671,7 @@ function scrExport(v){
   $('#x-mode').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;S.xmode=b.dataset.m;SET.xmode=S.xmode;saveSet();$$('#x-mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));modeUI()};
   $('#x-hw').onclick=e=>{const b=e.target.closest('[data-h]');if(!b)return;S.xhw=+b.dataset.h;$$('#x-hw .chip').forEach(x=>x.setAttribute('aria-pressed',x===b));modeUI()};
   const res=[];let i=0,done=false;
-  const sel=()=>res.filter(r=>!S.xoff.has(r.F.path));
+  const sel=()=>withTwins(res.filter(r=>!S.xoff.has(r.F.path)));
   const upd=()=>{const n=done?sel().length:fs.filter(F=>!S.xoff.has(F.path)).length;$('#x-cnt').textContent=n;$('#x-cntl').textContent=n===1?'imagen marcada':'imágenes marcadas';
     const nh=fs.filter(byHand),q=S.xoff.size===0?'all':S.xoff.size===fs.length?'none':(nh.every(F=>!S.xoff.has(F.path))&&fs.every(F=>byHand(F)||S.xoff.has(F.path)))?'hand':'';
     $$('#x-q .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.q===q));$('#x-part').hidden=!(S.xoff.size&&S.xoff.size<fs.length);

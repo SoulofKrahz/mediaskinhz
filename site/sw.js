@@ -4,7 +4,7 @@
 //   la app avisa y recarga solo cuando tú pulsas «Actualizar» (tu diseño se guarda antes).
 // - Las fuentes de Google se guardan aparte (FONTS) para no perderlas en cada actualización.
 // V = 'msz-' + la VER de src/web.js
-const V = 'msz-2026-10-28-1';
+const V = 'msz-2026-10-28-2';
 const FONTS = 'msz-fonts', ICONS = 'msz-iconos-1';
 // './' y no 'index.html': Cloudflare Pages redirige /index.html → / y una respuesta redirigida no vale para abrir la página
 const SHELL = ['./', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png', 'vistas.json'];

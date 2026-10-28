@@ -112,7 +112,7 @@ function scrScreen(v,r){
    Pone una letra grande en todas las «casas» del backup. Se instala con Automático y en el coche se lee qué letra sale
    en la pantalla que no cambia. Un segundo ZIP devuelve esas imágenes a como estaban. */
 const HOMEKIT=[['fm radio/fmradio_softkey_home_btn.bmp','R','Radio'],['media/media_softkey_home_btn.bmp','M','Multimedia'],['phone/phone_softkey_home_btn.bmp','T','Teléfono'],
-  ['setting/setting_softkey_home_btn.bmp','A','Ajustes'],['eco/eco_softkey_home_btn.bmp','E','Driving eco'],['etc/etc_caution_softkey_home_btn.bmp','C','Avisos (precaución)']];
+  ['setting/setting_softkey_home_btn.bmp','A','Ajustes'],['eco/eco_softkey_home_btn.bmp','E','Driving eco'],['etc/etc_caution_softkey_home_btn.bmp','C','Avisos (precaución)'],['4wd/4wd_softkey_home_btn.bmp','W','4x4 (4WD)']];
 function kitBytes(F,l){const fr=frames(F),fw=F.w/fr,c=document.createElement('canvas');c.width=F.w;c.height=F.h;const x=c.getContext('2d');x.drawImage(renderOrig(F,false),0,0);
   for(let s=0;s<fr;s++){x.fillStyle=s%2?'#202020':'#e02020';x.fillRect(s*fw+2,2,fw-4,F.h-4);x.fillStyle='#ffffff';x.font=`900 ${Math.round(F.h*.72)}px Inter, Arial, sans-serif`;x.textAlign='center';x.textBaseline='middle';x.fillText(l,s*fw+fw/2,F.h/2+2)}
   const q=quantize(x.getImageData(0,0,F.w,F.h).data,F.w,F.h,{key:new Uint8Array(F.w*F.h),dither:false});return new Uint8Array(encodeBMP8(F.w,F.h,q.idx,q.pal,F))}

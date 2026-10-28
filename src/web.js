@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-28-1';
+const VER='2026-10-28-2';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,7 +11,9 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['En la ventana de cada pantalla: «¿Un botón no cambia en el coche?». Descarga una prueba que pone una letra grande en cada casa (R, M, T, A, E, C) para ver en el coche qué imagen usa cada pantalla, y otro ZIP para quitarla y volver a tu diseño']],
+  [VER,['Driving eco: al exportar su casa, también se exporta la de 4WD (verde lima como ella; es la que parece usar tu radio en esa pantalla), dibujada igual y ajustada a su ancho. Si la radio usa la de Eco, no cambia nada',
+    'El kit de letras de las casas incluye también la de 4WD (letra W)']],
+  ['2026-10-28-1',['En la ventana de cada pantalla: «¿Un botón no cambia en el coche?». Descarga una prueba que pone una letra grande en cada casa (R, M, T, A, E, C) para ver en el coche qué imagen usa cada pantalla, y otro ZIP para quitarla y volver a tu diseño']],
   ['2026-10-28-0',['Ventana de cada pantalla mucho más corta: arriba la vista, luego «Botones de esta pantalla» (estilo, colores y tamaño de todos a la vez), el color de la pantalla y el fondo. «Su botón en Inicio» es una línea que abre su hoja, y «Todas las piezas» va plegado',
     'Exportar recuerda el modo que usaste la última vez (por ejemplo, Automático)',
     'El mismo nombre en todas partes: «Estilo de los botones»']],

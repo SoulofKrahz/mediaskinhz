@@ -606,6 +606,17 @@ const ic=(d,c='i')=>`<svg class="${c}" viewBox="0 0 24 24"><path d="${d}"/></svg
 const CHEV=ic('M9 6l6 6-6 6','i ch');
 let DL=null;try{if(window.claude&&window.claude.use)window.claude.use('downloads').then(d=>{DL=d}).catch(()=>{})}catch(_){}
 
+/* Imágenes gemelas: en algunas versiones de la radio una pantalla usa la imagen de otra carpeta. La casa de Driving eco puede
+   salir de 4WD (las dos son verde lima y miden lo mismo): al exportar la de Eco, la de 4WD se exporta igual. */
+const TWINS={'eco/eco_softkey_home_btn.bmp':'4wd/4wd_softkey_home_btn.bmp'};
+// La gemela se dibuja con la imagen final de la original, estado a estado, adaptada a su ancho (p. ej. 108 → 109 px por estado)
+function twinBytes(F,T){const fr=frames(F),ft=frames(T),fw=F.w/fr,tw=T.w/ft,src=renderCanvas(F,false),c=document.createElement('canvas');c.width=T.w;c.height=T.h;const x=c.getContext('2d');x.imageSmoothingQuality='high';
+  for(let s=0;s<ft;s++)x.drawImage(src,Math.min(s,fr-1)*fw,0,fw,F.h,s*tw,0,tw,T.h);
+  const d=x.getImageData(0,0,T.w,T.h).data,key=new Uint8Array(T.w*T.h);for(let i=0;i<T.w*T.h;i++)if(d[i*4+3]<128)key[i]=1;
+  const q=quantize(d,T.w,T.h,{key,dither:true});return new Uint8Array(encodeBMP8(T.w,T.h,q.idx,q.pal,T))}
+function withTwins(L){const out=[...L],has=new Set(L.map(r=>r.F.lc));for(const r of L){const t=TWINS[r.F.lc],T=t&&byName(t);
+  if(!T||has.has(T.lc)||T.h!==r.F.h||frames(T)!==frames(r.F))continue;let u=r.u;if(T.w!==r.F.w){try{u=twinBytes(r.F,T)}catch(_){continue}}
+  out.push({...r,F:T,u,twin:r.F});has.add(T.lc)}return out}
 /* ============ archivos ============ */
 // Estados de las imágenes que no siguen la regla de «4 estados si es un botón»: los da el programa de la radio (ancho de la imagen / ancho con que la dibuja).
 // p. ej. el botón de llamar tiene 8: llamar (4) y colgar (4). Sale de tools/vistas.py con el análisis de MediaNav-to-Evolution-Upgrade.
@@ -1235,7 +1246,7 @@ function scrExport(v){
   $('#x-mode').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;S.xmode=b.dataset.m;SET.xmode=S.xmode;saveSet();$$('#x-mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));modeUI()};
   $('#x-hw').onclick=e=>{const b=e.target.closest('[data-h]');if(!b)return;S.xhw=+b.dataset.h;$$('#x-hw .chip').forEach(x=>x.setAttribute('aria-pressed',x===b));modeUI()};
   const res=[];let i=0,done=false;
-  const sel=()=>res.filter(r=>!S.xoff.has(r.F.path));
+  const sel=()=>withTwins(res.filter(r=>!S.xoff.has(r.F.path)));
   const upd=()=>{const n=done?sel().length:fs.filter(F=>!S.xoff.has(F.path)).length;$('#x-cnt').textContent=n;$('#x-cntl').textContent=n===1?'imagen marcada':'imágenes marcadas';
     const nh=fs.filter(byHand),q=S.xoff.size===0?'all':S.xoff.size===fs.length?'none':(nh.every(F=>!S.xoff.has(F.path))&&fs.every(F=>byHand(F)||S.xoff.has(F.path)))?'hand':'';
     $$('#x-q .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.q===q));$('#x-part').hidden=!(S.xoff.size&&S.xoff.size<fs.length);
@@ -2670,7 +2681,7 @@ function scrScreen(v,r){
    Pone una letra grande en todas las «casas» del backup. Se instala con Automático y en el coche se lee qué letra sale
    en la pantalla que no cambia. Un segundo ZIP devuelve esas imágenes a como estaban. */
 const HOMEKIT=[['fm radio/fmradio_softkey_home_btn.bmp','R','Radio'],['media/media_softkey_home_btn.bmp','M','Multimedia'],['phone/phone_softkey_home_btn.bmp','T','Teléfono'],
-  ['setting/setting_softkey_home_btn.bmp','A','Ajustes'],['eco/eco_softkey_home_btn.bmp','E','Driving eco'],['etc/etc_caution_softkey_home_btn.bmp','C','Avisos (precaución)']];
+  ['setting/setting_softkey_home_btn.bmp','A','Ajustes'],['eco/eco_softkey_home_btn.bmp','E','Driving eco'],['etc/etc_caution_softkey_home_btn.bmp','C','Avisos (precaución)'],['4wd/4wd_softkey_home_btn.bmp','W','4x4 (4WD)']];
 function kitBytes(F,l){const fr=frames(F),fw=F.w/fr,c=document.createElement('canvas');c.width=F.w;c.height=F.h;const x=c.getContext('2d');x.drawImage(renderOrig(F,false),0,0);
   for(let s=0;s<fr;s++){x.fillStyle=s%2?'#202020':'#e02020';x.fillRect(s*fw+2,2,fw-4,F.h-4);x.fillStyle='#ffffff';x.font=`900 ${Math.round(F.h*.72)}px Inter, Arial, sans-serif`;x.textAlign='center';x.textBaseline='middle';x.fillText(l,s*fw+fw/2,F.h/2+2)}
   const q=quantize(x.getImageData(0,0,F.w,F.h).data,F.w,F.h,{key:new Uint8Array(F.w*F.h),dither:false});return new Uint8Array(encodeBMP8(F.w,F.h,q.idx,q.pal,F))}
@@ -2753,7 +2764,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-28-1';
+const VER='2026-10-28-2';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -2761,7 +2772,9 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['En la ventana de cada pantalla: «¿Un botón no cambia en el coche?». Descarga una prueba que pone una letra grande en cada casa (R, M, T, A, E, C) para ver en el coche qué imagen usa cada pantalla, y otro ZIP para quitarla y volver a tu diseño']],
+  [VER,['Driving eco: al exportar su casa, también se exporta la de 4WD (verde lima como ella; es la que parece usar tu radio en esa pantalla), dibujada igual y ajustada a su ancho. Si la radio usa la de Eco, no cambia nada',
+    'El kit de letras de las casas incluye también la de 4WD (letra W)']],
+  ['2026-10-28-1',['En la ventana de cada pantalla: «¿Un botón no cambia en el coche?». Descarga una prueba que pone una letra grande en cada casa (R, M, T, A, E, C) para ver en el coche qué imagen usa cada pantalla, y otro ZIP para quitarla y volver a tu diseño']],
   ['2026-10-28-0',['Ventana de cada pantalla mucho más corta: arriba la vista, luego «Botones de esta pantalla» (estilo, colores y tamaño de todos a la vez), el color de la pantalla y el fondo. «Su botón en Inicio» es una línea que abre su hoja, y «Todas las piezas» va plegado',
     'Exportar recuerda el modo que usaste la última vez (por ejemplo, Automático)',
     'El mismo nombre en todas partes: «Estilo de los botones»']],
