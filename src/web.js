@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-28-9';
+const VER='2026-10-28-10';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,9 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-28-10',['Las flechas grandes de avanzar y retroceder (presintonías, Multimedia, Driving eco) ya llevan el estilo del diseño listo, aunque vinieran de un diseño tuyo con otro estilo',
+    'Estilos de líneas (Futurista, Neón, Halo, Contorno, Anillo, Esquinas…) sin placa negra encima: con un diseño listo el cuerpo del botón deja ver el fondo con un velo suave, también dentro de las pantallas (se calca el trozo de fondo que queda detrás de cada botón)',
+    '7 diseños temáticos nuevos (31): Synthwave, Tron, Cyberpunk, Matrix, Luz ambiente, Deportivo rojo y Negro puro, cada uno con su propio fondo']],
   ['2026-10-28-9',['Diseños listos repasados uno a uno (24): fuera los que quedaban pobres (Píxel, Pestaña, Rejilla, Puntos, Mínimo) y nuevos Cristal ahumado, Neón dúo, Octógono violeta, Botón 3D, Titanio, Oro y Bronce',
     'Aluminio, Titanio, Oro y Bronce son metal de verdad: fondo de metal cepillado y botones oscuros para que el texto blanco de la radio se lea; Aluminio deja toda la radio en grises',
     'Dibujos con recuadro negro (la hoja de Driving eco, la carátula vacía, la imagen de balance…) con fondo transparente para que no quede una caja sobre el fondo de color',

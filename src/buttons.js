@@ -138,9 +138,13 @@ const PRESETS=[
   ['onda-azul','Onda azul','wave',215,'white',220],['arcoiris','Borde degradado','gborder',200,'white',250],['ocaso','Ocaso naranja','sunset',30,'white',25],
   ['capsula-rosa','Cápsula rosa','capsule',330,'white',330],['esquinas-oro','Esquinas doradas','corner',44,null,40],['muesca-roja','Muesca roja','notch',355,null,350],
   ['dos-tonos','Dos tonos índigo','split',236,'white',240],['relieve','Relieve acero','emboss',205,null,210],
+  ['synth','Synthwave','duo',300,null,300,'synth'],['tron','Tron','hudf',190,null,190,'tron'],['cyber','Cyberpunk','chamfer',52,null,52,'cyber'],
+  ['matrix','Matrix','neon',135,null,135,'matrix'],['ambiente','Luz ambiente','halo',30,null,28,'ambient'],['deportivo','Deportivo rojo','side',0,'white',0,'racing'],
+  ['oled','Negro puro','outline',210,'white',210,'oled'],
   ['aluminio','Aluminio','alu',210,null,210,'metal'],['titanio','Titanio azul','brushed',212,null,212,'metal'],['oro','Oro','brushed',42,null,40,'gold'],['bronce','Bronce','brushed',24,null,24,'gold']
 ].map(([id,name,look,hue,ihue,bk,bg])=>({id,name,look,hue,ihue,bk,bg,gs:look==='alu'?-92:0}));
-const presetInside=()=>{const T=genTargets();return S.files.filter(F=>kindOf(F)==='btn'&&canStyle(F)&&!T.includes(F))};
+// también las formas raras (las flechas altas de presintonías, Multimedia y Driving eco); solo se quedan fuera las barras larguísimas de las listas
+const presetInside=()=>{const T=genTargets();return S.files.filter(F=>{if(kindOf(F)!=='btn'||T.includes(F)||!canStyleOne(F))return false;const r=F.w/frames(F)/F.h;return r>.18&&r<9&&F.h>=44&&F.w/frames(F)>=36&&!/list_press|list2_btn/.test(F.lc)})};
 const presetOn=P=>{const g=S.gen||{},o=S.ops.global;return g.look===P.look&&g.color==='one'&&g.hue===P.hue&&!!o&&o.tA===100&&o.tH===P.hue};
 function presetTile(P){const T=genTargets(),R=T.find(F=>extractIcon(F))||T[0];if(!R)return null;const g=S.gen||(S.gen=defGen()),me={...(g.per[R.path]||{})};delete me.hue;if(P.ihue!=null)me.ihue=P.ihue;else delete me.ihue;
   return miniTile(R,{...g,look:P.look,style:P.look,color:'one',hue:P.hue,corners:'key',per:{...g.per,[R.path]:me}},0)}
@@ -153,7 +157,7 @@ function presetSet(P){const g=S.gen||(S.gen=defGen()),T=genTargets(),L=presetIns
   // se tiñe todo (también grises y el negro) para que el diseño quede de una pieza. Lo que pusiste tú a mano (una foto, el reposo) no se toca
   S.ops.global={...defOps(),tH:P.hue,tA:100,tG:false,s:P.gs||0};S.ops.sec={};const TL=new Set([...T,...L]),bgs=new Set([...SCRBG.values()].map(byName).filter(Boolean)),bk=P.bk==null?P.hue:P.bk;
   for(const F of S.files){if(TL.has(F))continue;const k=kindOf(F),odd=k==='btn';if(k==='ico'&&!/line/.test(F.lc))continue;
-    if(odd){const had=g.per[F.path];delete g.per[F.path];if(F.rep&&(F.rep.by==='gen'||F.rep.by==='btn'||(!F.rep.by&&had)))F.rep=null;if(S.icx)delete S.icx[F.path];if(S.ex[F.path]===true&&!F.rep)delete S.ex[F.path];F.cv=null}
+    if(odd){delete g.per[F.path];if(F.rep&&F.rep.by!=='stby')F.rep=null;if(S.icx)delete S.icx[F.path];if(S.ex[F.path]===true&&!F.rep)delete S.ex[F.path];F.cv=null}
     if(bgs.has(F)&&(!F.rep||F.rep.by==='preset')){presetBg(F,P,bk);continue}
     if(F.rep)continue;const o={...defOps(),tH:k==='bg'?bk:P.hue,tA:k==='bg'?90:100,tG:true,s:P.gs||0};o.map={13:bgs.has(F)?{to:bk,ts:.65,tl:.11}:{to:bk,ts:.55,tl:.07}};setFileOps(F,o)}
   // dibujos con su propio recuadro negro (la hoja de Driving eco, la carátula vacía…): el negro que toca el borde pasa a transparente
@@ -167,6 +171,23 @@ function presetBgCanvas(P,bk,scr){const c=document.createElement('canvas');c.wid
     let sd=97;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;for(let i=0;i<900;i++){x.fillStyle=`rgba(${rnd()<.5?'255,255,255':'0,0,0'},${.02+rnd()*.05})`;x.fillRect(0,78+rnd()*402,800,1)}
     const v=x.createRadialGradient(400,260,120,400,260,520);v.addColorStop(0,`hsla(${h},${sat}%,70%,.08)`);v.addColorStop(1,'rgba(0,0,0,.45)');x.fillStyle=v;x.fillRect(0,0,800,480);
     x.fillStyle=`hsla(${h},${sat+20}%,70%,.35)`;x.fillRect(0,477,800,2);return c}
+  const vg=(a,b)=>{const g=x.createLinearGradient(0,0,0,480);g.addColorStop(0,a);g.addColorStop(1,b);x.fillStyle=g;x.fillRect(0,0,800,480)};
+  const rg=(cx,cy,r,col)=>{const g=x.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,col);g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,800,480)};
+  const floor=(hz,col,lw)=>{x.save();x.strokeStyle=col;x.lineWidth=lw||1;x.beginPath();for(let i=-12;i<=12;i++){x.moveTo(400+i*18,hz);x.lineTo(400+i*150,480)}for(let k=1;k<9;k++){const y=hz+(480-hz)*Math.pow(k/8,2.1);x.moveTo(0,y);x.lineTo(800,y)}x.stroke();x.restore()};
+  if(P.bg==='synth'){vg('#0b0420','#2a0838');rg(400,330,300,'rgba(255,60,170,.35)');
+    if(scr==='home'){const sg=x.createLinearGradient(0,170,0,330);sg.addColorStop(0,'#ffd45a');sg.addColorStop(1,'#ff2d8a');x.save();x.beginPath();x.arc(400,330,120,Math.PI,0);x.closePath();x.clip();x.fillStyle=sg;x.fillRect(260,200,280,140);
+    x.fillStyle='#1a0530';for(let k=0;k<6;k++)x.fillRect(260,262+k*12,280,2+k*1.2);x.restore()}x.fillStyle='#14042a';x.fillRect(0,330,800,150);floor(330,'rgba(0,240,255,.55)',1.2);x.fillStyle='rgba(0,240,255,.8)';x.fillRect(0,329,800,2);return c}
+  if(P.bg==='tron'){vg('#010509','#031520');rg(400,300,420,`hsla(${h},100%,50%,.18)`);floor(300,`hsla(${h},100%,60%,.35)`);x.fillStyle=`hsla(${h},100%,65%,.7)`;x.fillRect(0,299,800,1.5);return c}
+  if(P.bg==='cyber'){vg('#0a0a06','#151405');rg(650,420,380,'rgba(255,220,0,.16)');rg(120,120,260,'rgba(0,220,255,.08)');
+    x.save();x.beginPath();x.rect(0,474,800,6);x.clip();x.fillStyle='#f5d400';x.fillRect(0,474,800,6);x.fillStyle='#0a0a06';for(let i=-40;i<840;i+=22){x.beginPath();x.moveTo(i,480);x.lineTo(i+11,480);x.lineTo(i+17,474);x.lineTo(i+6,474);x.closePath();x.fill()}x.restore();
+    x.strokeStyle='rgba(245,212,0,.25)';x.lineWidth=1;x.beginPath();x.moveTo(0,110);x.lineTo(60,110);x.lineTo(80,90);x.lineTo(800,90);x.stroke();return c}
+  if(P.bg==='matrix'){vg('#000400','#001206');let sd=31;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;for(let i=0;i<70;i++){const X=Math.floor(rnd()*80)*10,L=60+rnd()*220,Y0=78+rnd()*400;
+      const g=x.createLinearGradient(0,Y0,0,Y0+L);g.addColorStop(0,'rgba(0,255,90,0)');g.addColorStop(1,`rgba(0,255,90,${.1+rnd()*.2})`);x.fillStyle=g;for(let y=Y0;y<Y0+L;y+=9)x.fillRect(X,y,5,6)}rg(400,520,420,'rgba(0,255,90,.18)');return c}
+  if(P.bg==='ambient'){vg('#060505','#0d0907');x.save();x.lineCap='round';for(const [y,a,w] of [[420,.9,3],[436,.35,8],[404,.25,10]]){x.strokeStyle=`hsla(${h},100%,60%,${a})`;x.lineWidth=w;x.shadowColor=`hsl(${h} 100% 55%)`;x.shadowBlur=18;x.beginPath();x.moveTo(-20,y+40);x.bezierCurveTo(250,y-40,550,y+30,820,y-30);x.stroke()}x.restore();
+    rg(400,470,380,`hsla(${h},100%,50%,.14)`);return c}
+  if(P.bg==='racing'){vg('#0b0c0e','#121417');x.fillStyle=`hsla(${h},85%,48%,.45)`;x.save();x.transform(1,0,-.35,1,0,0);x.fillRect(880,78,30,402);x.fillRect(922,78,10,402);x.restore();
+    let sd=7;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;x.fillStyle='rgba(255,255,255,.025)';for(let i=0;i<2500;i++)x.fillRect(rnd()*800,78+rnd()*402,2,2);rg(200,480,380,`hsla(${h},85%,48%,.12)`);return c}
+  if(P.bg==='oled'){x.fillStyle='#000';x.fillRect(0,0,800,480);x.fillStyle=`hsla(${h},20%,60%,.18)`;x.fillRect(0,477,800,1);return c}
   let gr=x.createLinearGradient(0,0,0,480);gr.addColorStop(0,`hsl(${h} 45% 5%)`);gr.addColorStop(.55,`hsl(${h} 55% 8%)`);gr.addColorStop(1,`hsl(${h} 65% 13%)`);x.fillStyle=gr;x.fillRect(0,0,800,480);
   const glow=(cx,cy,r,a)=>{const g=x.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,`hsla(${h},90%,50%,${a})`);g.addColorStop(1,`hsla(${h},90%,50%,0)`);x.fillStyle=g;x.fillRect(0,0,800,480)};
   glow(400,560,460,.42);glow(400,300,420,scr==='home'?.12:.07);glow(0,80,260,.08);glow(800,80,260,.08);
@@ -216,7 +237,7 @@ function presetSheet(P0){
     S.curDesign=null;S.curDesignName=null;applyButtons(rest);render(true);toast(`«${P.name}» aplicado a toda la radio (${all.T.length+all.L.length} botones)`,{label:'Deshacer',fn:undo})};
   // miniaturas
   const cvs=[...lst.querySelectorAll('canvas')];let i=0;const step=()=>{for(let n=0;n<3&&i<cvs.length;n++,i++){if(!cvs[i].isConnected)return;const t=presetTile(PRESETS[i]);if(t)putMini(cvs[i],t)}if(i<cvs.length)requestAnimationFrame(step)};
-  first();use(P0);requestAnimationFrame(step);if(VW.st!==2)loadVistas();
+  const go0=()=>{if(!bs.isConnected||bs.hidden)return;first();use(P0);requestAnimationFrame(step)};if(VW.st===2)go0();else loadVistas().then(go0,go0);
   const b0=lst.querySelector(`[data-v="${P0.id}"]`);if(b0)setTimeout(()=>b0.scrollIntoView({inline:'center',block:'nearest'}),50)}
 function presetsHTML(id){return `<div class="card"><h3>Diseños listos <small class="cnt">${PRESETS.length}</small></h3><p class="note">Un diseño completo de una vez: botones de todas las pantallas, fondos, barra de arriba y colores. Lo ves antes de aplicarlo.</p>
   <div class="hs" id="${id}">${PRESETS.map(P=>`<button class="ocd" data-v="${P.id}" aria-pressed="${presetOn(P)}"><canvas width="1" height="1"></canvas><span>${esc(P.name)}</span></button>`).join('')}</div></div>`}
