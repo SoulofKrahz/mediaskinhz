@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-28-7';
+const VER='2026-10-28-8';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,9 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-28-8',['Diseños listos con fondo nuevo: en vez de teñir el de Renault (las rayas grises quedaban sucias), cada pantalla lleva un fondo oscuro con el color del diseño, un resplandor abajo y un dibujo suave que va con el estilo (rejilla, puntos, ondas, rayas…)',
+    'Sin cajas negras alrededor de los botones de dentro: con un fondo de diseño listo sus esquinas son transparentes. El negro de iconos y recuadros también toma el tono del diseño',
+    'Las miniaturas de los diseños ya no arrastran las esquinas del diseño que tengas puesto. Ocaso, menos amarillo']],
   ['2026-10-28-7',['Diseños listos de verdad en un toque: el fondo de cada pantalla se tiñe con el color del diseño (también el negro), igual que la barra de arriba, líneas, listas y ventanas',
     'Las flechas grandes de avanzar y retroceder (presintonías, carátulas, Driving eco) y demás botones de forma rara también cambian: toman el color del diseño sin deformarse',
     'Sin marcos de otro color: el borde morado de los botones de Multimedia sigue al color del diseño',

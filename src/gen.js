@@ -72,9 +72,11 @@ function borderColor(F){if(F.bdc)return F.bdc;const fw=F.w/frames(F),rs=[],gs=[]
   for(let x=0;x<fw;x++){add(x,0);add(x,F.h-1)}for(let y=0;y<F.h;y++){add(0,y);add(fw-1,y)}const m=a=>{a.sort((u,v)=>u-v);return a[a.length>>1]||0},r=m(rs),G=m(gs),B=m(bs);
   // las pantallas del MediaNav son oscuras: un borde claro o de color es parte del botón, no del fondo
   F.bdc=(r*.3+G*.59+B*.11)<60?`rgb(${r},${G},${B})`:'#000';return F.bdc}
+const presetBgOn=()=>[...SCRBG.values()].some(n=>{const B=byName(n);return B&&B.rep&&B.rep.by==='preset'});
 function cornerBase(F){const s=S.layout.slots.find(s=>s.p===F.path),bg=byName('common/home_bg.bmp'),fw=F.w/frames(F),c=document.createElement('canvas');c.width=fw;c.height=F.h;const x=c.getContext('2d');
   // fuera de Inicio: el color del borde original, teñido con el color de toda la radio (si lo hay) para que no quede un marco de otro color
-  if(!s){if(!F.keyCount){let col=borderColor(F);const o=S.ops.global;if(o&&o.tA){const m=col.match(/\d+/g);if(m){const [r,g,b]=applyOps(m.slice(0,3).map(Number),{...o,tG:true});col=`rgb(${r},${g},${b})`}}x.fillStyle=col;x.fillRect(0,0,fw,F.h)}return c}x.fillStyle='#000';x.fillRect(0,0,fw,F.h);
+  // con un fondo de diseño listo, las esquinas de dentro son transparentes (amarillo clave, como ya hacen muchos originales) para que no salgan cajas negras
+  if(!s){if(!F.keyCount&&!presetBgOn()){let col=borderColor(F);const o=S.ops.global;if(o&&o.tA){const m=col.match(/\d+/g);if(m){const [r,g,b]=applyOps(m.slice(0,3).map(Number),{...o,tG:true});col=`rgb(${r},${g},${b})`}}x.fillStyle=col;x.fillRect(0,0,fw,F.h)}return c}x.fillStyle='#000';x.fillRect(0,0,fw,F.h);
   if(s&&bg)x.drawImage(renderCanvas(bg,false),s.x,s.y,fw,F.h,0,0,fw,F.h);return c}
 function rrect(x,X,Y,W,H,r){r=Math.max(0,Math.min(r,W/2,H/2));x.beginPath();x.moveTo(X+r,Y);x.lineTo(X+W-r,Y);x.arcTo(X+W,Y,X+W,Y+r,r);x.lineTo(X+W,Y+H-r);x.arcTo(X+W,Y+H,X+W-r,Y+H,r);x.lineTo(X+r,Y+H);x.arcTo(X,Y+H,X,Y+H-r,r);x.lineTo(X,Y+r);x.arcTo(X,Y,X+r,Y,r);x.closePath()}
 const gRad=(g,h)=>g.shape==='rect'?0:g.shape==='pill'?(h-2*g.inset)/2:g.r;
@@ -145,7 +147,7 @@ function drawState(x,F,w,h,s,H,g,bgc){
     case 'halo':{x.fillStyle='#05070a';x.fill();x.save();x.shadowColor=`hsl(${H} 100% 55%)`;x.shadowBlur=on?22:dim?0:12;x.lineWidth=on?3:2;x.strokeStyle=`hsla(${H},100%,${on?72:62}%,${dim?.35:.95})`;
       rrect(x,X+7,Y+7,W-14,Hh-14,Math.max(0,r-4));x.stroke();if(on){x.fillStyle=`hsla(${H},90%,55%,.18)`;x.fill()}x.restore();ic=on?'#ffffff':`hsl(${H} 100% ${dim?40:74}%)`;glow=dim?0:on?14:7;break}
     case 'sunset':{const gr=x.createLinearGradient(0,Y,0,Y+Hh);gr.addColorStop(0,`hsl(${(H+330)%360} ${dim?20:80}% ${on?52:dim?14:30}%)`);gr.addColorStop(.55,`hsl(${H} ${dim?20:85}% ${on?46:dim?12:24}%)`);gr.addColorStop(1,`hsl(${(H+30)%360} ${dim?20:90}% ${on?40:dim?8:14}%)`);
-      x.fillStyle=gr;x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();x.fillStyle=`hsla(${(H+20)%360},100%,70%,${on?.5:dim?.08:.3})`;x.beginPath();x.ellipse(w/2,Y+Hh*1.05,W*.42,Hh*.42,0,0,Math.PI*2);x.fill();x.restore();
+      x.fillStyle=gr;x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();x.fillStyle=`hsla(${H},100%,64%,${on?.4:dim?.06:.2})`;x.beginPath();x.ellipse(w/2,Y+Hh*1.05,W*.42,Hh*.42,0,0,Math.PI*2);x.fill();x.restore();
       if(on){x.lineWidth=2.5;x.strokeStyle='rgba(255,255,255,.7)';rrect(x,X+2,Y+2,W-4,Hh-4,Math.max(0,r-1));x.stroke()}ic=dim?'rgba(255,255,255,.5)':'#ffffff';break}
     case 'grid':{x.fillStyle=on?`hsl(${H} 55% 14%)`:'#050709';x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();x.strokeStyle=`hsla(${H},90%,60%,${on?.32:dim?.06:.16})`;x.lineWidth=1;const q=Math.max(8,Math.round(Hh/7));
       x.beginPath();for(let xx=X+q/2;xx<X+W;xx+=q){x.moveTo(xx+.5,Y);x.lineTo(xx+.5,Y+Hh)}for(let yy=Y+q/2;yy<Y+Hh;yy+=q){x.moveTo(X,yy+.5);x.lineTo(X+W,yy+.5)}x.stroke();x.restore();

@@ -142,7 +142,7 @@ const PRESETS=[
 const presetInside=()=>{const T=genTargets();return S.files.filter(F=>kindOf(F)==='btn'&&canStyle(F)&&!T.includes(F))};
 const presetOn=P=>{const g=S.gen||{},o=S.ops.global;return g.look===P.look&&g.color==='one'&&g.hue===P.hue&&!!o&&o.tA===100&&o.tH===P.hue};
 function presetTile(P){const T=genTargets(),R=T.find(F=>extractIcon(F))||T[0];if(!R)return null;const g=S.gen||(S.gen=defGen()),me={...(g.per[R.path]||{})};delete me.hue;if(P.ihue!=null)me.ihue=P.ihue;else delete me.ihue;
-  return miniTile(R,{...g,look:P.look,style:P.look,color:'one',hue:P.hue,per:{...g.per,[R.path]:me}},0)}
+  return miniTile(R,{...g,look:P.look,style:P.look,color:'one',hue:P.hue,corners:'key',per:{...g.per,[R.path]:me}},0)}
 // pone los datos del diseño (sin dibujar aún los botones)
 function presetSet(P){const g=S.gen||(S.gen=defGen()),T=genTargets(),L=presetInside();g.look=P.look;g.style=P.look;g.color='one';g.hue=P.hue;
   const setI=p=>{if(P.ihue!=null)p.ihue=P.ihue;else delete p.ihue};
@@ -153,8 +153,28 @@ function presetSet(P){const g=S.gen||(S.gen=defGen()),T=genTargets(),L=presetIns
   S.ops.global={...defOps(),tH:P.hue,tA:100,tG:false};S.ops.sec={};const TL=new Set([...T,...L]),bgs=new Set([...SCRBG.values()].map(byName).filter(Boolean)),bk=P.bk==null?P.hue:P.bk;
   for(const F of S.files){if(TL.has(F))continue;const k=kindOf(F),odd=k==='btn';if(k==='ico'&&!/line/.test(F.lc))continue;
     if(odd){delete g.per[F.path];if(F.rep&&(F.rep.by==='gen'||F.rep.by==='btn'))F.rep=null;if(S.icx)delete S.icx[F.path];if(S.ex[F.path]===true&&!F.rep)delete S.ex[F.path];F.cv=null}
-    if(F.rep)continue;const o={...defOps(),tH:k==='bg'?bk:P.hue,tA:k==='bg'?90:100,tG:true};if(bgs.has(F))o.map={13:{to:bk,ts:.65,tl:.11}};setFileOps(F,o)}
+    if(bgs.has(F)&&(!F.rep||F.rep.by==='preset')){presetBg(F,P,bk);continue}
+    if(F.rep)continue;const o={...defOps(),tH:k==='bg'?bk:P.hue,tA:k==='bg'?90:100,tG:true};o.map={13:bgs.has(F)?{to:bk,ts:.65,tl:.11}:{to:bk,ts:.55,tl:.07}};setFileOps(F,o)}
   return {T,L}}
+/* Fondo nuevo para un diseño listo: negro con el color del diseño (degradado, resplandor abajo y un dibujo suave que sigue al estilo).
+   Sustituye al fondo de Renault (sus rayas grises teñidas quedaban sucias). Se deshace como todo lo demás */
+const BGPAT={grid:'grid',circuit:'grid',pixel:'grid',hud:'grid',hudb:'grid',hudf:'grid',scan:'lines',led:'dots',dots:'dots',wave:'wave',sunset:'wave',aurora:'wave',capsule:'wave',neon:'lines',halo:'rings',ring:'rings',corner:'grid',notch:'lines',chamfer:'diag',slash:'diag',stripes:'diag',tab:'lines',split:'lines'};
+function presetBgCanvas(P,bk,scr){const c=document.createElement('canvas');c.width=800;c.height=480;const x=c.getContext('2d'),h=bk;
+  let gr=x.createLinearGradient(0,0,0,480);gr.addColorStop(0,`hsl(${h} 45% 5%)`);gr.addColorStop(.55,`hsl(${h} 55% 8%)`);gr.addColorStop(1,`hsl(${h} 65% 13%)`);x.fillStyle=gr;x.fillRect(0,0,800,480);
+  const glow=(cx,cy,r,a)=>{const g=x.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,`hsla(${h},90%,50%,${a})`);g.addColorStop(1,`hsla(${h},90%,50%,0)`);x.fillStyle=g;x.fillRect(0,0,800,480)};
+  glow(400,560,460,.42);glow(400,300,420,scr==='home'?.12:.07);glow(0,80,260,.08);glow(800,80,260,.08);
+  const pat=BGPAT[P.look]||'soft';x.save();x.strokeStyle=`hsla(${h},90%,60%,.07)`;x.fillStyle=`hsla(${h},90%,60%,.09)`;x.lineWidth=1;x.beginPath();
+  if(pat==='grid'){for(let i=0;i<=800;i+=40){x.moveTo(i+.5,78);x.lineTo(i+.5,480)}for(let j=78;j<=480;j+=40){x.moveTo(0,j+.5);x.lineTo(800,j+.5)}x.stroke()}
+  else if(pat==='lines'){for(let j=80;j<480;j+=6){x.moveTo(0,j+.5);x.lineTo(800,j+.5)}x.globalAlpha=.6;x.stroke()}
+  else if(pat==='dots'){for(let j=90;j<480;j+=18)for(let i=9;i<800;i+=18){x.moveTo(i+1.3,j);x.arc(i,j,1.3,0,7)}x.fill()}
+  else if(pat==='diag'){for(let i=-480;i<800;i+=22){x.moveTo(i,480);x.lineTo(i+480,0)}x.stroke()}
+  else if(pat==='rings'){for(let r=60;r<700;r+=46){x.moveTo(400+r,420);x.arc(400,420,r,0,7)}x.stroke()}
+  else if(pat==='wave'){x.lineWidth=2;for(let k=0;k<5;k++){x.moveTo(0,380+k*16);for(let i=0;i<=800;i+=10)x.lineTo(i,380+k*16+Math.sin(i/130+k*.8)*14)}x.strokeStyle=`hsla(${h},90%,60%,.12)`;x.stroke()}
+  x.restore();
+  // brillo fino bajo la barra de arriba y en el borde de abajo
+  x.fillStyle=`hsla(${h},90%,60%,.25)`;x.fillRect(0,477,800,3);return c}
+function presetBg(F,P,bk){const scr=[...SCRBG.entries()].find(e=>e[1]===F.lc||byName(e[1])===F);const c=presetBgCanvas(P,bk,scr?scr[0]:'');
+  const d=c.getContext('2d').getImageData(0,0,800,480).data,q=quantize(d,800,480,{dither:true});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'preset'};S.ex[F.path]=true;delete S.ops.file[F.path];F.cv=null}
 const PSCR=[['home','Inicio'],['radio','Radio'],['media','Multimedia'],['phone','Teléfono'],['setting','Ajustes'],['eco','Driving eco']];
 function presetSheet(P0){
   const keep=[S.curDesign,S.curDesignName],scrs=PSCR.filter(([k])=>byName(SCRBG.get(k)));let P=null,done=new Set(),scr='home',all={T:[],L:[]};
