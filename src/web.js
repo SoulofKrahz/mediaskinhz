@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-28-12';
+const VER='2026-10-28-13';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,10 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-28-13',['La pestaña Tema pasa a ser Diseños, con tres partes: Listos (los diseños completos), Mis diseños (cargar con un toque, guardar, importar) y Crear el tuyo (estilo de los botones, color de toda la radio o de cada sección, colores concretos y ajustes finos)',
+    'Pantalla más limpia: sin el bloque de diseños listos ni el color de toda la radio (están en Diseños)',
+    'Exportar: la instalación automática es la de por defecto; Total Commander y la actualización oficial quedan plegados en «Otros modos»',
+    'Lanzador del USB para un USB nuevo: guarda una vez el contenido de tu USB de siempre (ZIP o carpeta) y cada exportación automática y el selector lo llevan completo. Se queda solo en tu dispositivo']],
   ['2026-10-28-12',['«Varios diseños en el USB» justo debajo de «Descargar ZIP»',
     'Menú «⋯» ordenado por grupos: Tu diseño (guardar, Mis diseños), Backup (cargar, quitar cambios, cerrar) y Más (kit de prueba, Ajustes). El modo oscuro sale de ahí: está en Ajustes → Preferencias → Tema',
     'Ajustes con pestañas claras: Mis diseños, Exportaciones, Preferencias y App. El kit de prueba ya no se repite en Pantalla']],

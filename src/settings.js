@@ -1,6 +1,6 @@
 
 /* ============ ajustes, confirmaciones, puntos de restauración e historial ============ */
-const SETDEF={confirm:true,auto:true,xboot:true,xmode:'tc',xhw:2,xorig:true,pv:'m',theme:'auto'};
+const SETDEF={confirm:true,auto:true,xboot:true,xmode:'auto',xhw:2,xorig:true,pv:'m',theme:'auto'};
 let SET={...SETDEF};
 function loadSet(){try{SET={...SETDEF,...JSON.parse(localStorage.getItem('skinhz-set')||'{}')}}catch(_){SET={...SETDEF}}
   if(S.xmode===undefined)S.xmode=SET.xmode;if(S.xhw===undefined)S.xhw=SET.xhw;applySetUI()}

@@ -843,7 +843,7 @@ function fileRow(F,sub){const s=stateOf(F),fr=frames(F);return `<button class="l
 function tile(F){const s=stateOf(F),fr=frames(F);return `<button class="tile" data-f="${S.files.indexOf(F)}" data-edit><div class="tt">${th(F,150,76)}</div><div class="tm"><span class="nm">${esc(pretty(F))}</span><span class="dm">${F.w/fr}×${F.h}${fr>1?' · '+fr+' estados':''}</span><span class="pill ${s.c}" data-stt>${s.t}</span></div></button>`}
 
 /* ============ navegación ============ */
-const ROOTS=[['home','Pantalla','M3 5h18v12H3zM8 21h8M12 17v4'],['theme','Tema','M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4 4h-2a2 2 0 0 0-1.4 3.4A1.6 1.6 0 0 1 12 22zM7.5 11.5h.01M10.5 7.5h.01M15.5 8.5h.01'],['lib','Imágenes','M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z'],['export','Exportar','M12 3v12M7 10l5 5 5-5M5 21h14']];
+const ROOTS=[['home','Pantalla','M3 5h18v12H3zM8 21h8M12 17v4'],['theme','Diseños','M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4 4h-2a2 2 0 0 0-1.4 3.4A1.6 1.6 0 0 1 12 22zM7.5 11.5h.01M10.5 7.5h.01M15.5 8.5h.01'],['lib','Imágenes','M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z'],['export','Exportar','M12 3v12M7 10l5 5 5-5M5 21h14']];
 const ROOTN=new Set(ROOTS.map(r=>r[0]));
 function go(r){if(ROOTN.has(r.n))S.stack=[];else S.stack.push(S.route);S.route=r;render();scrollTo(0,0)}
 function back(){S.route=S.stack.pop()||{n:'home'};render();}
@@ -867,7 +867,7 @@ function updBadge(){const n=S.files.filter(changed).length;$$('[data-badge]').fo
 /* ============ Pantalla ============ */
 function scrHome(v){
   setTitle('Pantalla',S.demo?`<span class="lw">Mediaskin<em>hz</em></span> · ejemplo`:`<button class="dsn-t" id="h-dsn" title="Mis diseños">${designLine()}</button>`);
-  const hd=$('#h-dsn');if(hd)hd.onclick=()=>{S.focus='s-des';go({n:'settings'})};
+  const hd=$('#h-dsn');if(hd)hd.onclick=()=>{S.ttab='mios';go({n:'theme'})};
   const scr=S.scr,have=SCREENS.filter(s=>byName(s[2]));if(!have.some(s=>s[0]===scr)&&have.length)S.scr=have[0][0];
   const rows=[];const bg=byName(SCRBG.get(S.scr));if(bg)rows.push(fileRow(bg,'Fondo · 800×480'));
   if(S.scr==='home')for(const s of S.layout.slots){const F=slotF(s);if(F)rows.push(fileRow(F,'Botón · 4 estados'))}
@@ -881,13 +881,11 @@ function scrHome(v){
     </div>
     <div class="stack">
       ${S.demo?`<div class="card demo"><h2>Esto es un ejemplo</h2><p>Las imágenes son de muestra. Carga tu backup (la carpeta <b>M1</b> o un ZIP) para editar las de tu MediaNav. No sale de tu móvil.</p><button class="btn wide" data-act="load">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}Cargar mi backup</button></div>`:''}
-      ${S.scr==='home'&&!S.demo&&genTargets().length?`<div class="qa"><button class="qai" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><b>Estilo de los botones</b><small>Los 6 a la vez: estilo, forma y trazo</small></button><button class="qai" data-act="designs"><span class="ic">${ic('M5 3h11l3 3v15H5zM8 3v6h8V3M8 21v-7h8v7')}</span><b>Mis diseños</b><small>Guardar y cambiar entre ellos</small></button></div>`:S.scr==='home'&&genTargets().length?`<div class="list"><button class="li" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><span class="tx"><b>Rediseñar los botones</b><small>Estilo, forma, color e iconos nuevos</small></span>${CHEV}</button></div>`:''}
-      ${S.scr==='home'&&!S.demo&&genTargets().length?presetsHTML('h-pre'):''}
+      ${S.scr==='home'&&!S.demo&&genTargets().length?`<div class="qa"><button class="qai" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><b>Estilo de los botones</b><small>Los 6 a la vez: estilo, forma y trazo</small></button><button class="qai" data-act="listos"><span class="ic">${ic('M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4 4h-2a2 2 0 0 0-1.4 3.4A1.6 1.6 0 0 1 12 22zM7.5 11.5h.01M10.5 7.5h.01M15.5 8.5h.01')}</span><b>Diseños listos</b><small>${PRESETS.length} diseños completos, con vista previa</small></button></div>`:S.scr==='home'&&genTargets().length?`<div class="list"><button class="li" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><span class="tx"><b>Rediseñar los botones</b><small>Estilo, forma, color e iconos nuevos</small></span>${CHEV}</button></div>`:''}
       <p class="sec-t">En esta pantalla</p>
       <div class="list">${rows.join('')||'<p class="empty">No hay imágenes de esta pantalla en el backup.</p>'}</div>
       ${S.scr==='home'?`<div class="list"><button class="li" data-go="layout"><span class="ic">${ic('M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20')}</span><span class="tx"><b>Distribución de los botones</b><small>Moverlos, cuadrícula y qué botón va en cada hueco</small></span>${CHEV}</button></div>`:''}
       ${nSec&&S.scr!=='home'?`<div class="list"><button class="li" data-cat="${catOf({sec})}" data-sec="${esc(sec)}"><span class="ic">${ic('M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z')}</span><span class="tx"><b>Todas las imágenes de ${esc(SECL.get(sec))}</b><small>${nSec} imágenes</small></span>${CHEV}</button></div>`:''}
-      <div class="list"><button class="li" data-go="theme"><span class="ic">${ic(ROOTS[1][2])}</span><span class="tx"><b>Cambiar el color de toda la radio</b><small>${esc(describe(S.ops.global)||'Sin tema')}</small></span>${CHEV}</button></div>
     </div></div>`;
   $('#h-scr').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;const k=b.dataset.s;if(k==='stby'){go({n:'stby'});return}if(k!=='home'&&!S.demo){go({n:'scr',s:k});return}S.scr=k;remember();render(true)};
   const c=$('#pv');mountPreview(c,()=>({scr:S.scr,orig:S.hcmp==='orig'}));
@@ -897,15 +895,25 @@ function scrHome(v){
     c.onpointermove=e=>{if(e.pointerType!=='mouse')return;const h=slotAt(c,e);c.style.cursor=h.i>=0?'pointer':'default';if(down<0&&S.press!==h.i){S.press=h.i;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})}};
     c.onpointerleave=c.onpointercancel=()=>{down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})};
     c.onpointerup=e=>{const h=slotAt(c,e);const i=down;down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'});if(i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F){const sc=slotScr(F);if(sc&&!S.demo)go({n:'scr',s:sc});else if(genTargets().includes(F))btnSheet(F);else go({n:'edit',p:F.path})}}}}
-  mountPresets($('#h-pre'));
   S.slow=()=>{};
 }
 
 /* ============ Tema ============ */
 function scopeList(){const secs=[...new Set(S.files.map(F=>F.sec))].filter(s=>s!=='4WD');return [['global','Toda la radio'],...secs.map(s=>[s,SECL.get(s)||s])]}
+// Mis diseños en la pestaña Diseños: cargar con un toque; renombrar, borrar y archivos en Ajustes → Mis diseños
+async function mineUI(el){if(!el)return;if(S.demo){el.innerHTML='<p class="note">Carga tu backup para guardar diseños.</p>';return}
+  const D=(await listPoints()).filter(p=>p.kind==='manual'&&p.sig===sig());if(!el.isConnected)return;
+  el.innerHTML=`<div class="stack" style="gap:8px"><button class="btn wide" id="tm-save">Guardar lo que tienes ahora</button><button class="btn o wide" id="tm-imp">Importar un diseño (.mskz o ZIP)</button></div>
+    ${D.length?`<div class="dsg" style="margin-top:12px">${D.map(p=>`<div class="dsc${S.curDesign===p.id?' on':''}" data-d="${p.id}"><button class="dsi" data-a="load" aria-label="Cargar ${esc(p.label)}">${p.thumb?`<img src="${p.thumb}" alt="">`:'<span class="dsn">Sin vista previa</span>'}${S.curDesign===p.id?'<span class="pill p-col">Cargado</span>':''}</button>
+      <div class="dst"><b>${esc(p.label)}</b><small>${fdt(p.t)}</small></div></div>`).join('')}</div>
+      <button class="btn o sm" id="tm-man" style="margin-top:10px">Renombrar, borrar o guardar en archivo</button>`:'<p class="note" style="margin-top:10px">Aún no has guardado ninguno. Guarda los que te gusten para cambiar entre ellos o llevarlos juntos al USB.</p>'}`;
+  $('#tm-save').onclick=async()=>{await saveDesign();render(true)};$('#tm-imp').onclick=pickDesignFile;
+  const m=$('#tm-man');if(m)m.onclick=()=>{S.focus='s-des';S.stab='des';go({n:'settings'})};
+  el.querySelectorAll('.dsc').forEach(c=>c.onclick=e=>{if(e.target.closest('[data-a]'))restorePoint(c.dataset.d)})}
 function scrTheme(v){
+  const tt=S.ttab||(S.ttab=S.demo?'crear':'listos');
   const sl=scopeList();if(!sl.some(s=>s[0]===S.scope))S.scope='global';const sc=S.scope,scl=sc==='global'?'toda la radio':SECL.get(sc);
-  setTitle('Tema',`<span class="lw">Mediaskin<em>hz</em></span> · ${esc(sc==='global'?'Toda la radio':'Solo '+SECL.get(sc))}`);
+  setTitle('Diseños',`<span class="lw">Mediaskin<em>hz</em></span> · ${tt==='listos'?'listos para usar':tt==='mios'?'los que has guardado':'crea el tuyo'}`);
   const strip=stripFiles(sc);
   const actives=[['global','Toda la radio',S.ops.global],...Object.entries(S.ops.sec).map(([k,o])=>[k,SECL.get(k)||k,o])].filter(a=>!empty(a[2]));
   v.innerHTML=`<div class="two">
@@ -914,13 +922,20 @@ function scrTheme(v){
       <div class="strip" aria-label="Muestras">${strip.map(F=>`<button data-f="${S.files.indexOf(F)}" data-edit title="${esc(pretty(F))}">${th(F,66,42)}</button>`).join('')}</div>
     </div>
     <div class="stack">
-      <div class="field"><span class="lbl">Aplicar a</span><div class="chips scroll" id="t-sc">${sl.map(([k,l])=>`<button class="chip" data-sc="${esc(k)}" aria-pressed="${k===sc}">${!empty(scopeOps(k))?'<span class="dot"></span>':''}${esc(l)}</button>`).join('')}</div></div>
+      <div class="seg gtabs" id="t-tabs" role="tablist">${[['listos','Listos'],['mios','Mis diseños'],['crear','Crear el tuyo']].map(([k,l])=>`<button data-t="${k}" aria-pressed="${tt===k}">${l}</button>`).join('')}</div>
+      ${tt==='listos'?(S.demo||!genTargets().length?'<p class="note">Carga tu backup para usar los diseños listos.</p>':presetsHTML('t-pre')+'<p class="note">Cada diseño listo cambia de una vez los botones, los fondos y los colores de toda la radio. Después puedes retocarlo en «Crear el tuyo» o pantalla a pantalla.</p>'):''}
+      ${tt==='mios'?'<div id="t-mios"><p class="note">Cargando…</p></div>':''}
+      ${tt==='crear'?`<div class="list"><button class="li" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><span class="tx"><b>Estilo de los botones</b><small>Forma, estilo, iconos y su color</small></span>${CHEV}</button></div>
+      <div class="field"><span class="lbl">Color · aplicar a</span><div class="chips scroll" id="t-sc">${sl.map(([k,l])=>`<button class="chip" data-sc="${esc(k)}" aria-pressed="${k===sc}">${!empty(scopeOps(k))?'<span class="dot"></span>':''}${esc(l)}</button>`).join('')}</div></div>
       <div class="card"><h3>Color de ${esc(scl)}</h3><div id="t-tint"></div></div>
       <div class="card"><h3>Cambiar un color concreto</h3><p class="note">Elige uno de los colores que hay en ${esc(scl)} y sustitúyelo solo a él. El resto se queda como está.</p><div id="t-fam"></div></div>
       <details class="card" id="t-fine"${(scopeOps(sc)||{}).h||(scopeOps(sc)||{}).s||(scopeOps(sc)||{}).l?' open':''}><summary>Ajustes finos</summary><div id="t-fn"></div></details>
-      <div class="card"><h3>Temas activos</h3>${actives.length?`<div class="applies">${actives.map(([k,l,o])=>`<div class="ap"><span class="dt" style="background:${opsDot(o)}"></span><span class="tx"><b>${esc(l)}</b><small>${esc(describe(o))}</small></span><button class="lnk" data-rm="${esc(k)}">Quitar</button></div>`).join('')}</div>`:'<p class="note">Todavía no hay ningún tema. Elige un color arriba.</p>'}</div>
+      <div class="card"><h3>Temas activos</h3>${actives.length?`<div class="applies">${actives.map(([k,l,o])=>`<div class="ap"><span class="dt" style="background:${opsDot(o)}"></span><span class="tx"><b>${esc(l)}</b><small>${esc(describe(o))}</small></span><button class="lnk" data-rm="${esc(k)}">Quitar</button></div>`).join('')}</div>`:'<p class="note">Todavía no hay ningún tema. Elige un color arriba.</p>'}</div>`:''}
     </div></div>`;
-  const c=$('#pv');mountPreview(c,()=>({scr:SECSCR[sc]||'home'}));
+  const c=$('#pv');mountPreview(c,()=>({scr:tt==='crear'?SECSCR[sc]||'home':'home'}));
+  $('#t-tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;S.ttab=b.dataset.t;render(true)};
+  if(tt==='listos'){mountPresets($('#t-pre'));return}
+  if(tt==='mios'){mineUI($('#t-mios'));return}
   $('#t-sc').onclick=e=>{const b=e.target.closest('[data-sc]');if(!b)return;S.scope=b.dataset.sc;S.famOpen=null;render(true)};
   const get=()=>scopeOps(sc),set=o=>setScopeOps(sc,o);
   tintUI($('#t-tint'),'t',get,set,()=>render(true));
@@ -1209,12 +1224,13 @@ function scrExport(v){
     <div class="card"><p class="eyebrow">Qué se exporta</p><p class="big-n" id="x-cnt">0</p><p id="x-cntl"></p>
       <div class="chips" id="x-q"><button class="chip" data-q="all">Todas <small>${fs.length}</small></button>${nHand&&nTheme?`<button class="chip" data-q="hand">Solo editadas a mano <small>${nHand}</small></button>`:''}<button class="chip" data-q="none">Ninguna</button></div>
       <p class="note">${nHand} ${nHand===1?'editada':'editadas'} a mano (color propio o imagen nueva)${nTheme?` · ${nTheme} cambiadas por un tema de toda la radio o de una sección`:''}. El ZIP solo lleva las marcadas, cada una en su carpeta.</p>
-      <div class="field"><span class="lbl">Cómo lo vas a instalar</span><div class="seg seg3" id="x-mode"><button data-m="tc" aria-pressed="${S.xmode!=='lgu'&&S.xmode!=='auto'}">Total Commander</button><button data-m="auto" aria-pressed="${S.xmode==='auto'}">Automático</button><button data-m="lgu" aria-pressed="${S.xmode==='lgu'}">Actualización</button></div>
+      <details class="isd" id="x-oth"${S.xmode!=='auto'?' open':''}><summary><span>${S.xmode==='auto'?'Instalación automática con tu USB':S.xmode==='lgu'?'Como actualización oficial':'A mano con Total Commander'}<small>${S.xmode==='auto'?'Recomendada · toca para ver otros modos':'Toca para cambiar el modo'}</small></span></summary><div class="isb"><div class="field"><div class="seg seg3" id="x-mode"><button data-m="tc" aria-pressed="${S.xmode!=='lgu'&&S.xmode!=='auto'}">Total Commander</button><button data-m="auto" aria-pressed="${S.xmode==='auto'}">Automático</button><button data-m="lgu" aria-pressed="${S.xmode==='lgu'}">Actualización</button></div>
         <div class="chips" id="x-hw" ${S.xmode!=='lgu'?'hidden':''}><button class="chip" data-h="2" aria-pressed="${S.xhw!==1}">MediaNav Evolution</button><button class="chip" data-h="1" aria-pressed="${S.xhw===1}">MediaNav 1.ª generación</button></div>
-        <p class="note" id="x-mnote"></p></div>
+        <p class="note" id="x-mnote"></p></div></div></details>
       <p class="warnbox" id="x-part" hidden>Las imágenes que no exportes se quedarán como están en el coche, aunque aquí las veas cambiadas.</p>
       <div class="chk" id="x-chk"><span>Comprobando los archivos… <b id="x-n">0</b> de ${fs.length}</span></div>
       <label class="swrow" for="x-boot" id="x-bootrow"${S.xmode==='auto'?'':' hidden'}><span>Que se instale solo al arrancar<small>Para tu USB con ULC2_recovery: al arrancar pregunta si instalar (con el dedo, sin Total Commander). Si dices que no, abre Total Commander como siempre</small></span><input class="sw" type="checkbox" id="x-boot"${SET.xboot!==false?' checked':''}></label>
+      <div id="x-kit"${S.xmode==='auto'?'':' hidden'}></div>
       <label class="swrow" for="x-orig"><span>Incluir los originales<small>Carpeta ORIGINALES con solo estos archivos, para deshacer</small></span><input class="sw" type="checkbox" id="x-orig"${SET.xorig?' checked':''}></label>
       <button class="btn wide" id="x-go" disabled>Descargar ZIP</button>${S.demo?'':`<button class="btn o wide" id="x-sel" style="margin-top:8px">${ic('M4 6h16M4 12h16M4 18h10')}Varios diseños en el USB</button><p class="note" style="margin-top:4px">Un selector: al arrancar con el USB eliges en la radio cuál poner.</p>`}</div>
     <div class="card"><h3>Archivos</h3><div class="fl" id="x-list"><p class="note">Comprobando…</p></div></div></div>
@@ -1253,7 +1269,8 @@ function scrExport(v){
     const o=$('#x-orig').closest('.swrow').querySelector('small');if(o)o.textContent=S.xmode==='auto'?'Carpeta originales por si falta la copia que hace el script':S.xmode!=='lgu'?'Carpeta ORIGINALES con solo estos archivos, para deshacer':'Un segundo upgrade.lgu en RESTAURAR para deshacer'};
   modeUI();
   $('#x-boot').onchange=e=>{SET.xboot=e.target.checked;saveSet();modeUI()};
-  $('#x-mode').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;S.xmode=b.dataset.m;SET.xmode=S.xmode;saveSet();$$('#x-mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));modeUI()};
+  $('#x-mode').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;S.xmode=b.dataset.m;SET.xmode=S.xmode;saveSet();render(true)};
+  kitUI($('#x-kit'));
   $('#x-hw').onclick=e=>{const b=e.target.closest('[data-h]');if(!b)return;S.xhw=+b.dataset.h;$$('#x-hw .chip').forEach(x=>x.setAttribute('aria-pressed',x===b));modeUI()};
   const res=[];let i=0,done=false;
   const sel=()=>withTwins(res.filter(r=>!S.xoff.has(r.F.path)));
@@ -1279,7 +1296,7 @@ function scrExport(v){
   $('#x-go').onclick=async e=>{const btn=e.currentTarget,rs=sel();if(!rs.length)return;btn.disabled=true;btn.textContent='Preparando el ZIP…';
     try{const inc=$('#x-orig').checked,lgu=S.xmode==='lgu',ulc2=S.xhw!==1;let ents;
       if(lgu){ents=[{name:'upgrade.lgu',data:await makeLGU(lguEntries(rs,false),ulc2,'Mediaskinhz')}];if(inc)ents.push({name:'RESTAURAR/upgrade.lgu',data:await makeLGU(lguEntries(rs,true),ulc2,'Skinhz restaurar')})}
-      else if(S.xmode==='auto'){ents=autoEntries(rs,inc,{boot:SET.xboot!==false,name:(S.base&&S.base.name)||designName()}).ents}
+      else if(S.xmode==='auto'){const kit=SET.xkit!==false?await usbKit():null;ents=autoEntries(rs,inc,{boot:SET.xboot!==false,name:(S.base&&S.base.name)||designName(),kit}).ents}
       else{ents=rs.map(r=>({name:S.root+'/'+r.F.path,data:r.u}));if(inc)for(const r of rs)ents.push({name:'ORIGINALES/'+S.root+'/'+r.F.path,data:new Uint8Array(r.F.buf)})}
       const d=new Date(),stamp=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
       if(!S.demo){try{const dn=(S.base&&S.base.name)||designName();ents.push({name:'Mediaskinhz/diseno.mskz',data:new Uint8Array(await (await designFile({label:dn,t:Date.now(),n:S.files.filter(changed).length,st:packState(),thumb:designThumb()})).arrayBuffer())})}catch(_){}}
@@ -1323,7 +1340,7 @@ function openMenu(){const G=t=>`<p class="lbl" style="margin:12px 6px 4px">${t}<
     if(m==='load')openLoad();
     else if(m==='kit'){closeBS();makeKit()}
     else if(m==='settings'){closeBS();if(S.stab==='des')S.stab='pref';go({n:'settings'})}
-    else if(m==='designs'){closeBS();S.focus='s-des';go({n:'settings'})}
+    else if(m==='designs'){closeBS();S.ttab='mios';go({n:'theme'})}
     else if(m==='save'){closeBS();saveDesign()}
     else if(m==='reset'){const n=updBadge();if(!await confirmBS({title:'Quitar todos los cambios',text:`Las ${n} imágenes cambiadas volverán a ser las originales. Se guardará antes una copia automática y también podrás deshacerlo.`,ok:'Quitar los cambios',danger:true}))return;
       await addPoint('Antes de quitar todos los cambios','auto');before();S.ops={global:null,sec:{},file:{}};S.ex={};for(const F of S.files)F.rep=null;S.src=new Map();bump();render(true);toast('Cambios quitados',{label:'Deshacer',fn:undo})}
@@ -1354,7 +1371,7 @@ function bind(){
     const ed=t.closest('[data-edit]');if(ed){const F=S.files[+ed.dataset.f];if(F){if(isBtnLike(F))btnSheet(F);else go({n:'edit',p:F.path})}return}
     const g=t.closest('[data-go]');if(g){go({n:g.dataset.go});return}
     const c=t.closest('[data-cat]');if(c){S.sec=c.dataset.sec||'all';S.kind='all';S.onlyCh=false;if(c.dataset.cat!=='*'){S.cat=c.dataset.cat;remember()}go({n:'cat',c:c.dataset.cat});return}
-    const a=t.closest('[data-act]');if(a&&a.dataset.act==='load')openLoad();if(a&&a.dataset.act==='kit')makeKit();if(a&&a.dataset.act==='designs'){S.focus='s-des';go({n:'settings'})}});
+    const a=t.closest('[data-act]');if(a&&a.dataset.act==='load')openLoad();if(a&&a.dataset.act==='kit')makeKit();if(a&&a.dataset.act==='designs'){S.ttab='mios';go({n:'theme'})}if(a&&a.dataset.act==='listos'){S.ttab='listos';go({n:'theme'})}});
   $('#in-dir').onchange=e=>{fromFileList(e.target.files);e.target.value=''};$('#in-zip').onchange=e=>{fromFileList(e.target.files);e.target.value=''};
   let dc=0;const da=$('#dropall');
   addEventListener('dragenter',e=>{if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')&&S.route.n!=='edit'){dc++;da.hidden=false}});
@@ -1776,7 +1793,7 @@ async function makeKit(){
 }
 
 /* ============ ajustes, confirmaciones, puntos de restauración e historial ============ */
-const SETDEF={confirm:true,auto:true,xboot:true,xmode:'tc',xhw:2,xorig:true,pv:'m',theme:'auto'};
+const SETDEF={confirm:true,auto:true,xboot:true,xmode:'auto',xhw:2,xorig:true,pv:'m',theme:'auto'};
 let SET={...SETDEF};
 function loadSet(){try{SET={...SETDEF,...JSON.parse(localStorage.getItem('skinhz-set')||'{}')}}catch(_){SET={...SETDEF}}
   if(S.xmode===undefined)S.xmode=SET.xmode;if(S.xhw===undefined)S.xhw=SET.xhw;applySetUI()}
@@ -2256,10 +2273,10 @@ function autoEntries(rs,inc,o){o=o||{};
   const when=`${z(d.getDate())}/${z(d.getMonth()+1)}/${d.getFullYear()} ${z(d.getHours())}:${z(d.getMinutes())}`;
   const items=rs.map(r=>({path:r.F.path,size:r.u.length}));
   const e=[{name:'Mediaskinhz/instalar.mscr',data:ansi(mortInstall(R,items,id,when,{name:o.name,undo:o.undo}))},{name:'Mediaskinhz/deshacer.mscr',data:ansi(mortUndo(R,items,id,when))}];
-  if(o.boot){e.push({name:'Medianav.mscr',data:ansi(mortBoot(items,id,when,o.name||'Mediaskinhz',o.undo))});e.push({name:'Mediaskinhz/Medianav-original.mscr',data:ansi(MEDIANAV_ORIG)})}
+  if(o.boot){e.push({name:'Medianav.mscr',data:ansi(mortBoot(items,id,when,o.name||'Mediaskinhz',o.undo))});e.push({name:'Mediaskinhz/Medianav-original.mscr',data:kitOrig(o.kit)})}
   for(const r of rs)e.push({name:`Mediaskinhz/archivos/${R}/${r.F.path}`,data:r.u});
   if(inc)for(const r of rs)e.push({name:`Mediaskinhz/originales/${R}/${r.F.path}`,data:new Uint8Array(r.F.buf)});
-  return {ents:e,id};
+  return {ents:withKit(e,o.kit,o.boot),id};
 }
 
 /* ============ selector de diseños en el USB ============
@@ -2340,12 +2357,13 @@ async function selectorZip(list,onp){await loadVistas().catch(()=>{});
     for(const p of U){const F=FF.get(p);if(!F)continue;const u=(m&&m.get(p))||new Uint8Array(F.buf);items.push({path:p,size:u.length});ents.push({name:`Mediaskinhz/disenos/${dir}/archivos/${R}/${p}`,data:u})}
     ents.push({name:`Mediaskinhz/disenos/${dir}/instalar.mscr`,data:ansi(mortInstall(R,items,id+'-'+k,when,{name,undo,sel:true}))});skins.push({dir,name})};
   list.forEach((x,i)=>add(x.name,maps[i],false));add('Original de Renault',null,true);
-  ents.unshift({name:'Medianav.mscr',data:ansi(mortSelect(skins,id,when))},{name:'Mediaskinhz/Medianav-original.mscr',data:ansi(MEDIANAV_ORIG)});
+  const kit=SET.xkit!==false?await usbKit():null;
+  ents.unshift({name:'Medianav.mscr',data:ansi(mortSelect(skins,id,when))},{name:'Mediaskinhz/Medianav-original.mscr',data:kitOrig(kit)});
   ents.push({name:'LEEME.txt',data:new TextEncoder().encode(['Mediaskinhz · selector de diseños en el USB','',`Diseños: ${skins.map(s=>s.name).join(' · ')}`,`Archivos por diseño: ${U.length}`,'',
     '1. Descomprime este ZIP en la raíz de tu USB de siempre (el de ULC2_recovery, MortScript y Total Commander) y acepta sobrescribir.','   Tu Medianav.mscr de antes queda en Mediaskinhz\\Medianav-original.mscr.',
     '2. Arranca la radio con el USB como para entrar a Total Commander. A los 25 s sale la lista de diseños.','3. Toca el que quieras y pulsa Aceptar. Se guarda una copia, se instala, se comprueba y, si falla, la radio vuelve a como estaba.',
     '4. Al terminar: primero ACEPTAR y, cuando la pantalla se apague, saca el USB.','','Para cambiar otro día de diseño, vuelve a arrancar con el USB y elige otro. «Original de Renault» deja todo como de fábrica.'].join('\r\n'))});
-  return {zip:await makeZip(ents),n:U.length,skins}}
+  return {zip:await makeZip(withKit(ents,kit,true)),n:U.length,skins}}
 async function selectorSheet(){if(S.demo){toast('Carga tu backup para preparar el selector');return}
   const ds=(await listPoints()).filter(p=>p.kind==='manual'),cur=S.files.some(changed);
   const row=(v,t,sub,on)=>`<label class="ck" style="display:flex;gap:10px;align-items:center;padding:8px 2px"><input type="checkbox" value="${esc(v)}"${on?' checked':''}><span><b>${esc(t)}</b>${sub?`<br><small class="note">${esc(sub)}</small>`:''}</span></label>`;
@@ -2361,6 +2379,43 @@ async function selectorSheet(){if(S.demo){toast('Carga tu backup para preparar e
     closeBS();toast('Preparando el selector…',{ms:120000});
     try{const r=await selectorZip(list,(i,n)=>toast(`Preparando el selector… ${i+1} de ${n}`,{ms:120000}));const d=new Date();await saveBlob(r.zip,`mediaskinhz-selector-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.zip`);
       toast(`Selector listo: ${r.skins.length} opciones, ${r.n} imágenes cada una`)}catch(e){console.error(e);toast('No se ha podido preparar el selector')}}}
+
+/* ============ lanzador del USB ============
+   Para preparar un USB nuevo de una vez: guardas una vez el contenido de tu USB de siempre (ULC2_recovery, MortScript, Total Commander, REINICIAR…)
+   y cada exportación automática lo lleva completo. Se guarda solo en este navegador (IndexedDB), nunca se sube a ningún sitio:
+   el repositorio de la app es público y esos archivos (y la clave de tu equipo) no pueden ir en él. */
+async function usbKit(){try{return await idb.get('usbkit')}catch(_){return null}}
+function kitOrig(kit){return kit&&kit.orig?kit.orig:ansi(MEDIANAV_ORIG)}
+// junta el lanzador con lo que genera Mediaskinhz; lo de Mediaskinhz manda si se repite un nombre
+function withKit(ents,kit,boot){if(!kit||!kit.files)return ents;const have=new Set(ents.map(e=>e.name.toLowerCase()));
+  const add=kit.files.filter(f=>!have.has(f.name.toLowerCase())&&!(boot&&f.name.toLowerCase()==='medianav.mscr')).map(f=>({name:f.name,data:f.data}));
+  if(!boot&&kit.orig&&!have.has('medianav.mscr')&&!add.some(f=>f.name.toLowerCase()==='medianav.mscr'))add.push({name:'Medianav.mscr',data:kit.orig});return [...add,...ents]}
+async function saveUsbKit(fl){const arr=[...fl];if(!arr.length)return false;let files=[];
+  if(arr.length===1&&/\.rar$/i.test(arr[0].name)){toast('El navegador no puede abrir .rar: comprímelo como .zip o elige la carpeta del USB.',{ms:7000});return false}
+  if(arr.length===1&&/\.zip$/i.test(arr[0].name)){try{files=(await readZip(await arr[0].arrayBuffer(),()=>true)).map(e=>({name:e.path.replace(/\\/g,'/'),data:new Uint8Array(e.buf)}))}catch(e){toast('No se ha podido leer el ZIP');return false}}
+  else for(const f of arr)files.push({name:(f.webkitRelativePath||f.name).replace(/\\/g,'/'),data:new Uint8Array(await f.arrayBuffer())});
+  files=files.filter(f=>f.name&&!f.name.endsWith('/'));
+  // la raíz del USB es donde está MortScript.exe
+  const ms=files.find(f=>/(^|\/)mortscript\.exe$/i.test(f.name));if(!ms){toast('No parece tu USB del lanzador: falta MortScript.exe',{ms:6000});return false}
+  const pre=ms.name.slice(0,ms.name.length-'mortscript.exe'.length);
+  files=files.filter(f=>f.name.toLowerCase().startsWith(pre.toLowerCase())).map(f=>({...f,name:f.name.slice(pre.length)}))
+    .filter(f=>!/^(mediaskinhz|m1|m0|m1_inv|originales|restaurar)\//i.test(f.name)&&!/^(leeme\.txt|upgrade\.lgu)$/i.test(f.name)&&f.data.length<40e6);
+  const mn=files.find(f=>f.name.toLowerCase()==='medianav.mscr');let orig=null;
+  if(mn){const t=new TextDecoder('latin1').decode(mn.data);if(!/^#\s*Mediaskinhz/i.test(t))orig=mn.data}
+  const size=files.reduce((a,f)=>a+f.data.length,0);
+  try{await idb.set('usbkit',{t:Date.now(),files,orig,size,n:files.length})}catch(_){toast('No queda espacio en el navegador para guardar el USB');return false}
+  toast(`Lanzador guardado: ${files.length} archivos (${fsz(size)})`);return true}
+function pickUsbKit(after){openBS(`<h2>Guardar el contenido de tu USB</h2><p class="note">Elige tu USB de siempre (el que arranca Total Commander): un <b>ZIP</b> de todo su contenido o, en el ordenador, la <b>carpeta</b> del USB. Se guarda solo en este dispositivo; las imágenes y backups que haya en él no se guardan.</p>
+  <div class="stack" style="gap:8px"><button class="btn wide" id="k-zip">Elegir un ZIP</button><button class="btn o wide" id="k-dir">Elegir la carpeta del USB</button><button class="btn o wide" id="k-x">Cancelar</button></div>`);
+  const mk=dir=>{const i=document.createElement('input');i.type='file';if(dir){i.webkitdirectory=true;i.multiple=true}else i.accept='.zip,application/zip';
+    i.onchange=async()=>{closeBS();toast('Leyendo tu USB…',{ms:30000});if(await saveUsbKit(i.files)&&after)after()};i.click()};
+  $('#k-zip').onclick=()=>mk(false);$('#k-dir').onclick=()=>mk(true);$('#k-x').onclick=()=>closeBS()}
+async function kitUI(el){if(!el||S.demo){if(el)el.hidden=true;return}const kit=await usbKit();if(!el.isConnected)return;
+  el.innerHTML=kit?`<label class="swrow" for="x-kitc"><span>Incluir el lanzador completo<small>Para un USB nuevo: ${kit.n} archivos de tu USB (${fsz(kit.size)}) · <a href="#" id="x-kitr">cambiar</a></small></span><input class="sw" type="checkbox" id="x-kitc"${SET.xkit!==false?' checked':''}></label>`
+    :`<div class="li" style="padding:10px 0"><span class="tx"><b>¿USB nuevo?</b><small>Guarda una vez el contenido de tu USB de siempre y cada exportación lo llevará completo, listo para arrancar.</small></span></div><button class="btn o sm" id="x-kits">Guardar el contenido de mi USB</button>`;
+  const c=el.querySelector('#x-kitc');if(c)c.onchange=e=>{SET.xkit=e.target.checked;saveSet()};
+  const r=el.querySelector('#x-kitr');if(r)r.onclick=e=>{e.preventDefault();pickUsbKit(()=>kitUI(el))};
+  const sv=el.querySelector('#x-kits');if(sv)sv.onclick=()=>pickUsbKit(()=>kitUI(el))}
 
 /* ============ biblioteca de iconos (Tabler Icons, MIT) ============
    site/iconos.json se descarga la primera vez que hace falta (≈300 KB) y el service worker lo guarda aparte.
@@ -3084,7 +3139,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-28-12';
+const VER='2026-10-28-13';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3092,6 +3147,10 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-28-13',['La pestaña Tema pasa a ser Diseños, con tres partes: Listos (los diseños completos), Mis diseños (cargar con un toque, guardar, importar) y Crear el tuyo (estilo de los botones, color de toda la radio o de cada sección, colores concretos y ajustes finos)',
+    'Pantalla más limpia: sin el bloque de diseños listos ni el color de toda la radio (están en Diseños)',
+    'Exportar: la instalación automática es la de por defecto; Total Commander y la actualización oficial quedan plegados en «Otros modos»',
+    'Lanzador del USB para un USB nuevo: guarda una vez el contenido de tu USB de siempre (ZIP o carpeta) y cada exportación automática y el selector lo llevan completo. Se queda solo en tu dispositivo']],
   ['2026-10-28-12',['«Varios diseños en el USB» justo debajo de «Descargar ZIP»',
     'Menú «⋯» ordenado por grupos: Tu diseño (guardar, Mis diseños), Backup (cargar, quitar cambios, cerrar) y Más (kit de prueba, Ajustes). El modo oscuro sale de ahí: está en Ajustes → Preferencias → Tema',
     'Ajustes con pestañas claras: Mis diseños, Exportaciones, Preferencias y App. El kit de prueba ya no se repite en Pantalla']],

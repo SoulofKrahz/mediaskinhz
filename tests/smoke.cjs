@@ -132,6 +132,8 @@ async function run(browser, label, viewport, mobile) {
     const r = await selectorZip([{ name: 'Actual', cur: true }, { name: PRESETS[0].name, preset: PRESETS[0] }]); const txt = mortSelect(r.skins, 'x', 'y');
     return { ok: r.zip.size > 1000 && r.skins.length === 3 && S.files.filter(changed).length === n0 && JSON.stringify(S.ops.global) === g0 && /Choice\(/.test(txt) && txt.split('\n').filter(l => /^\s*If /.test(l)).length === txt.split('\n').filter(l => /^\s*EndIf/.test(l)).length }; });
   ok(sel.ok, 'el selector de diseños del USB se prepara (2 diseños + original) sin tocar lo que tienes');
+  const dz = await p.evaluate(async () => { S.ttab = 'mios'; go({ n: 'theme' }); await new Promise(r => setTimeout(r, 400)); const a = document.querySelectorAll('#t-tabs button').length; S.ttab = 'crear'; render(true); await new Promise(r => setTimeout(r, 300)); const b = !!document.querySelector('#t-tint'); const k = withKit([{ name: 'Medianav.mscr', data: new Uint8Array(1) }], { files: [{ name: 'MortScript.exe', data: new Uint8Array(2) }, { name: 'medianav.mscr', data: new Uint8Array(3) }], orig: new Uint8Array(3) }, true).map(e => e.name).join(','); S.ttab = 'listos'; go({ n: 'home' }); return a === 3 && b && k === 'MortScript.exe,Medianav.mscr'; });
+  ok(dz, 'la pestaña Diseños tiene Listos, Mis diseños y Crear el tuyo; el lanzador del USB se junta sin repetir Medianav.mscr');
   ok(sty.n >= 47 && !sty.bad.length, `los ${sty.n} estilos de botón se dibujan` + (sty.bad.length ? ': fallan ' + sty.bad.join(', ') : ''));
   // Diálogo para poner nombre (lo usan «Mis diseños»)
   const nm = p.evaluate(() => promptBS({ title: 'Prueba', value: 'Mi diseño' })); await p.waitForTimeout(300);

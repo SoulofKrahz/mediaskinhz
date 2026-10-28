@@ -252,10 +252,10 @@ function autoEntries(rs,inc,o){o=o||{};
   const when=`${z(d.getDate())}/${z(d.getMonth()+1)}/${d.getFullYear()} ${z(d.getHours())}:${z(d.getMinutes())}`;
   const items=rs.map(r=>({path:r.F.path,size:r.u.length}));
   const e=[{name:'Mediaskinhz/instalar.mscr',data:ansi(mortInstall(R,items,id,when,{name:o.name,undo:o.undo}))},{name:'Mediaskinhz/deshacer.mscr',data:ansi(mortUndo(R,items,id,when))}];
-  if(o.boot){e.push({name:'Medianav.mscr',data:ansi(mortBoot(items,id,when,o.name||'Mediaskinhz',o.undo))});e.push({name:'Mediaskinhz/Medianav-original.mscr',data:ansi(MEDIANAV_ORIG)})}
+  if(o.boot){e.push({name:'Medianav.mscr',data:ansi(mortBoot(items,id,when,o.name||'Mediaskinhz',o.undo))});e.push({name:'Mediaskinhz/Medianav-original.mscr',data:kitOrig(o.kit)})}
   for(const r of rs)e.push({name:`Mediaskinhz/archivos/${R}/${r.F.path}`,data:r.u});
   if(inc)for(const r of rs)e.push({name:`Mediaskinhz/originales/${R}/${r.F.path}`,data:new Uint8Array(r.F.buf)});
-  return {ents:e,id};
+  return {ents:withKit(e,o.kit,o.boot),id};
 }
 
 /* ============ selector de diseños en el USB ============
@@ -336,12 +336,13 @@ async function selectorZip(list,onp){await loadVistas().catch(()=>{});
     for(const p of U){const F=FF.get(p);if(!F)continue;const u=(m&&m.get(p))||new Uint8Array(F.buf);items.push({path:p,size:u.length});ents.push({name:`Mediaskinhz/disenos/${dir}/archivos/${R}/${p}`,data:u})}
     ents.push({name:`Mediaskinhz/disenos/${dir}/instalar.mscr`,data:ansi(mortInstall(R,items,id+'-'+k,when,{name,undo,sel:true}))});skins.push({dir,name})};
   list.forEach((x,i)=>add(x.name,maps[i],false));add('Original de Renault',null,true);
-  ents.unshift({name:'Medianav.mscr',data:ansi(mortSelect(skins,id,when))},{name:'Mediaskinhz/Medianav-original.mscr',data:ansi(MEDIANAV_ORIG)});
+  const kit=SET.xkit!==false?await usbKit():null;
+  ents.unshift({name:'Medianav.mscr',data:ansi(mortSelect(skins,id,when))},{name:'Mediaskinhz/Medianav-original.mscr',data:kitOrig(kit)});
   ents.push({name:'LEEME.txt',data:new TextEncoder().encode(['Mediaskinhz · selector de diseños en el USB','',`Diseños: ${skins.map(s=>s.name).join(' · ')}`,`Archivos por diseño: ${U.length}`,'',
     '1. Descomprime este ZIP en la raíz de tu USB de siempre (el de ULC2_recovery, MortScript y Total Commander) y acepta sobrescribir.','   Tu Medianav.mscr de antes queda en Mediaskinhz\\Medianav-original.mscr.',
     '2. Arranca la radio con el USB como para entrar a Total Commander. A los 25 s sale la lista de diseños.','3. Toca el que quieras y pulsa Aceptar. Se guarda una copia, se instala, se comprueba y, si falla, la radio vuelve a como estaba.',
     '4. Al terminar: primero ACEPTAR y, cuando la pantalla se apague, saca el USB.','','Para cambiar otro día de diseño, vuelve a arrancar con el USB y elige otro. «Original de Renault» deja todo como de fábrica.'].join('\r\n'))});
-  return {zip:await makeZip(ents),n:U.length,skins}}
+  return {zip:await makeZip(withKit(ents,kit,true)),n:U.length,skins}}
 async function selectorSheet(){if(S.demo){toast('Carga tu backup para preparar el selector');return}
   const ds=(await listPoints()).filter(p=>p.kind==='manual'),cur=S.files.some(changed);
   const row=(v,t,sub,on)=>`<label class="ck" style="display:flex;gap:10px;align-items:center;padding:8px 2px"><input type="checkbox" value="${esc(v)}"${on?' checked':''}><span><b>${esc(t)}</b>${sub?`<br><small class="note">${esc(sub)}</small>`:''}</span></label>`;
@@ -357,3 +358,40 @@ async function selectorSheet(){if(S.demo){toast('Carga tu backup para preparar e
     closeBS();toast('Preparando el selector…',{ms:120000});
     try{const r=await selectorZip(list,(i,n)=>toast(`Preparando el selector… ${i+1} de ${n}`,{ms:120000}));const d=new Date();await saveBlob(r.zip,`mediaskinhz-selector-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.zip`);
       toast(`Selector listo: ${r.skins.length} opciones, ${r.n} imágenes cada una`)}catch(e){console.error(e);toast('No se ha podido preparar el selector')}}}
+
+/* ============ lanzador del USB ============
+   Para preparar un USB nuevo de una vez: guardas una vez el contenido de tu USB de siempre (ULC2_recovery, MortScript, Total Commander, REINICIAR…)
+   y cada exportación automática lo lleva completo. Se guarda solo en este navegador (IndexedDB), nunca se sube a ningún sitio:
+   el repositorio de la app es público y esos archivos (y la clave de tu equipo) no pueden ir en él. */
+async function usbKit(){try{return await idb.get('usbkit')}catch(_){return null}}
+function kitOrig(kit){return kit&&kit.orig?kit.orig:ansi(MEDIANAV_ORIG)}
+// junta el lanzador con lo que genera Mediaskinhz; lo de Mediaskinhz manda si se repite un nombre
+function withKit(ents,kit,boot){if(!kit||!kit.files)return ents;const have=new Set(ents.map(e=>e.name.toLowerCase()));
+  const add=kit.files.filter(f=>!have.has(f.name.toLowerCase())&&!(boot&&f.name.toLowerCase()==='medianav.mscr')).map(f=>({name:f.name,data:f.data}));
+  if(!boot&&kit.orig&&!have.has('medianav.mscr')&&!add.some(f=>f.name.toLowerCase()==='medianav.mscr'))add.push({name:'Medianav.mscr',data:kit.orig});return [...add,...ents]}
+async function saveUsbKit(fl){const arr=[...fl];if(!arr.length)return false;let files=[];
+  if(arr.length===1&&/\.rar$/i.test(arr[0].name)){toast('El navegador no puede abrir .rar: comprímelo como .zip o elige la carpeta del USB.',{ms:7000});return false}
+  if(arr.length===1&&/\.zip$/i.test(arr[0].name)){try{files=(await readZip(await arr[0].arrayBuffer(),()=>true)).map(e=>({name:e.path.replace(/\\/g,'/'),data:new Uint8Array(e.buf)}))}catch(e){toast('No se ha podido leer el ZIP');return false}}
+  else for(const f of arr)files.push({name:(f.webkitRelativePath||f.name).replace(/\\/g,'/'),data:new Uint8Array(await f.arrayBuffer())});
+  files=files.filter(f=>f.name&&!f.name.endsWith('/'));
+  // la raíz del USB es donde está MortScript.exe
+  const ms=files.find(f=>/(^|\/)mortscript\.exe$/i.test(f.name));if(!ms){toast('No parece tu USB del lanzador: falta MortScript.exe',{ms:6000});return false}
+  const pre=ms.name.slice(0,ms.name.length-'mortscript.exe'.length);
+  files=files.filter(f=>f.name.toLowerCase().startsWith(pre.toLowerCase())).map(f=>({...f,name:f.name.slice(pre.length)}))
+    .filter(f=>!/^(mediaskinhz|m1|m0|m1_inv|originales|restaurar)\//i.test(f.name)&&!/^(leeme\.txt|upgrade\.lgu)$/i.test(f.name)&&f.data.length<40e6);
+  const mn=files.find(f=>f.name.toLowerCase()==='medianav.mscr');let orig=null;
+  if(mn){const t=new TextDecoder('latin1').decode(mn.data);if(!/^#\s*Mediaskinhz/i.test(t))orig=mn.data}
+  const size=files.reduce((a,f)=>a+f.data.length,0);
+  try{await idb.set('usbkit',{t:Date.now(),files,orig,size,n:files.length})}catch(_){toast('No queda espacio en el navegador para guardar el USB');return false}
+  toast(`Lanzador guardado: ${files.length} archivos (${fsz(size)})`);return true}
+function pickUsbKit(after){openBS(`<h2>Guardar el contenido de tu USB</h2><p class="note">Elige tu USB de siempre (el que arranca Total Commander): un <b>ZIP</b> de todo su contenido o, en el ordenador, la <b>carpeta</b> del USB. Se guarda solo en este dispositivo; las imágenes y backups que haya en él no se guardan.</p>
+  <div class="stack" style="gap:8px"><button class="btn wide" id="k-zip">Elegir un ZIP</button><button class="btn o wide" id="k-dir">Elegir la carpeta del USB</button><button class="btn o wide" id="k-x">Cancelar</button></div>`);
+  const mk=dir=>{const i=document.createElement('input');i.type='file';if(dir){i.webkitdirectory=true;i.multiple=true}else i.accept='.zip,application/zip';
+    i.onchange=async()=>{closeBS();toast('Leyendo tu USB…',{ms:30000});if(await saveUsbKit(i.files)&&after)after()};i.click()};
+  $('#k-zip').onclick=()=>mk(false);$('#k-dir').onclick=()=>mk(true);$('#k-x').onclick=()=>closeBS()}
+async function kitUI(el){if(!el||S.demo){if(el)el.hidden=true;return}const kit=await usbKit();if(!el.isConnected)return;
+  el.innerHTML=kit?`<label class="swrow" for="x-kitc"><span>Incluir el lanzador completo<small>Para un USB nuevo: ${kit.n} archivos de tu USB (${fsz(kit.size)}) · <a href="#" id="x-kitr">cambiar</a></small></span><input class="sw" type="checkbox" id="x-kitc"${SET.xkit!==false?' checked':''}></label>`
+    :`<div class="li" style="padding:10px 0"><span class="tx"><b>¿USB nuevo?</b><small>Guarda una vez el contenido de tu USB de siempre y cada exportación lo llevará completo, listo para arrancar.</small></span></div><button class="btn o sm" id="x-kits">Guardar el contenido de mi USB</button>`;
+  const c=el.querySelector('#x-kitc');if(c)c.onchange=e=>{SET.xkit=e.target.checked;saveSet()};
+  const r=el.querySelector('#x-kitr');if(r)r.onclick=e=>{e.preventDefault();pickUsbKit(()=>kitUI(el))};
+  const sv=el.querySelector('#x-kits');if(sv)sv.onclick=()=>pickUsbKit(()=>kitUI(el))}
