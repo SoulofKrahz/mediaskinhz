@@ -129,7 +129,7 @@ function btnSheet(F,after,el){
 
 /* ---- Diseños listos: un diseño completo de una vez ----
    Botones de Inicio y de dentro (estilo, color del marco y del icono) + color de toda la radio (fondos, barra de arriba, listas, barras…) + tono del negro de los fondos.
-   Se ve antes de aplicarlo: una hoja con la vista previa de cada pantalla. look = estilo · hue = color · ihue = color del icono (null = el del estilo) · bk = tono del negro (null = negro) */
+   Se ve antes de aplicarlo: una hoja con la vista previa de cada pantalla. look = estilo · hue = color · ihue = color del icono (null = el del estilo) · bk = tono de los fondos (null = el mismo color) */
 const PRESETS=[
   ['neon-az','Neón azul','neon',210,null,215],['bisel-lima','Biselado lima','chamfer',75,null,null],['futuro-cian','Futurista cian','hud',185,null,195],
   ['carbono-rojo','Carbono rojo','carbon',0,null,null],['aurora','Aurora morada','aurora',275,null,270],['cristal','Cristal azul','glass',205,'white',210],
@@ -148,10 +148,12 @@ function presetSet(P){const g=S.gen||(S.gen=defGen()),T=genTargets(),L=presetIns
   const setI=p=>{if(P.ihue!=null)p.ihue=P.ihue;else delete p.ihue};
   for(const F of T){const p=g.per[F.path];if(p){delete p.hue;setI(p)}else if(P.ihue!=null)g.per[F.path]={ihue:P.ihue}}
   for(const F of L){const p=g.per[F.path]||(g.per[F.path]={});p.look=P.look;p.hue=P.hue;setI(p)}
-  // color de toda la radio: fondos, barra de arriba, listas, barras, iconos sueltos… (solo las partes de color; grises y blancos se quedan)
-  S.ops.global={...defOps(),tH:P.hue,tA:100,tG:false};S.ops.sec={};
-  for(const n of new Set(SCRBG.values())){const B=byName(n);if(!B)continue;const o={...defOps(),...(S.ops.file[B.path]||{})};o.map={...(o.map||{})};
-    if(P.bk==null)delete o.map[13];else o.map[13]={to:P.bk,ts:.6,tl:.1};if(!Object.keys(o.map).length)delete o.map;setFileOps(B,o)}
+  // color de toda la radio: en lo de color (iconos, textos en imagen…) cambia solo el tono; en fondos, barras, líneas, listas y botones de forma rara
+  // se tiñe todo (también grises y el negro) para que el diseño quede de una pieza. Lo que pusiste tú a mano (una foto, el reposo) no se toca
+  S.ops.global={...defOps(),tH:P.hue,tA:100,tG:false};S.ops.sec={};const TL=new Set([...T,...L]),bgs=new Set([...SCRBG.values()].map(byName).filter(Boolean)),bk=P.bk==null?P.hue:P.bk;
+  for(const F of S.files){if(TL.has(F))continue;const k=kindOf(F),odd=k==='btn';if(k==='ico'&&!/line/.test(F.lc))continue;
+    if(odd){delete g.per[F.path];if(F.rep&&(F.rep.by==='gen'||F.rep.by==='btn'))F.rep=null;if(S.icx)delete S.icx[F.path];if(S.ex[F.path]===true&&!F.rep)delete S.ex[F.path];F.cv=null}
+    if(F.rep)continue;const o={...defOps(),tH:k==='bg'?bk:P.hue,tA:k==='bg'?90:100,tG:true};if(bgs.has(F))o.map={13:{to:bk,ts:.65,tl:.11}};setFileOps(F,o)}
   return {T,L}}
 const PSCR=[['home','Inicio'],['radio','Radio'],['media','Multimedia'],['phone','Teléfono'],['setting','Ajustes'],['eco','Driving eco']];
 function presetSheet(P0){

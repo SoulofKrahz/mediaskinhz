@@ -125,7 +125,7 @@ async function run(browser, label, viewport, mobile) {
     document.querySelector('#ps-l [data-v="ocaso"]').click(); await new Promise(r => setTimeout(r, 300)); const sw = S.gen.look === 'sunset' && S.ops.global.tH === 30 && H.length === n0 + 1;
     document.querySelector('#ps-x').click(); await new Promise(r => setTimeout(r, 300)); const back = JSON.stringify(S.ops.global) === g0 && H.length === n0;
     presetSheet(PRESETS[1]); await new Promise(r => setTimeout(r, 300)); document.querySelector('#ps-ok').click(); await new Promise(r => setTimeout(r, 600));
-    const T = genTargets(), L = presetInside(), ap = S.gen.look === PRESETS[1].look && T.every(F => F.rep && F.rep.by === 'gen') && L.every(F => S.gen.per[F.path].look === PRESETS[1].look) && S.ops.global.tA === 100;
+    const T = genTargets(), L = presetInside(), ap = S.gen.look === PRESETS[1].look && T.every(F => F.rep && F.rep.by === 'gen') && L.every(F => S.gen.per[F.path].look === PRESETS[1].look) && S.ops.global.tA === 100 && [...SCRBG.values()].map(byName).filter(Boolean).every(B => (S.ops.file[B.path] || {}).tG === true);
     undo(); return { bad, pv, sw, back, ap, nL: L.length }; });
   ok(!pre.bad.length && pre.pv && pre.sw && pre.back && pre.ap, `diseños listos: vista previa, cambiar, cancelar sin dejar rastro y aplicar a Inicio, ${pre.nL} botones de dentro y el color de la radio` + (pre.ap && pre.back ? "" : JSON.stringify(pre)));
   ok(sty.n >= 40 && !sty.bad.length, `los ${sty.n} estilos de botón se dibujan` + (sty.bad.length ? ': fallan ' + sty.bad.join(', ') : ''));

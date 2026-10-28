@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-28-6';
+const VER='2026-10-28-7';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,10 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-28-7',['Diseños listos de verdad en un toque: el fondo de cada pantalla se tiñe con el color del diseño (también el negro), igual que la barra de arriba, líneas, listas y ventanas',
+    'Las flechas grandes de avanzar y retroceder (presintonías, carátulas, Driving eco) y demás botones de forma rara también cambian: toman el color del diseño sin deformarse',
+    'Sin marcos de otro color: el borde morado de los botones de Multimedia sigue al color del diseño',
+    'Anillo: el círculo solo sale en los botones con icono']],
   ['2026-10-28-6',['Diseños listos completos: además de los botones cambian los fondos, la barra de arriba, listas y barras de toda la radio',
     'Vista previa antes de aplicar: se abre con la pantalla grande, pasas por Inicio, Radio, Multimedia, Teléfono, Ajustes y Driving eco, pruebas otros diseños y solo se queda si pulsas «Aplicar». Cancelar no deja rastro',
     '10 estilos de botón más: Anillo, Pestaña, Esquinas, Píxel retro, Borde degradado, Hundido, Puntos, Onda, Dos tonos y Circuito (40 en total). 23 diseños listos']],

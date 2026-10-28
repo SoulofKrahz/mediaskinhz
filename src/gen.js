@@ -73,7 +73,8 @@ function borderColor(F){if(F.bdc)return F.bdc;const fw=F.w/frames(F),rs=[],gs=[]
   // las pantallas del MediaNav son oscuras: un borde claro o de color es parte del botón, no del fondo
   F.bdc=(r*.3+G*.59+B*.11)<60?`rgb(${r},${G},${B})`:'#000';return F.bdc}
 function cornerBase(F){const s=S.layout.slots.find(s=>s.p===F.path),bg=byName('common/home_bg.bmp'),fw=F.w/frames(F),c=document.createElement('canvas');c.width=fw;c.height=F.h;const x=c.getContext('2d');
-  if(!s){if(!F.keyCount){x.fillStyle=borderColor(F);x.fillRect(0,0,fw,F.h)}return c}x.fillStyle='#000';x.fillRect(0,0,fw,F.h);
+  // fuera de Inicio: el color del borde original, teñido con el color de toda la radio (si lo hay) para que no quede un marco de otro color
+  if(!s){if(!F.keyCount){let col=borderColor(F);const o=S.ops.global;if(o&&o.tA){const m=col.match(/\d+/g);if(m){const [r,g,b]=applyOps(m.slice(0,3).map(Number),{...o,tG:true});col=`rgb(${r},${g},${b})`}}x.fillStyle=col;x.fillRect(0,0,fw,F.h)}return c}x.fillStyle='#000';x.fillRect(0,0,fw,F.h);
   if(s&&bg)x.drawImage(renderCanvas(bg,false),s.x,s.y,fw,F.h,0,0,fw,F.h);return c}
 function rrect(x,X,Y,W,H,r){r=Math.max(0,Math.min(r,W/2,H/2));x.beginPath();x.moveTo(X+r,Y);x.lineTo(X+W-r,Y);x.arcTo(X+W,Y,X+W,Y+r,r);x.lineTo(X+W,Y+H-r);x.arcTo(X+W,Y+H,X+W-r,Y+H,r);x.lineTo(X+r,Y+H);x.arcTo(X,Y+H,X,Y+H-r,r);x.lineTo(X,Y+r);x.arcTo(X,Y,X+r,Y,r);x.closePath()}
 const gRad=(g,h)=>g.shape==='rect'?0:g.shape==='pill'?(h-2*g.inset)/2:g.r;
@@ -162,7 +163,7 @@ function drawState(x,F,w,h,s,H,g,bgc){
       x.save();rrect(x,X+1,Y+1,W-2,Hh-2,R);x.clip();const gl=x.createLinearGradient(0,Y,0,Y+Hh*.5);gl.addColorStop(0,`rgba(255,255,255,${on?.5:.38})`);gl.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gl;rrect(x,X+W*.06,Y+3,W*.88,Hh*.46,R*.8);x.fill();x.restore();
       x.lineWidth=1.5;x.strokeStyle='rgba(255,255,255,.35)';rrect(x,X+1.5,Y+1.5,W-3,Hh-3,R);x.stroke();ic=dim?'rgba(255,255,255,.5)':'#ffffff';break}
     case 'ring':{x.fillStyle=on?`hsl(${H} 45% 14%)`:'#06080b';x.fill();x.lineWidth=1.5;x.strokeStyle=`hsla(${H},70%,55%,${dim?.2:.45})`;x.stroke();
-      const cy=Hh>100?Y+Hh*.4:h/2,R=Math.min(W*.42,Hh>100?Hh*.34:Hh*.44);x.save();x.beginPath();if(W/Hh>2.2)rrect(x,X+5,Y+5,W-10,Hh-10,Math.max(0,r-3));else x.arc(w/2,cy,R,0,7);x.fillStyle=`hsla(${H},85%,50%,${on?.35:dim?.04:.14})`;x.fill();
+      const cy=Hh>100?Y+Hh*.4:h/2,R=Math.min(W*.42,Hh>100?Hh*.34:Hh*.44);const hasI=S.layout.slots.some(q=>q.p===F.path)||!!extractIcon(F,grp);x.save();x.beginPath();if(W/Hh>2.2||!hasI)rrect(x,X+5,Y+5,W-10,Hh-10,Math.max(0,r-3));else x.arc(w/2,cy,R,0,7);x.fillStyle=`hsla(${H},85%,50%,${on?.35:dim?.04:.14})`;x.fill();
       x.lineWidth=on?3.5:2.5;x.strokeStyle=`hsl(${H} 95% ${on?70:dim?26:56}%)`;x.shadowColor=x.strokeStyle;x.shadowBlur=dim?0:on?14:6;x.stroke();x.restore();ic=on?'#ffffff':`hsl(${H} 95% ${dim?32:72}%)`;glow=dim?0:4;break}
     case 'tab':{x.fillStyle=on?`hsl(${H} 40% 18%)`:'#0b0e13';x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const th=Math.max(4,Math.round(Hh*.07));
       x.fillStyle=`hsl(${H} ${dim?30:90}% ${on?66:dim?24:52}%)`;x.fillRect(X,Y,W,th);if(on){const gr=x.createLinearGradient(0,Y,0,Y+Hh*.6);gr.addColorStop(0,`hsla(${H},90%,60%,.35)`);gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fillRect(X,Y+th,W,Hh*.6)}x.restore();
