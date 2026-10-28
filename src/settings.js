@@ -31,7 +31,7 @@ async function prunePoints(){const ix=await ptIndex();for(const k of ['auto','ex
 const noSpace=()=>toast('No queda espacio en el navegador. Borra copias automáticas o diseños que no uses (Ajustes e historial → Diseños).',{ms:7000});
 // Datos de los botones para guardar: todo menos la imagen PNG en memoria (p.png)
 function packGen(){if(!S.gen)return null;const gen={...S.gen,per:{}};for(const [k,p] of Object.entries(S.gen.per||{})){const {png,...r}=p;gen.per[k]={...r,icon:p.icon==='png'?undefined:p.icon}}return structuredClone(gen)}
-function packState(){const reps={};for(const F of S.files)if(F.rep)reps[F.path]={pal:F.rep.pal,idx:F.rep.idx,keyIdx:F.rep.keyIdx};
+function packState(){const reps={};for(const F of S.files)if(F.rep)reps[F.path]={pal:F.rep.pal,idx:F.rep.idx,keyIdx:F.rep.keyIdx,by:F.rep.by};
   const gen=packGen();
   return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen,reps,icx:structuredClone(S.icx||{}),stby:S.stby?{...S.stby}:null}}
 // Miniatura de la pantalla de Inicio para reconocer cada diseño

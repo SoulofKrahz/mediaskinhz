@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-28-8';
+const VER='2026-10-28-9';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,12 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-28-9',['Diseños listos repasados uno a uno (24): fuera los que quedaban pobres (Píxel, Pestaña, Rejilla, Puntos, Mínimo) y nuevos Cristal ahumado, Neón dúo, Octógono violeta, Botón 3D, Titanio, Oro y Bronce',
+    'Aluminio, Titanio, Oro y Bronce son metal de verdad: fondo de metal cepillado y botones oscuros para que el texto blanco de la radio se lea; Aluminio deja toda la radio en grises',
+    'Dibujos con recuadro negro (la hoja de Driving eco, la carátula vacía, la imagen de balance…) con fondo transparente para que no quede una caja sobre el fondo de color',
+    'Los botones a los que diste estilo en un diseño guardado antes de hoy (por ejemplo las flechas de presintonías) ya los cambia el diseño listo: los diseños guardan quién hizo cada imagen',
+    'Anillo en Inicio ya no pisa el nombre del botón',
+    '7 estilos nuevos (47): Metal de color, Aluminio cepillado, Cristal ahumado, Botón 3D, Neón dúo, Octógono y Etiqueta']],
   ['2026-10-28-8',['Diseños listos con fondo nuevo: en vez de teñir el de Renault (las rayas grises quedaban sucias), cada pantalla lleva un fondo oscuro con el color del diseño, un resplandor abajo y un dibujo suave que va con el estilo (rejilla, puntos, ondas, rayas…)',
     'Sin cajas negras alrededor de los botones de dentro: con un fondo de diseño listo sus esquinas son transparentes. El negro de iconos y recuadros también toma el tono del diseño',
     'Las miniaturas de los diseños ya no arrastran las esquinas del diseño que tengas puesto. Ocaso, menos amarillo']],

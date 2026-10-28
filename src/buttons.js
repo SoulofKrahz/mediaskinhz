@@ -131,14 +131,15 @@ function btnSheet(F,after,el){
    Botones de Inicio y de dentro (estilo, color del marco y del icono) + color de toda la radio (fondos, barra de arriba, listas, barras…) + tono del negro de los fondos.
    Se ve antes de aplicarlo: una hoja con la vista previa de cada pantalla. look = estilo · hue = color · ihue = color del icono (null = el del estilo) · bk = tono de los fondos (null = el mismo color) */
 const PRESETS=[
-  ['neon-az','Neón azul','neon',210,null,215],['bisel-lima','Biselado lima','chamfer',75,null,null],['futuro-cian','Futurista cian','hud',185,null,195],
-  ['carbono-rojo','Carbono rojo','carbon',0,null,null],['aurora','Aurora morada','aurora',275,null,270],['cristal','Cristal azul','glass',205,'white',210],
-  ['ocaso','Ocaso naranja','sunset',30,'white',25],['halo-verde','Halo verde','halo',140,null,150],['capsula-rosa','Cápsula rosa','capsule',330,'white',330],
-  ['muesca-roja','Muesca roja','notch',355,null,null],['rejilla-ambar','Rejilla ámbar','grid',35,null,30],['relieve','Relieve acero','emboss',205,null,null],
-  ['anillo-turq','Anillo turquesa','ring',176,null,180],['esquinas-oro','Esquinas doradas','corner',44,null,null],['retro','Píxel retro','pixel',120,null,null],
-  ['arcoiris','Borde degradado','gborder',200,'white',250],['onda-azul','Onda azul','wave',215,'white',220],['circuito','Circuito verde','circuit',150,null,155],
-  ['pestana-roja','Pestaña roja','tab',2,null,null],['dos-tonos','Dos tonos índigo','split',236,'white',240],['puntos-magenta','Puntos magenta','dots',298,null,300],
-  ['aluminio','Aluminio','metal',210,null,null],['minimo-oro','Mínimo dorado','minimal',45,null,null]].map(([id,name,look,hue,ihue,bk])=>({id,name,look,hue,ihue,bk}));
+  ['neon-az','Neón azul','neon',210,null,215],['futuro-cian','Futurista cian','hud',185,null,195],['bisel-lima','Biselado lima','chamfer',75,null,null],
+  ['carbono-rojo','Carbono rojo','carbon',0,null,null],['aurora','Aurora morada','aurora',275,null,270],['ahumado','Cristal ahumado','smoke',200,null,205],
+  ['duo','Neón dúo','duo',190,null,200],['halo-verde','Halo verde','halo',140,null,150],['anillo-turq','Anillo turquesa','ring',176,null,180],
+  ['octo-violeta','Octógono violeta','hex',266,null,262],['boton3d','Botón 3D azul','bevel3d',215,null,218],['circuito','Circuito verde','circuit',150,null,155],
+  ['onda-azul','Onda azul','wave',215,'white',220],['arcoiris','Borde degradado','gborder',200,'white',250],['ocaso','Ocaso naranja','sunset',30,'white',25],
+  ['capsula-rosa','Cápsula rosa','capsule',330,'white',330],['esquinas-oro','Esquinas doradas','corner',44,null,40],['muesca-roja','Muesca roja','notch',355,null,350],
+  ['dos-tonos','Dos tonos índigo','split',236,'white',240],['relieve','Relieve acero','emboss',205,null,210],
+  ['aluminio','Aluminio','alu',210,null,210,'metal'],['titanio','Titanio azul','brushed',212,null,212,'metal'],['oro','Oro','brushed',42,null,40,'gold'],['bronce','Bronce','brushed',24,null,24,'gold']
+].map(([id,name,look,hue,ihue,bk,bg])=>({id,name,look,hue,ihue,bk,bg,gs:look==='alu'?-92:0}));
 const presetInside=()=>{const T=genTargets();return S.files.filter(F=>kindOf(F)==='btn'&&canStyle(F)&&!T.includes(F))};
 const presetOn=P=>{const g=S.gen||{},o=S.ops.global;return g.look===P.look&&g.color==='one'&&g.hue===P.hue&&!!o&&o.tA===100&&o.tH===P.hue};
 function presetTile(P){const T=genTargets(),R=T.find(F=>extractIcon(F))||T[0];if(!R)return null;const g=S.gen||(S.gen=defGen()),me={...(g.per[R.path]||{})};delete me.hue;if(P.ihue!=null)me.ihue=P.ihue;else delete me.ihue;
@@ -150,16 +151,22 @@ function presetSet(P){const g=S.gen||(S.gen=defGen()),T=genTargets(),L=presetIns
   for(const F of L){const p=g.per[F.path]||(g.per[F.path]={});p.look=P.look;p.hue=P.hue;setI(p)}
   // color de toda la radio: en lo de color (iconos, textos en imagen…) cambia solo el tono; en fondos, barras, líneas, listas y botones de forma rara
   // se tiñe todo (también grises y el negro) para que el diseño quede de una pieza. Lo que pusiste tú a mano (una foto, el reposo) no se toca
-  S.ops.global={...defOps(),tH:P.hue,tA:100,tG:false};S.ops.sec={};const TL=new Set([...T,...L]),bgs=new Set([...SCRBG.values()].map(byName).filter(Boolean)),bk=P.bk==null?P.hue:P.bk;
+  S.ops.global={...defOps(),tH:P.hue,tA:100,tG:false,s:P.gs||0};S.ops.sec={};const TL=new Set([...T,...L]),bgs=new Set([...SCRBG.values()].map(byName).filter(Boolean)),bk=P.bk==null?P.hue:P.bk;
   for(const F of S.files){if(TL.has(F))continue;const k=kindOf(F),odd=k==='btn';if(k==='ico'&&!/line/.test(F.lc))continue;
-    if(odd){delete g.per[F.path];if(F.rep&&(F.rep.by==='gen'||F.rep.by==='btn'))F.rep=null;if(S.icx)delete S.icx[F.path];if(S.ex[F.path]===true&&!F.rep)delete S.ex[F.path];F.cv=null}
+    if(odd){const had=g.per[F.path];delete g.per[F.path];if(F.rep&&(F.rep.by==='gen'||F.rep.by==='btn'||(!F.rep.by&&had)))F.rep=null;if(S.icx)delete S.icx[F.path];if(S.ex[F.path]===true&&!F.rep)delete S.ex[F.path];F.cv=null}
     if(bgs.has(F)&&(!F.rep||F.rep.by==='preset')){presetBg(F,P,bk);continue}
-    if(F.rep)continue;const o={...defOps(),tH:k==='bg'?bk:P.hue,tA:k==='bg'?90:100,tG:true};o.map={13:bgs.has(F)?{to:bk,ts:.65,tl:.11}:{to:bk,ts:.55,tl:.07}};setFileOps(F,o)}
+    if(F.rep)continue;const o={...defOps(),tH:k==='bg'?bk:P.hue,tA:k==='bg'?90:100,tG:true,s:P.gs||0};o.map={13:bgs.has(F)?{to:bk,ts:.65,tl:.11}:{to:bk,ts:.55,tl:.07}};setFileOps(F,o)}
+  // dibujos con su propio recuadro negro (la hoja de Driving eco, la carátula vacía…): el negro que toca el borde pasa a transparente
+  S.ver++;for(const n of PCLEAR){const F=byName(n);if(F&&(!F.rep||F.rep.by==='preset'))clearBlack(F)}
   return {T,L}}
 /* Fondo nuevo para un diseño listo: negro con el color del diseño (degradado, resplandor abajo y un dibujo suave que sigue al estilo).
    Sustituye al fondo de Renault (sus rayas grises teñidas quedaban sucias). Se deshace como todo lo demás */
 const BGPAT={grid:'grid',circuit:'grid',pixel:'grid',hud:'grid',hudb:'grid',hudf:'grid',scan:'lines',led:'dots',dots:'dots',wave:'wave',sunset:'wave',aurora:'wave',capsule:'wave',neon:'lines',halo:'rings',ring:'rings',corner:'grid',notch:'lines',chamfer:'diag',slash:'diag',stripes:'diag',tab:'lines',split:'lines'};
 function presetBgCanvas(P,bk,scr){const c=document.createElement('canvas');c.width=800;c.height=480;const x=c.getContext('2d'),h=bk;
+  if(P.bg==='metal'||P.bg==='gold'){const sat=P.bg==='gold'?38:P.look==='alu'?3:10;let gr=x.createLinearGradient(0,0,0,480);gr.addColorStop(0,`hsl(${h} ${sat}% 9%)`);gr.addColorStop(.5,`hsl(${h} ${sat}% 15%)`);gr.addColorStop(1,`hsl(${h} ${sat}% 10%)`);x.fillStyle=gr;x.fillRect(0,0,800,480);
+    let sd=97;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;for(let i=0;i<900;i++){x.fillStyle=`rgba(${rnd()<.5?'255,255,255':'0,0,0'},${.02+rnd()*.05})`;x.fillRect(0,78+rnd()*402,800,1)}
+    const v=x.createRadialGradient(400,260,120,400,260,520);v.addColorStop(0,`hsla(${h},${sat}%,70%,.08)`);v.addColorStop(1,'rgba(0,0,0,.45)');x.fillStyle=v;x.fillRect(0,0,800,480);
+    x.fillStyle=`hsla(${h},${sat+20}%,70%,.35)`;x.fillRect(0,477,800,2);return c}
   let gr=x.createLinearGradient(0,0,0,480);gr.addColorStop(0,`hsl(${h} 45% 5%)`);gr.addColorStop(.55,`hsl(${h} 55% 8%)`);gr.addColorStop(1,`hsl(${h} 65% 13%)`);x.fillStyle=gr;x.fillRect(0,0,800,480);
   const glow=(cx,cy,r,a)=>{const g=x.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,`hsla(${h},90%,50%,${a})`);g.addColorStop(1,`hsla(${h},90%,50%,0)`);x.fillStyle=g;x.fillRect(0,0,800,480)};
   glow(400,560,460,.42);glow(400,300,420,scr==='home'?.12:.07);glow(0,80,260,.08);glow(800,80,260,.08);
@@ -175,6 +182,12 @@ function presetBgCanvas(P,bk,scr){const c=document.createElement('canvas');c.wid
   x.fillStyle=`hsla(${h},90%,60%,.25)`;x.fillRect(0,477,800,3);return c}
 function presetBg(F,P,bk){const scr=[...SCRBG.entries()].find(e=>e[1]===F.lc||byName(e[1])===F);const c=presetBgCanvas(P,bk,scr?scr[0]:'');
   const d=c.getContext('2d').getImageData(0,0,800,480).data,q=quantize(d,800,480,{dither:true});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'preset'};S.ex[F.path]=true;delete S.ops.file[F.path];F.cv=null}
+const PCLEAR=['eco/eco_scoring_img.bmp','eco/eco_coaching_elf_renault_img.bmp','eco/eco_coaching_elf_dacia_img.bmp','media/media_album_case_noalbum_img.bmp','media/media_device_icon.bmp','media/media_nearby_default_icon.bmp','setting/setting_direction_image.bmp','setting/setting_direction_center_image.bmp'];
+function clearBlack(F){F.rep=null;F.cv=null;const od=renderOrig(F,false).getContext('2d').getImageData(0,0,F.w,F.h).data,c=renderCanvas(F,false),w=c.width,h=c.height,x=c.getContext('2d'),im=x.getImageData(0,0,w,h),d=im.data,key=new Uint8Array(w*h),st=[];
+  const dark=i=>od[i*4+3]>=128&&Math.max(od[i*4],od[i*4+1],od[i*4+2])<34,push=i=>{if(!key[i]&&dark(i)){key[i]=1;st.push(i)}};
+  for(let X=0;X<w;X++){push(X);push((h-1)*w+X)}for(let Y=0;Y<h;Y++){push(Y*w);push(Y*w+w-1)}
+  while(st.length){const i=st.pop(),X=i%w,Y=(i/w)|0;if(X>0)push(i-1);if(X<w-1)push(i+1);if(Y>0)push(i-w);if(Y<h-1)push(i+w)}
+  for(let i=0;i<w*h;i++)if(d[i*4+3]<128)key[i]=1;const q=quantize(d,w,h,{key,dither:false});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'preset'};S.ex[F.path]=true;delete S.ops.file[F.path];F.cv=null}
 const PSCR=[['home','Inicio'],['radio','Radio'],['media','Multimedia'],['phone','Teléfono'],['setting','Ajustes'],['eco','Driving eco']];
 function presetSheet(P0){
   const keep=[S.curDesign,S.curDesignName],scrs=PSCR.filter(([k])=>byName(SCRBG.get(k)));let P=null,done=new Set(),scr='home',all={T:[],L:[]};
