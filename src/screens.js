@@ -73,6 +73,7 @@ function scrScreen(v,r){
       <p class="lbl">Color del negro del fondo</p><div class="hsw" id="sc-bk">${swatches(((S.ops.file[bg.path]||{}).map||{})[13]?((S.ops.file[bg.path].map[13].to)):'none',{none:'Negro original',label:'Color del negro del fondo'})}</div>
       <p class="note">Conserva el degradado. Para un fondo claro o una foto: toca el fondo → Sustituir.</p></div>`:''}
     ${hb?`<div class="list"><button class="li" id="sc-hb"><span class="th">${th(hb,72,42)}</span><span class="tx"><b>Su botón en Inicio</b><small>Icono, colores y estilo del botón «${esc(pretty(hb))}»</small></span>${CHEV}</button></div>`:''}
+    ${s!=='common'?`<div class="list"><button class="li" id="sc-kit"><span class="ic">${ic('M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3')}</span><span class="tx"><b>¿Un botón no cambia en el coche?</b><small>Prueba con letras para saber qué imagen usa la radio en la casa de cada pantalla</small></span>${CHEV}</button></div>`:''}
     ${files.length?`<details class="isd card" id="sc-all"><summary><span>Todas las piezas<small>Una a una, también las que no salen en la vista</small></span><b>${files.length}</b></summary><div class="isb">
       ${btns.length?`<div class="grid sc-grid">${btns.map(tile).join('')}</div>`:''}
       ${rest.length?`<p class="lbl">Barras, listas y fondos de ventanas</p><div class="list">${rest.map(F=>fileRow(F,KINDL.get(kindOf(F)))).join('')}</div>`:''}</div></details>`:''}
@@ -84,6 +85,7 @@ function scrScreen(v,r){
       c.onpointerleave=c.onpointercancel=()=>{down=press=hov=-1;schedule()};
       c.onpointerup=e=>{const V=vwCur(s),i=down;down=press=-1;schedule();if(!V||i<0)return;const h=vwHit(V,c,e);if(h.i!==i)return;
         if(isBtnLike(h.F))btnSheet(h.F,()=>{mountThumbs(v);schedule()});else go({n:'edit',p:h.F.path})}}$('#sc-cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.hcmp=b.dataset.v;$$('#sc-cmp button').forEach(x=>x.setAttribute('aria-pressed',x===b));schedule()}}
+  const kb=$('#sc-kit');if(kb)kb.onclick=homeKit;
   const hbb=$('#sc-hb');if(hbb)hbb.onclick=()=>btnSheet(hb,()=>{mountThumbs(v);schedule()});
   const all=$('#sc-all');if(all)all.ontoggle=()=>{if(all.open)mountThumbs(v)};
   const sec0=secs[0],get=()=>S.ops.sec[sec0],set=o=>{for(const k of secs)setScopeOps(k,o?structuredClone(o):o)};
@@ -105,3 +107,22 @@ function scrScreen(v,r){
   const isz=$('#sc-isz');if(isz)isz.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;await setIsIn(+b.dataset.v,btns);render(true)};
   mountThumbs(v);
 }
+
+/* ---- Kit para averiguar qué imagen usa la radio para la casa de cada pantalla ----
+   Pone una letra grande en todas las «casas» del backup. Se instala con Automático y en el coche se lee qué letra sale
+   en la pantalla que no cambia. Un segundo ZIP devuelve esas imágenes a como estaban. */
+const HOMEKIT=[['fm radio/fmradio_softkey_home_btn.bmp','R','Radio'],['media/media_softkey_home_btn.bmp','M','Multimedia'],['phone/phone_softkey_home_btn.bmp','T','Teléfono'],
+  ['setting/setting_softkey_home_btn.bmp','A','Ajustes'],['eco/eco_softkey_home_btn.bmp','E','Driving eco'],['etc/etc_caution_softkey_home_btn.bmp','C','Avisos (precaución)']];
+function kitBytes(F,l){const fr=frames(F),fw=F.w/fr,c=document.createElement('canvas');c.width=F.w;c.height=F.h;const x=c.getContext('2d');x.drawImage(renderOrig(F,false),0,0);
+  for(let s=0;s<fr;s++){x.fillStyle=s%2?'#202020':'#e02020';x.fillRect(s*fw+2,2,fw-4,F.h-4);x.fillStyle='#ffffff';x.font=`900 ${Math.round(F.h*.72)}px Inter, Arial, sans-serif`;x.textAlign='center';x.textBaseline='middle';x.fillText(l,s*fw+fw/2,F.h/2+2)}
+  const q=quantize(x.getImageData(0,0,F.w,F.h).data,F.w,F.h,{key:new Uint8Array(F.w*F.h),dither:false});return new Uint8Array(encodeBMP8(F.w,F.h,q.idx,q.pal,F))}
+async function homeKitZip(undo){const rs=[];for(const [n,l] of HOMEKIT){const F=byName(n);if(F)rs.push({F,u:undo?outBytes(F):kitBytes(F,l)})}
+  const {ents}=autoEntries(rs,!undo,{boot:SET.xboot!==false,name:undo?'Quitar la prueba (vuelve tu diseño)':'Prueba: letras en las casas'});
+  ents.push({name:'LEEME.txt',data:new TextEncoder().encode(undo?'Quita las letras: pone las casas como están en tu diseño actual de Mediaskinhz. Se instala igual que la prueba.':
+    ['Prueba: cada «casa» lleva una letra para saber qué imagen usa la radio en cada pantalla.','',...HOMEKIT.map(([n,l,t])=>`${l} = ${t}  (${n})`),'','Instálalo como siempre (Automático). En la pantalla que no cambiaba, mira qué letra sale en la casa.','Después instala «quitar-prueba-casas.zip»: las casas vuelven a como están en tu diseño.'].join('\r\n'))});
+  return makeZip(ents)}
+async function homeKit(){openBS(`<h2>¿Qué imagen usa la casa?</h2><p class="note">Pon una letra en todas las casas de la radio, instálalo y mira qué letra sale en la pantalla que no cambiaba (por ejemplo, Driving eco).</p>
+  <div class="list">${HOMEKIT.map(([n,l,t])=>`<div class="li"><span class="ic" style="font-weight:900">${l}</span><span class="tx"><b>${esc(t)}</b><small>${esc(n)}</small></span></div>`).join('')}</div>
+  <div class="stack" style="gap:8px;margin-top:10px"><button class="btn wide" data-k="1">1. Descargar la prueba</button><button class="btn o wide" data-k="2">2. Descargar «quitar la prueba» (vuelve tu diseño)</button><button class="btn o wide" data-k="0">Cerrar</button></div>`);
+  $('#bs').onclick=async e=>{const b=e.target.closest('[data-k]');if(!b)return;const k=b.dataset.k;if(k==='0'){closeBS();return}
+    toast('Preparando…',{ms:20000});try{const z=await homeKitZip(k==='2');await saveBlob(z,k==='2'?'quitar-prueba-casas.zip':'prueba-casas.zip')}catch(_){toast('No se ha podido preparar el ZIP')}}}
