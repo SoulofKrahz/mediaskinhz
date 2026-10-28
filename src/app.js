@@ -504,7 +504,7 @@ function paneImg(p,F){
     ${fr>1?`<div class="field"><span class="lbl">Dónde ponerla</span><div class="chips" id="i-tg"><button class="chip" data-t="all" aria-pressed="${src.target==='all'}">Todos los estados</button>${[...Array(fr).keys()].map(i=>`<button class="chip" data-t="${i}" aria-pressed="${src.target===String(i)}">${i===0?'Reposo':i===1?'Pulsado':'Estado '+(i+1)}</button>`).join('')}</div></div>`:''}
     <label class="swrow" for="i-di"><span>Difuminar<small>Suaviza los degradados de las fotos</small></span><input class="sw" type="checkbox" id="i-di"${src.dither?' checked':''}></label>
     <p class="note">${F.keyCount?'Las zonas transparentes de tu PNG pasan a ser transparentes en el MediaNav.':'Esta imagen no usa transparencia: las zonas transparentes de tu PNG quedarán en negro.'}</p></div>
-    ${S.layout.slots.some(sl=>sl.p===F.path)?`<div class="list"><button class="li" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><span class="tx"><b>Rediseñar los botones de Inicio</b><small>Crea los 4 estados con otro estilo, forma o icono</small></span>${CHEV}</button></div>`:''}
+    ${S.layout.slots.some(sl=>sl.p===F.path)?`<div class="list"><button class="li" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><span class="tx"><b>Estilo de los botones de Inicio</b><small>Crea los 4 estados con otro estilo, forma o icono</small></span>${CHEV}</button></div>`:''}
     ${F.rep?`<div class="card"><h3>Ya tiene una imagen nueva</h3><p class="note">Puedes cambiarle los colores en la pestaña Color o volver a la original.</p><button class="btn dg wide" id="i-rs">Quitar la imagen nueva</button></div>`:''}`;
   $('#in-img').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)useImage(F,f)};$('#i-pick').onclick=()=>$('#in-img').click();if($('#ic-pick'))icBind(F);
   $('#i-fit').onclick=e=>{const b=e.target.closest('button');if(!b)return;src.fit=b.dataset.v;$$('#i-fit button').forEach(x=>x.setAttribute('aria-pressed',x===b));if(src.bmp){before();reapply(F)}};
@@ -657,7 +657,7 @@ function scrExport(v){
     const o=$('#x-orig').closest('.swrow').querySelector('small');if(o)o.textContent=S.xmode==='auto'?'Carpeta originales por si falta la copia que hace el script':S.xmode!=='lgu'?'Carpeta ORIGINALES con solo estos archivos, para deshacer':'Un segundo upgrade.lgu en RESTAURAR para deshacer'};
   modeUI();
   $('#x-boot').onchange=e=>{SET.xboot=e.target.checked;saveSet();modeUI()};
-  $('#x-mode').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;S.xmode=b.dataset.m;$$('#x-mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));modeUI()};
+  $('#x-mode').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;S.xmode=b.dataset.m;SET.xmode=S.xmode;saveSet();$$('#x-mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));modeUI()};
   $('#x-hw').onclick=e=>{const b=e.target.closest('[data-h]');if(!b)return;S.xhw=+b.dataset.h;$$('#x-hw .chip').forEach(x=>x.setAttribute('aria-pressed',x===b));modeUI()};
   const res=[];let i=0,done=false;
   const sel=()=>res.filter(r=>!S.xoff.has(r.F.path));

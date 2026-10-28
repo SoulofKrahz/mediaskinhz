@@ -175,7 +175,7 @@ function genSum(g){return {style:(GSTYLES.find(s=>s[0]===g.style)||GSTYLES[0])[1
   color:g.color==='orig'?'El de cada botón':'Uno para todos: '+hueName(g.hue).toLowerCase(),icons:`${icStyleSum()} · tamaño ${g.is} px · altura ${g.iy} %`}}
 function scrGen(v){
   if(!S.gen)S.gen=defGen();const g=S.gen,fs=genTargets();if(!fs.length){v.innerHTML='<p class="empty">No hay botones de Inicio en el backup.</p>';return}
-  setTitle('Rediseñar botones',`Inicio · ${fs.length} botones`);
+  setTitle('Estilo de los botones',`Inicio · ${fs.length} botones`);
   if(!S.gsel||!fs.some(F=>F.path===S.gsel))S.gsel=fs[0].path;if(!S.gtab)S.gtab='btn';
   const ref=()=>S.lc.get(S.gsel.toLowerCase())||fs[0],sm=genSum(g);
   const item=(k,icon,title,sum,body)=>`<div class="acc-i${S.gopen===k?' open':''}" data-k="${k}"><button class="acc-h" aria-expanded="${S.gopen===k}"><span class="ic">${ic(icon)}</span><span class="tx"><b>${title}</b><small data-sum="${k}">${esc(sum)}</small></span>${CHEV}</button>${S.gopen===k?`<div class="acc-b">${body}</div>`:''}</div>`;

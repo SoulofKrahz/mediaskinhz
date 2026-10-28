@@ -60,21 +60,22 @@ function scrScreen(v,r){
   const g=S.gen||(S.gen=defGen()),looks=new Set(sty.map(F=>(g.per[F.path]||{}).look||'orig')),curLook=looks.size===1?[...looks][0]:null;
   const same=k=>{const vs=new Set(sty.map(F=>{const h=(g.per[F.path]||{})[k];return h==null?'none':h}));return vs.size===1?[...vs][0]:''};
   v.innerHTML=`<div class="two">
-    ${bg?`<div class="stick sticky-pv">${VWS.has(s)?'<div id="sc-vw" class="vwbar"></div>':''}${pvBlock('pv')}<div class="e-bar"><div class="seg" id="sc-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="${S.hcmp!=='orig'}">Ahora</button><button data-v="orig" aria-pressed="${S.hcmp==='orig'}">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">${VWS.has(s)?'Toca un botón de la pantalla para cambiarlo':'Fondo de '+esc(scrName(s))+' con tus cambios'}</span></div></div>`:''}
+    ${bg?`<div class="stick sticky-pv">${VWS.has(s)?'<div id="sc-vw" class="vwbar"></div>':''}${pvBlock('pv')}<div class="e-bar"><div class="seg" id="sc-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="${S.hcmp!=='orig'}">Ahora</button><button data-v="orig" aria-pressed="${S.hcmp==='orig'}">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">${VWS.has(s)?(s==='common'?'Sobre el fondo de Radio. Toca una pieza para cambiarla':'Toca un botón de la pantalla para cambiarlo'):'Fondo de '+esc(scrName(s))+' con tus cambios'}</span></div></div>`:''}
     <div class="stack">
-    ${hb?`<div class="card"><h3>Su botón en Inicio</h3><div id="sc-btn"></div></div>`:''}
+    ${sty.length?`<div class="card"><h3>Botones de esta pantalla <small class="cnt">${sty.length}</small></h3><p class="note">Todos a la vez. Para cambiar uno solo, tócalo en la pantalla de arriba.</p>
+      <p class="lbl">Estilo</p><div class="chips scroll" id="sc-lk">${LOOKS().map(([k,l])=>`<button class="chip" data-v="${k}" aria-pressed="${curLook===k}">${l}</button>`).join('')}</div>
+      <p class="lbl">Color del marco</p><div class="hsw" id="sc-fc">${swatches(same('hue'),{none:'El original',white:true,label:'Color del marco de todos'})}</div>
+      <p class="lbl">Color del icono</p><div class="hsw" id="sc-icc">${swatches(same('ihue'),{none:'Como el original',white:true,label:'Color del icono de todos'})}</div>
+      ${isInHTML('sc-isz')}</div>`:''}
     <div class="card"><h3>Color de toda la pantalla</h3><p class="note">Tiñe todas las imágenes de ${esc(scrName(s))} a la vez. Lo que cambies después en una imagen concreta manda sobre esto.</p><div id="sc-tint"></div>
       <button class="btn o sm" id="sc-more">Más colores de esta pantalla</button></div>
     ${bg&&s!=='common'?`<div class="card"><h3>Fondo</h3><div class="list">${fileRow(bg,'Fondo · 800×480')}</div>
       <p class="lbl">Color del negro del fondo</p><div class="hsw" id="sc-bk">${swatches(((S.ops.file[bg.path]||{}).map||{})[13]?((S.ops.file[bg.path].map[13].to)):'none',{none:'Negro original',label:'Color del negro del fondo'})}</div>
       <p class="note">Conserva el degradado. Para un fondo claro o una foto: toca el fondo → Sustituir.</p></div>`:''}
-    ${btns.length?`<div class="card"><h3>Botones e iconos <small class="cnt">${btns.length}</small></h3><p class="note">Toca uno para cambiar su icono, colores y estilo.</p>
-      ${sty.length?`<p class="lbl">El mismo estilo para los ${sty.length} botones</p><div class="chips scroll" id="sc-lk">${LOOKS().map(([k,l])=>`<button class="chip" data-v="${k}" aria-pressed="${curLook===k}">${l}</button>`).join('')}</div>
-        <p class="lbl">Color del marco de todos</p><div class="hsw" id="sc-fc">${swatches(same('hue'),{none:'El original',white:true,label:'Color del marco de todos'})}</div>
-        <p class="lbl">Color del icono de todos</p><div class="hsw" id="sc-icc">${swatches(same('ihue'),{none:'Como el original',white:true,label:'Color del icono de todos'})}</div>`:''}
-      ${isInHTML('sc-isz')}<p class="note">Agranda los iconos de los botones de esta pantalla y de los que ya hayas cambiado en otras. Inicio tiene su propio tamaño (Estilo de los botones → Forma).</p>
-      <div class="grid sc-grid">${btns.map(tile).join('')}</div></div>`:''}
-    ${rest.length?`<div class="card"><h3>Otras piezas <small class="cnt">${rest.length}</small></h3><p class="note">Barras, listas, fondos de ventanas… Tócalas para cambiar sus colores o sustituirlas.</p><div class="list">${rest.map(F=>fileRow(F,KINDL.get(kindOf(F)))).join('')}</div></div>`:''}
+    ${hb?`<div class="list"><button class="li" id="sc-hb"><span class="th">${th(hb,72,42)}</span><span class="tx"><b>Su botón en Inicio</b><small>Icono, colores y estilo del botón «${esc(pretty(hb))}»</small></span>${CHEV}</button></div>`:''}
+    ${files.length?`<details class="isd card" id="sc-all"><summary><span>Todas las piezas<small>Una a una, también las que no salen en la vista</small></span><b>${files.length}</b></summary><div class="isb">
+      ${btns.length?`<div class="grid sc-grid">${btns.map(tile).join('')}</div>`:''}
+      ${rest.length?`<p class="lbl">Barras, listas y fondos de ventanas</p><div class="list">${rest.map(F=>fileRow(F,KINDL.get(kindOf(F)))).join('')}</div>`:''}</div></details>`:''}
     </div></div>`;
   if(bg){const c=$('#pv'),vw=VWS.has(s);let press=-1,down=-1,hov=-1;mountPreview(c,()=>({scr:pscr,orig:S.hcmp==='orig',view:vw?vwCur(s):null,press,hov}));
     if(vw){vwBar(s);if(VW.st!==2)loadVistas().then(()=>{vwBar(s);schedule()});
@@ -83,7 +84,8 @@ function scrScreen(v,r){
       c.onpointerleave=c.onpointercancel=()=>{down=press=hov=-1;schedule()};
       c.onpointerup=e=>{const V=vwCur(s),i=down;down=press=-1;schedule();if(!V||i<0)return;const h=vwHit(V,c,e);if(h.i!==i)return;
         if(isBtnLike(h.F))btnSheet(h.F,()=>{mountThumbs(v);schedule()});else go({n:'edit',p:h.F.path})}}$('#sc-cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.hcmp=b.dataset.v;$$('#sc-cmp button').forEach(x=>x.setAttribute('aria-pressed',x===b));schedule()}}
-  if(hb)btnSheet(hb,()=>mountThumbs(v),$('#sc-btn'));
+  const hbb=$('#sc-hb');if(hbb)hbb.onclick=()=>btnSheet(hb,()=>{mountThumbs(v);schedule()});
+  const all=$('#sc-all');if(all)all.ontoggle=()=>{if(all.open)mountThumbs(v)};
   const sec0=secs[0],get=()=>S.ops.sec[sec0],set=o=>{for(const k of secs)setScopeOps(k,o?structuredClone(o):o)};
   tintUI($('#sc-tint'),'sc',get,set,()=>{schedule();mountThumbs(v)});
   $('#sc-more').onclick=()=>{S.scope=sec0;go({n:'theme'})};

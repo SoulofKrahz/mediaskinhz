@@ -1079,7 +1079,7 @@ function paneImg(p,F){
     ${fr>1?`<div class="field"><span class="lbl">Dónde ponerla</span><div class="chips" id="i-tg"><button class="chip" data-t="all" aria-pressed="${src.target==='all'}">Todos los estados</button>${[...Array(fr).keys()].map(i=>`<button class="chip" data-t="${i}" aria-pressed="${src.target===String(i)}">${i===0?'Reposo':i===1?'Pulsado':'Estado '+(i+1)}</button>`).join('')}</div></div>`:''}
     <label class="swrow" for="i-di"><span>Difuminar<small>Suaviza los degradados de las fotos</small></span><input class="sw" type="checkbox" id="i-di"${src.dither?' checked':''}></label>
     <p class="note">${F.keyCount?'Las zonas transparentes de tu PNG pasan a ser transparentes en el MediaNav.':'Esta imagen no usa transparencia: las zonas transparentes de tu PNG quedarán en negro.'}</p></div>
-    ${S.layout.slots.some(sl=>sl.p===F.path)?`<div class="list"><button class="li" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><span class="tx"><b>Rediseñar los botones de Inicio</b><small>Crea los 4 estados con otro estilo, forma o icono</small></span>${CHEV}</button></div>`:''}
+    ${S.layout.slots.some(sl=>sl.p===F.path)?`<div class="list"><button class="li" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><span class="tx"><b>Estilo de los botones de Inicio</b><small>Crea los 4 estados con otro estilo, forma o icono</small></span>${CHEV}</button></div>`:''}
     ${F.rep?`<div class="card"><h3>Ya tiene una imagen nueva</h3><p class="note">Puedes cambiarle los colores en la pestaña Color o volver a la original.</p><button class="btn dg wide" id="i-rs">Quitar la imagen nueva</button></div>`:''}`;
   $('#in-img').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)useImage(F,f)};$('#i-pick').onclick=()=>$('#in-img').click();if($('#ic-pick'))icBind(F);
   $('#i-fit').onclick=e=>{const b=e.target.closest('button');if(!b)return;src.fit=b.dataset.v;$$('#i-fit button').forEach(x=>x.setAttribute('aria-pressed',x===b));if(src.bmp){before();reapply(F)}};
@@ -1232,7 +1232,7 @@ function scrExport(v){
     const o=$('#x-orig').closest('.swrow').querySelector('small');if(o)o.textContent=S.xmode==='auto'?'Carpeta originales por si falta la copia que hace el script':S.xmode!=='lgu'?'Carpeta ORIGINALES con solo estos archivos, para deshacer':'Un segundo upgrade.lgu en RESTAURAR para deshacer'};
   modeUI();
   $('#x-boot').onchange=e=>{SET.xboot=e.target.checked;saveSet();modeUI()};
-  $('#x-mode').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;S.xmode=b.dataset.m;$$('#x-mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));modeUI()};
+  $('#x-mode').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;S.xmode=b.dataset.m;SET.xmode=S.xmode;saveSet();$$('#x-mode button').forEach(x=>x.setAttribute('aria-pressed',x===b));modeUI()};
   $('#x-hw').onclick=e=>{const b=e.target.closest('[data-h]');if(!b)return;S.xhw=+b.dataset.h;$$('#x-hw .chip').forEach(x=>x.setAttribute('aria-pressed',x===b));modeUI()};
   const res=[];let i=0,done=false;
   const sel=()=>res.filter(r=>!S.xoff.has(r.F.path));
@@ -1556,7 +1556,7 @@ function genSum(g){return {style:(GSTYLES.find(s=>s[0]===g.style)||GSTYLES[0])[1
   color:g.color==='orig'?'El de cada botón':'Uno para todos: '+hueName(g.hue).toLowerCase(),icons:`${icStyleSum()} · tamaño ${g.is} px · altura ${g.iy} %`}}
 function scrGen(v){
   if(!S.gen)S.gen=defGen();const g=S.gen,fs=genTargets();if(!fs.length){v.innerHTML='<p class="empty">No hay botones de Inicio en el backup.</p>';return}
-  setTitle('Rediseñar botones',`Inicio · ${fs.length} botones`);
+  setTitle('Estilo de los botones',`Inicio · ${fs.length} botones`);
   if(!S.gsel||!fs.some(F=>F.path===S.gsel))S.gsel=fs[0].path;if(!S.gtab)S.gtab='btn';
   const ref=()=>S.lc.get(S.gsel.toLowerCase())||fs[0],sm=genSum(g);
   const item=(k,icon,title,sum,body)=>`<div class="acc-i${S.gopen===k?' open':''}" data-k="${k}"><button class="acc-h" aria-expanded="${S.gopen===k}"><span class="ic">${ic(icon)}</span><span class="tx"><b>${title}</b><small data-sum="${k}">${esc(sum)}</small></span>${CHEV}</button>${S.gopen===k?`<div class="acc-b">${body}</div>`:''}</div>`;
@@ -2618,21 +2618,22 @@ function scrScreen(v,r){
   const g=S.gen||(S.gen=defGen()),looks=new Set(sty.map(F=>(g.per[F.path]||{}).look||'orig')),curLook=looks.size===1?[...looks][0]:null;
   const same=k=>{const vs=new Set(sty.map(F=>{const h=(g.per[F.path]||{})[k];return h==null?'none':h}));return vs.size===1?[...vs][0]:''};
   v.innerHTML=`<div class="two">
-    ${bg?`<div class="stick sticky-pv">${VWS.has(s)?'<div id="sc-vw" class="vwbar"></div>':''}${pvBlock('pv')}<div class="e-bar"><div class="seg" id="sc-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="${S.hcmp!=='orig'}">Ahora</button><button data-v="orig" aria-pressed="${S.hcmp==='orig'}">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">${VWS.has(s)?'Toca un botón de la pantalla para cambiarlo':'Fondo de '+esc(scrName(s))+' con tus cambios'}</span></div></div>`:''}
+    ${bg?`<div class="stick sticky-pv">${VWS.has(s)?'<div id="sc-vw" class="vwbar"></div>':''}${pvBlock('pv')}<div class="e-bar"><div class="seg" id="sc-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="${S.hcmp!=='orig'}">Ahora</button><button data-v="orig" aria-pressed="${S.hcmp==='orig'}">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">${VWS.has(s)?(s==='common'?'Sobre el fondo de Radio. Toca una pieza para cambiarla':'Toca un botón de la pantalla para cambiarlo'):'Fondo de '+esc(scrName(s))+' con tus cambios'}</span></div></div>`:''}
     <div class="stack">
-    ${hb?`<div class="card"><h3>Su botón en Inicio</h3><div id="sc-btn"></div></div>`:''}
+    ${sty.length?`<div class="card"><h3>Botones de esta pantalla <small class="cnt">${sty.length}</small></h3><p class="note">Todos a la vez. Para cambiar uno solo, tócalo en la pantalla de arriba.</p>
+      <p class="lbl">Estilo</p><div class="chips scroll" id="sc-lk">${LOOKS().map(([k,l])=>`<button class="chip" data-v="${k}" aria-pressed="${curLook===k}">${l}</button>`).join('')}</div>
+      <p class="lbl">Color del marco</p><div class="hsw" id="sc-fc">${swatches(same('hue'),{none:'El original',white:true,label:'Color del marco de todos'})}</div>
+      <p class="lbl">Color del icono</p><div class="hsw" id="sc-icc">${swatches(same('ihue'),{none:'Como el original',white:true,label:'Color del icono de todos'})}</div>
+      ${isInHTML('sc-isz')}</div>`:''}
     <div class="card"><h3>Color de toda la pantalla</h3><p class="note">Tiñe todas las imágenes de ${esc(scrName(s))} a la vez. Lo que cambies después en una imagen concreta manda sobre esto.</p><div id="sc-tint"></div>
       <button class="btn o sm" id="sc-more">Más colores de esta pantalla</button></div>
     ${bg&&s!=='common'?`<div class="card"><h3>Fondo</h3><div class="list">${fileRow(bg,'Fondo · 800×480')}</div>
       <p class="lbl">Color del negro del fondo</p><div class="hsw" id="sc-bk">${swatches(((S.ops.file[bg.path]||{}).map||{})[13]?((S.ops.file[bg.path].map[13].to)):'none',{none:'Negro original',label:'Color del negro del fondo'})}</div>
       <p class="note">Conserva el degradado. Para un fondo claro o una foto: toca el fondo → Sustituir.</p></div>`:''}
-    ${btns.length?`<div class="card"><h3>Botones e iconos <small class="cnt">${btns.length}</small></h3><p class="note">Toca uno para cambiar su icono, colores y estilo.</p>
-      ${sty.length?`<p class="lbl">El mismo estilo para los ${sty.length} botones</p><div class="chips scroll" id="sc-lk">${LOOKS().map(([k,l])=>`<button class="chip" data-v="${k}" aria-pressed="${curLook===k}">${l}</button>`).join('')}</div>
-        <p class="lbl">Color del marco de todos</p><div class="hsw" id="sc-fc">${swatches(same('hue'),{none:'El original',white:true,label:'Color del marco de todos'})}</div>
-        <p class="lbl">Color del icono de todos</p><div class="hsw" id="sc-icc">${swatches(same('ihue'),{none:'Como el original',white:true,label:'Color del icono de todos'})}</div>`:''}
-      ${isInHTML('sc-isz')}<p class="note">Agranda los iconos de los botones de esta pantalla y de los que ya hayas cambiado en otras. Inicio tiene su propio tamaño (Estilo de los botones → Forma).</p>
-      <div class="grid sc-grid">${btns.map(tile).join('')}</div></div>`:''}
-    ${rest.length?`<div class="card"><h3>Otras piezas <small class="cnt">${rest.length}</small></h3><p class="note">Barras, listas, fondos de ventanas… Tócalas para cambiar sus colores o sustituirlas.</p><div class="list">${rest.map(F=>fileRow(F,KINDL.get(kindOf(F)))).join('')}</div></div>`:''}
+    ${hb?`<div class="list"><button class="li" id="sc-hb"><span class="th">${th(hb,72,42)}</span><span class="tx"><b>Su botón en Inicio</b><small>Icono, colores y estilo del botón «${esc(pretty(hb))}»</small></span>${CHEV}</button></div>`:''}
+    ${files.length?`<details class="isd card" id="sc-all"><summary><span>Todas las piezas<small>Una a una, también las que no salen en la vista</small></span><b>${files.length}</b></summary><div class="isb">
+      ${btns.length?`<div class="grid sc-grid">${btns.map(tile).join('')}</div>`:''}
+      ${rest.length?`<p class="lbl">Barras, listas y fondos de ventanas</p><div class="list">${rest.map(F=>fileRow(F,KINDL.get(kindOf(F)))).join('')}</div>`:''}</div></details>`:''}
     </div></div>`;
   if(bg){const c=$('#pv'),vw=VWS.has(s);let press=-1,down=-1,hov=-1;mountPreview(c,()=>({scr:pscr,orig:S.hcmp==='orig',view:vw?vwCur(s):null,press,hov}));
     if(vw){vwBar(s);if(VW.st!==2)loadVistas().then(()=>{vwBar(s);schedule()});
@@ -2641,7 +2642,8 @@ function scrScreen(v,r){
       c.onpointerleave=c.onpointercancel=()=>{down=press=hov=-1;schedule()};
       c.onpointerup=e=>{const V=vwCur(s),i=down;down=press=-1;schedule();if(!V||i<0)return;const h=vwHit(V,c,e);if(h.i!==i)return;
         if(isBtnLike(h.F))btnSheet(h.F,()=>{mountThumbs(v);schedule()});else go({n:'edit',p:h.F.path})}}$('#sc-cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.hcmp=b.dataset.v;$$('#sc-cmp button').forEach(x=>x.setAttribute('aria-pressed',x===b));schedule()}}
-  if(hb)btnSheet(hb,()=>mountThumbs(v),$('#sc-btn'));
+  const hbb=$('#sc-hb');if(hbb)hbb.onclick=()=>btnSheet(hb,()=>{mountThumbs(v);schedule()});
+  const all=$('#sc-all');if(all)all.ontoggle=()=>{if(all.open)mountThumbs(v)};
   const sec0=secs[0],get=()=>S.ops.sec[sec0],set=o=>{for(const k of secs)setScopeOps(k,o?structuredClone(o):o)};
   tintUI($('#sc-tint'),'sc',get,set,()=>{schedule();mountThumbs(v)});
   $('#sc-more').onclick=()=>{S.scope=sec0;go({n:'theme'})};
@@ -2730,7 +2732,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-27-15';
+const VER='2026-10-28-0';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -2738,7 +2740,10 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Pantalla de reposo → «Color del reloj»: tiñe los números, los dos puntos y el AM/PM del reloj grande, con la vista previa a la hora de ahora']],
+  [VER,['Ventana de cada pantalla mucho más corta: arriba la vista, luego «Botones de esta pantalla» (estilo, colores y tamaño de todos a la vez), el color de la pantalla y el fondo. «Su botón en Inicio» es una línea que abre su hoja, y «Todas las piezas» va plegado',
+    'Exportar recuerda el modo que usaste la última vez (por ejemplo, Automático)',
+    'El mismo nombre en todas partes: «Estilo de los botones»']],
+  ['2026-10-27-15',['Pantalla de reposo → «Color del reloj»: tiñe los números, los dos puntos y el AM/PM del reloj grande, con la vista previa a la hora de ahora']],
   ['2026-10-27-14',['Corregido: en Mis diseños el botón de borrar se salía de la tarjeta y no se veía. Ahora cada diseño tiene «Cargar» y «⋯», con Llevar a la radio, Guardar en un archivo, Cambiar el nombre y Borrar',
     '«Llevar a la radio» carga el diseño y te lleva a Exportar para descargar el ZIP del USB; «Guardar en un archivo» baja el .mskz para otro móvil u ordenador',
     'Los nombres de diseño ya no se repiten: al guardar con un nombre que existe te ofrece sobrescribirlo, al cambiar el nombre te pide otro y al importar se añade «(2)»',

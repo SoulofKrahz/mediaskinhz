@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-27-15';
+const VER='2026-10-28-0';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,7 +11,10 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Pantalla de reposo → «Color del reloj»: tiñe los números, los dos puntos y el AM/PM del reloj grande, con la vista previa a la hora de ahora']],
+  [VER,['Ventana de cada pantalla mucho más corta: arriba la vista, luego «Botones de esta pantalla» (estilo, colores y tamaño de todos a la vez), el color de la pantalla y el fondo. «Su botón en Inicio» es una línea que abre su hoja, y «Todas las piezas» va plegado',
+    'Exportar recuerda el modo que usaste la última vez (por ejemplo, Automático)',
+    'El mismo nombre en todas partes: «Estilo de los botones»']],
+  ['2026-10-27-15',['Pantalla de reposo → «Color del reloj»: tiñe los números, los dos puntos y el AM/PM del reloj grande, con la vista previa a la hora de ahora']],
   ['2026-10-27-14',['Corregido: en Mis diseños el botón de borrar se salía de la tarjeta y no se veía. Ahora cada diseño tiene «Cargar» y «⋯», con Llevar a la radio, Guardar en un archivo, Cambiar el nombre y Borrar',
     '«Llevar a la radio» carga el diseño y te lleva a Exportar para descargar el ZIP del USB; «Guardar en un archivo» baja el .mskz para otro móvil u ordenador',
     'Los nombres de diseño ya no se repiten: al guardar con un nombre que existe te ofrece sobrescribirlo, al cambiar el nombre te pide otro y al importar se añade «(2)»',
