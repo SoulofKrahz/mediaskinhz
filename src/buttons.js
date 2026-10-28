@@ -127,29 +127,63 @@ function btnSheet(F,after,el){
   const dn=bs.querySelector('[data-done]');if(dn)dn.onclick=()=>{S.icRedraw=null;closeBS();after&&after()};
 }
 
-/* ---- Diseños listos: estilo + colores para todos los botones de la radio de una vez (Inicio y dentro) ----
-   look = estilo · hue = color del marco · ihue = color del icono (null = el de cada estilo) · bk = tono del negro de los fondos (null = negro original) */
+/* ---- Diseños listos: un diseño completo de una vez ----
+   Botones de Inicio y de dentro (estilo, color del marco y del icono) + color de toda la radio (fondos, barra de arriba, listas, barras…) + tono del negro de los fondos.
+   Se ve antes de aplicarlo: una hoja con la vista previa de cada pantalla. look = estilo · hue = color · ihue = color del icono (null = el del estilo) · bk = tono del negro (null = negro) */
 const PRESETS=[
   ['neon-az','Neón azul','neon',210,null,215],['bisel-lima','Biselado lima','chamfer',75,null,null],['futuro-cian','Futurista cian','hud',185,null,195],
-  ['carbono-rojo','Carbono rojo','carbon',0,null,null],['aurora','Aurora morada','aurora',275,null,270],['cristal','Cristal blanco','glass',205,'white',null],
+  ['carbono-rojo','Carbono rojo','carbon',0,null,null],['aurora','Aurora morada','aurora',275,null,270],['cristal','Cristal azul','glass',205,'white',210],
   ['ocaso','Ocaso naranja','sunset',30,'white',25],['halo-verde','Halo verde','halo',140,null,150],['capsula-rosa','Cápsula rosa','capsule',330,'white',330],
-  ['muesca-roja','Muesca roja','notch',355,null,null],['rejilla-ambar','Rejilla ámbar','grid',35,null,30],['relieve-azul','Relieve acero','emboss',205,null,null],
+  ['muesca-roja','Muesca roja','notch',355,null,null],['rejilla-ambar','Rejilla ámbar','grid',35,null,30],['relieve','Relieve acero','emboss',205,null,null],
+  ['anillo-turq','Anillo turquesa','ring',176,null,180],['esquinas-oro','Esquinas doradas','corner',44,null,null],['retro','Píxel retro','pixel',120,null,null],
+  ['arcoiris','Borde degradado','gborder',200,'white',250],['onda-azul','Onda azul','wave',215,'white',220],['circuito','Circuito verde','circuit',150,null,155],
+  ['pestana-roja','Pestaña roja','tab',2,null,null],['dos-tonos','Dos tonos índigo','split',236,'white',240],['puntos-magenta','Puntos magenta','dots',298,null,300],
   ['aluminio','Aluminio','metal',210,null,null],['minimo-oro','Mínimo dorado','minimal',45,null,null]].map(([id,name,look,hue,ihue,bk])=>({id,name,look,hue,ihue,bk}));
 const presetInside=()=>{const T=genTargets();return S.files.filter(F=>kindOf(F)==='btn'&&canStyle(F)&&!T.includes(F))};
-const presetOn=P=>{const g=S.gen||{};return g.look===P.look&&g.color==='one'&&g.hue===P.hue};
+const presetOn=P=>{const g=S.gen||{},o=S.ops.global;return g.look===P.look&&g.color==='one'&&g.hue===P.hue&&!!o&&o.tA===100&&o.tH===P.hue};
 function presetTile(P){const T=genTargets(),R=T.find(F=>extractIcon(F))||T[0];if(!R)return null;const g=S.gen||(S.gen=defGen()),me={...(g.per[R.path]||{})};delete me.hue;if(P.ihue!=null)me.ihue=P.ihue;else delete me.ihue;
   return miniTile(R,{...g,look:P.look,style:P.look,color:'one',hue:P.hue,per:{...g.per,[R.path]:me}},0)}
-async function applyPreset(P){const T=genTargets(),mine=T.filter(handRep);
-  if(mine.length&&!await confirmBS({title:'Aplicar «'+P.name+'»',text:`${mine.map(F=>esc(pretty(F))).join(', ')} ${mine.length===1?'tiene':'tienen'} una imagen que pusiste tú. El diseño la sustituirá. Podrás deshacerlo.`,ok:'Aplicar'}))return false;
-  before();const g=S.gen||(S.gen=defGen()),L=presetInside();g.look=P.look;g.style=P.look;g.color='one';g.hue=P.hue;
+// pone los datos del diseño (sin dibujar aún los botones)
+function presetSet(P){const g=S.gen||(S.gen=defGen()),T=genTargets(),L=presetInside();g.look=P.look;g.style=P.look;g.color='one';g.hue=P.hue;
   const setI=p=>{if(P.ihue!=null)p.ihue=P.ihue;else delete p.ihue};
   for(const F of T){const p=g.per[F.path];if(p){delete p.hue;setI(p)}else if(P.ihue!=null)g.per[F.path]={ihue:P.ihue}}
   for(const F of L){const p=g.per[F.path]||(g.per[F.path]={});p.look=P.look;p.hue=P.hue;setI(p)}
+  // color de toda la radio: fondos, barra de arriba, listas, barras, iconos sueltos… (solo las partes de color; grises y blancos se quedan)
+  S.ops.global={...defOps(),tH:P.hue,tA:100,tG:false};S.ops.sec={};
   for(const n of new Set(SCRBG.values())){const B=byName(n);if(!B)continue;const o={...defOps(),...(S.ops.file[B.path]||{})};o.map={...(o.map||{})};
     if(P.bk==null)delete o.map[13];else o.map[13]={to:P.bk,ts:.6,tl:.1};if(!Object.keys(o.map).length)delete o.map;setFileOps(B,o)}
-  toast('Aplicando «'+P.name+'»…',{ms:30000});await new Promise(r=>setTimeout(r,30));applyButtons([...T,...L]);
-  toast(`«${P.name}» en ${T.length+L.length} botones${P.bk!=null?' y los fondos':''}`,{label:'Deshacer',fn:undo});return true}
-function presetsHTML(id){return `<div class="card"><h3>Diseños listos <small class="cnt">${PRESETS.length}</small></h3><p class="note">Estilo y colores para todos los botones de la radio de una vez, también los de dentro. Deshacer lo quita.</p>
+  return {T,L}}
+const PSCR=[['home','Inicio'],['radio','Radio'],['media','Multimedia'],['phone','Teléfono'],['setting','Ajustes'],['eco','Driving eco']];
+function presetSheet(P0){
+  const keep=[S.curDesign,S.curDesignName],scrs=PSCR.filter(([k])=>byName(SCRBG.get(k)));let P=null,done=new Set(),scr='home',all={T:[],L:[]};
+  const forScr=s=>{if(s==='home')return all.T;const fs=new Set(scrFiles(s));return all.L.filter(F=>fs.has(F))};
+  openBS(`<h2>Diseños listos</h2><p class="note" id="ps-n"></p>${pvBlock('ps-pv')}
+    <div class="chips scroll" id="ps-s" style="margin-top:8px">${scrs.map(([k,l])=>`<button class="chip" data-s="${k}" aria-pressed="${k===scr}">${l}</button>`).join('')}</div>
+    <div class="hs" id="ps-l" style="margin-top:6px">${PRESETS.map(Q=>`<button class="ocd" data-v="${Q.id}"><canvas width="1" height="1"></canvas><span>${esc(Q.name)}</span></button>`).join('')}</div>
+    <div class="row2" style="display:flex;gap:8px;margin-top:10px"><button class="btn o" style="flex:1" id="ps-x">Cancelar</button><button class="btn" style="flex:2" id="ps-ok">Aplicar este diseño</button></div>`);
+  const bs=$('#bs'),c=bs.querySelector('#ps-pv'),lst=bs.querySelector('#ps-l');
+  const draw=()=>{drawPreview(c,{scr,view:scr==='home'?null:vwCur(scr)})};
+  const build=s=>{const A=forScr(s).filter(F=>!done.has(F));A.forEach(F=>done.add(F));applyButtons(A)};
+  const use=Q=>{if(P)restoreSnap();P=Q;done=new Set();all=presetSet(Q);S.ver++;build(scr);draw();
+    bs.querySelector('#ps-n').textContent=`«${Q.name}»: botones, fondos, barra de arriba y colores de toda la radio. Mira cada pantalla antes de aplicarlo.`;
+    lst.querySelectorAll('.ocd').forEach(x=>x.setAttribute('aria-pressed',x.dataset.v===Q.id))};
+  // la primera vez se guarda el estado para Deshacer; al probar otro se vuelve a ese estado sin tocar el historial
+  let snap0=null;const restoreSnap=()=>{const s=snap0;Object.assign(S,{ops:structuredClone(s.ops),ex:{...s.ex},frames:{...s.frames},layout:structuredClone(s.layout),gen:genCopy(s.gen),icx:structuredClone(s.icx||{}),stby:s.stby?{...s.stby}:null});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;S.ver++};
+  const first=()=>{snap0=snap();H.push(snap());if(H.length>80)H.shift();updUndo()};
+  const cancel=()=>{if(P){restoreSnap();H.pop();updUndo();S.curDesign=keep[0];S.curDesignName=keep[1];saveState();render(true)}};
+  S.bsCancel=cancel;
+  bs.querySelector('#ps-s').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;scr=b.dataset.s;bs.querySelectorAll('#ps-s .chip').forEach(x=>x.setAttribute('aria-pressed',x===b));if(P)build(scr);draw();
+    if(scr!=='home'&&VW.st!==2)loadVistas().then(draw)};
+  lst.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;const Q=PRESETS.find(p=>p.id===b.dataset.v);if(Q&&Q!==P){use(Q);b.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'})}};
+  bs.querySelector('#ps-x').onclick=()=>closeBS();
+  bs.querySelector('#ps-ok').onclick=async()=>{if(!P){closeBS();return}S.bsCancel=null;
+    const rest=[...all.T,...all.L].filter(F=>!done.has(F));toast(`Aplicando «${P.name}»…`,{ms:30000});closeBS();await new Promise(r=>setTimeout(r,30));
+    S.curDesign=null;S.curDesignName=null;applyButtons(rest);render(true);toast(`«${P.name}» aplicado a toda la radio (${all.T.length+all.L.length} botones)`,{label:'Deshacer',fn:undo})};
+  // miniaturas
+  const cvs=[...lst.querySelectorAll('canvas')];let i=0;const step=()=>{for(let n=0;n<3&&i<cvs.length;n++,i++){if(!cvs[i].isConnected)return;const t=presetTile(PRESETS[i]);if(t)putMini(cvs[i],t)}if(i<cvs.length)requestAnimationFrame(step)};
+  first();use(P0);requestAnimationFrame(step);if(VW.st!==2)loadVistas();
+  const b0=lst.querySelector(`[data-v="${P0.id}"]`);if(b0)setTimeout(()=>b0.scrollIntoView({inline:'center',block:'nearest'}),50)}
+function presetsHTML(id){return `<div class="card"><h3>Diseños listos <small class="cnt">${PRESETS.length}</small></h3><p class="note">Un diseño completo de una vez: botones de todas las pantallas, fondos, barra de arriba y colores. Lo ves antes de aplicarlo.</p>
   <div class="hs" id="${id}">${PRESETS.map(P=>`<button class="ocd" data-v="${P.id}" aria-pressed="${presetOn(P)}"><canvas width="1" height="1"></canvas><span>${esc(P.name)}</span></button>`).join('')}</div></div>`}
-function mountPresets(el,after){if(!el)return;const cvs=[...el.querySelectorAll('canvas')];let i=0;const step=()=>{for(let n=0;n<3&&i<cvs.length;n++,i++){if(!cvs[i].isConnected)return;const t=presetTile(PRESETS[i]);if(t)putMini(cvs[i],t)}if(i<cvs.length)requestAnimationFrame(step)};requestAnimationFrame(step);
-  el.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;const P=PRESETS.find(p=>p.id===b.dataset.v);if(!P)return;if(await applyPreset(P)){el.querySelectorAll('.ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));after&&after()}}}
+function mountPresets(el){if(!el)return;const cvs=[...el.querySelectorAll('canvas')];let i=0;const step=()=>{for(let n=0;n<3&&i<cvs.length;n++,i++){if(!cvs[i].isConnected)return;const t=presetTile(PRESETS[i]);if(t)putMini(cvs[i],t)}if(i<cvs.length)requestAnimationFrame(step)};requestAnimationFrame(step);
+  el.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;const P=PRESETS.find(p=>p.id===b.dataset.v);if(P)presetSheet(P)}}

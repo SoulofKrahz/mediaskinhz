@@ -120,9 +120,15 @@ async function run(browser, label, viewport, mobile) {
   ok(await p.evaluate(() => { applyGen(); return genTargets().every(F => F.rep && outBytes(F).length === 1078 + (((F.w + 3) & ~3) * F.h)); }), 'aplica el estilo (relieve en círculo) y los BMP salen bien');
   await p.evaluate(() => { undo(); S.gen.ifx = 'none'; S.gen.ibox = 'none'; }); await p.waitForTimeout(300);
   const sty = await p.evaluate(() => { const F = genTargets()[0], bad = []; for (const [k] of GSTYLES) { try { const c = genTile(F, { ...S.gen, style: k }); const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let v = 0; for (let i = 0; i < d.length; i += 4) v += d[i] + d[i + 1] + d[i + 2]; if (!v) bad.push(k); } catch (e) { bad.push(k + ': ' + e.message); } } return { n: GSTYLES.length, bad }; });
-  const pre = await p.evaluate(async () => { const bad = PRESETS.filter(P => !presetTile(P)).map(P => P.id); const P = PRESETS[0], r = await Promise.race([applyPreset(P), new Promise(res => setTimeout(() => res('cuelga'), 4000))]); const T = genTargets(), ok1 = r === true && S.gen.look === P.look && T.every(F => F.rep && F.rep.by === 'gen'), L = presetInside(), ok2 = L.every(F => S.gen.per[F.path].look === P.look && S.gen.per[F.path].hue === P.hue); undo(); return { bad, ok1, ok2, r, nL: L.length }; });
-  ok(!pre.bad.length && pre.ok1 && pre.ok2, `los diseños listos se dibujan y se aplican a Inicio y a ${pre.nL} botones de dentro` + (pre.bad.length ? ': fallan ' + pre.bad.join(', ') : '') + (pre.r !== true ? ' (' + pre.r + ')' : ''));
-  ok(sty.n >= 30 && !sty.bad.length, `los ${sty.n} estilos de botón se dibujan` + (sty.bad.length ? ': fallan ' + sty.bad.join(', ') : ''));
+  const pre = await p.evaluate(async () => { const bad = PRESETS.filter(P => !presetTile(P)).map(P => P.id), g0 = JSON.stringify(S.ops.global), n0 = H.length;
+    presetSheet(PRESETS[0]); await new Promise(r => setTimeout(r, 300)); const pv = !!document.querySelector('#bs:not([hidden]) #ps-pv');
+    document.querySelector('#ps-l [data-v="ocaso"]').click(); await new Promise(r => setTimeout(r, 300)); const sw = S.gen.look === 'sunset' && S.ops.global.tH === 30 && H.length === n0 + 1;
+    document.querySelector('#ps-x').click(); await new Promise(r => setTimeout(r, 300)); const back = JSON.stringify(S.ops.global) === g0 && H.length === n0;
+    presetSheet(PRESETS[1]); await new Promise(r => setTimeout(r, 300)); document.querySelector('#ps-ok').click(); await new Promise(r => setTimeout(r, 600));
+    const T = genTargets(), L = presetInside(), ap = S.gen.look === PRESETS[1].look && T.every(F => F.rep && F.rep.by === 'gen') && L.every(F => S.gen.per[F.path].look === PRESETS[1].look) && S.ops.global.tA === 100;
+    undo(); return { bad, pv, sw, back, ap, nL: L.length }; });
+  ok(!pre.bad.length && pre.pv && pre.sw && pre.back && pre.ap, `diseños listos: vista previa, cambiar, cancelar sin dejar rastro y aplicar a Inicio, ${pre.nL} botones de dentro y el color de la radio` + (pre.ap && pre.back ? "" : JSON.stringify(pre)));
+  ok(sty.n >= 40 && !sty.bad.length, `los ${sty.n} estilos de botón se dibujan` + (sty.bad.length ? ': fallan ' + sty.bad.join(', ') : ''));
   // Diálogo para poner nombre (lo usan «Mis diseños»)
   const nm = p.evaluate(() => promptBS({ title: 'Prueba', value: 'Mi diseño' })); await p.waitForTimeout(300);
   await p.fill('#pb-in', 'Neón azul'); await p.keyboard.press('Enter');
