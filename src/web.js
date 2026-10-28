@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-28-4';
+const VER='2026-10-28-5';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,8 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-28-5',['Diseños listos en Pantalla → Inicio: 14 combinaciones de estilo y colores que se aplican de una vez a todos los botones de la radio (Inicio y dentro) y al negro de los fondos. Deshacer lo quita',
+    '8 estilos de botón nuevos: Relieve, Halo, Ocaso, Rejilla, Diagonal, Muesca, Rayas y Cápsula brillante (30 en total)']],
   [VER,['Pantalla: arriba se ve el diseño que estás usando («Diseño «Biselado azul»», con aviso de cambios sin guardar, o «Diseño sin guardar»). Tócalo para ir a Mis diseños',
     'Al cargar o importar un diseño, la app te lleva a Pantalla para verlo']],
   ['2026-10-28-3',['Ventana de cada pantalla → Botones de esta pantalla: los estilos se ven en miniatura, dibujados sobre un botón de esa pantalla, y se aplican al momento al tocarlos (sin pedir confirmación; Deshacer lo quita)']],

@@ -880,6 +880,7 @@ function scrHome(v){
     <div class="stack">
       ${S.demo?`<div class="card demo"><h2>Esto es un ejemplo</h2><p>Las imágenes son de muestra. Carga tu backup (la carpeta <b>M1</b> o un ZIP) para editar las de tu MediaNav. No sale de tu móvil.</p><button class="btn wide" data-act="load">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}Cargar mi backup</button></div>`:''}
       ${S.scr==='home'&&!S.demo&&genTargets().length?`<div class="qa"><button class="qai" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><b>Estilo de los botones</b><small>Los 6 a la vez: estilo, forma y trazo</small></button><button class="qai" data-act="designs"><span class="ic">${ic('M5 3h11l3 3v15H5zM8 3v6h8V3M8 21v-7h8v7')}</span><b>Mis diseños</b><small>Guardar y cambiar entre ellos</small></button></div>`:S.scr==='home'&&genTargets().length?`<div class="list"><button class="li" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><span class="tx"><b>Rediseñar los botones</b><small>Estilo, forma, color e iconos nuevos</small></span>${CHEV}</button></div>`:''}
+      ${S.scr==='home'&&!S.demo&&genTargets().length?presetsHTML('h-pre'):''}
       <p class="sec-t">En esta pantalla</p>
       <div class="list">${rows.join('')||'<p class="empty">No hay imágenes de esta pantalla en el backup.</p>'}</div>
       ${!S.demo&&S.scr==='home'?`<div class="list"><button class="li" data-act="kit"><span class="ic">${ic('M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3')}</span><span class="tx"><b>Kit de prueba para el coche</b><small>3 imágenes para comprobar transparencia, estados y posiciones</small></span>${CHEV}</button></div>`:''}
@@ -895,6 +896,7 @@ function scrHome(v){
     c.onpointermove=e=>{if(e.pointerType!=='mouse')return;const h=slotAt(c,e);c.style.cursor=h.i>=0?'pointer':'default';if(down<0&&S.press!==h.i){S.press=h.i;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})}};
     c.onpointerleave=c.onpointercancel=()=>{down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})};
     c.onpointerup=e=>{const h=slotAt(c,e);const i=down;down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'});if(i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F){const sc=slotScr(F);if(sc&&!S.demo)go({n:'scr',s:sc});else if(genTargets().includes(F))btnSheet(F);else go({n:'edit',p:F.path})}}}}
+  mountPresets($('#h-pre'),()=>render(true));
   S.slow=()=>{};
 }
 
@@ -1461,7 +1463,7 @@ function pngMask(bmp){const s=96,c=document.createElement('canvas');c.width=c.he
   for(let i=0;i<s*s;i++){d.data[i*4]=d.data[i*4+1]=d.data[i*4+2]=255}x.putImageData(d,0,0);return {cv:c,bx:0,by:0,bw:s,bh:s}}
 
 /* ============ generador ============ */
-const GSTYLES=[['glow','Brillo inferior'],['flat','Plano'],['outline','Contorno'],['glass','Cristal'],['neon','Neón'],['tile','Mosaico'],['minimal','Mínimo'],['metal','Aluminio'],['carbon','Carbono'],['aurora','Aurora'],['hud','Futurista'],['hudb','Futurista grande'],['hudf','Futurista marco'],['chamfer','Biselado'],['scan','Escáner'],['led','Luces LED'],['double','Doble línea'],['side','Barra lateral'],['beam','Haz central'],['frost','Esmerilado'],['soft','Suave'],['vivid','Degradado vivo']];
+const GSTYLES=[['glow','Brillo inferior'],['flat','Plano'],['outline','Contorno'],['glass','Cristal'],['neon','Neón'],['tile','Mosaico'],['minimal','Mínimo'],['metal','Aluminio'],['carbon','Carbono'],['aurora','Aurora'],['hud','Futurista'],['hudb','Futurista grande'],['hudf','Futurista marco'],['chamfer','Biselado'],['scan','Escáner'],['led','Luces LED'],['double','Doble línea'],['side','Barra lateral'],['beam','Haz central'],['emboss','Relieve'],['halo','Halo'],['sunset','Ocaso'],['grid','Rejilla'],['slash','Diagonal'],['notch','Muesca'],['stripes','Rayas'],['capsule','Cápsula brillante'],['frost','Esmerilado'],['soft','Suave'],['vivid','Degradado vivo']];
 const defGen=()=>({isIn:1.15,look:'orig',style:'glow',shape:'round',r:14,inset:4,corners:'bg',color:'orig',hue:156,is:56,iy:42,per:{}});
 function origHue(F){if(F.oh!=null)return F.oh;const cnt=new Uint32Array(256);for(let i=0;i<F.idx.length;i++)cnt[F.idx[i]]++;let sx=0,sy=0;
   for(let i=0;i<F.n;i++){if(!cnt[i])continue;const r=F.pal[i*3],g=F.pal[i*3+1],b=F.pal[i*3+2];if(isKey(r,g,b))continue;const C=(Math.max(r,g,b)-Math.min(r,g,b))/255;if(C<.2)continue;const [h]=rgb2hsl(r,g,b),w=cnt[i]*C*C;sx+=Math.cos(h*Math.PI/180)*w;sy+=Math.sin(h*Math.PI/180)*w}
@@ -1535,6 +1537,30 @@ function drawState(x,F,w,h,s,H,g,bgc){
       gr.addColorStop(0,`hsla(${H},90%,50%,0)`);gr.addColorStop(.5,`hsla(${H},90%,55%,${on?.7:dim?.08:.32})`);gr.addColorStop(1,`hsla(${H},90%,50%,0)`);x.fillStyle=gr;x.fillRect(X,Y,W,Hh);
       x.fillStyle=`hsla(${H},100%,80%,${on?.9:dim?.15:.55})`;x.fillRect(X+W*.25,Y+1,W*.5,1.5);x.fillRect(X+W*.25,Y+Hh-2.5,W*.5,1.5);x.restore();
       ic=on?'#ffffff':dim?`hsl(${H} 30% 40%)`:'#f2f6fa';glow=dim?0:on?10:6;break}
+    case 'emboss':{x.fillStyle=on?`hsl(${H} 45% 22%)`:`hsl(${H} 25% ${dim?9:16}%)`;x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();
+      x.lineWidth=4;x.strokeStyle=on?'rgba(0,0,0,.55)':'rgba(255,255,255,.22)';x.beginPath();x.moveTo(X+2,Y+Hh-2);x.lineTo(X+2,Y+2);x.lineTo(X+W-2,Y+2);x.stroke();
+      x.strokeStyle=on?'rgba(255,255,255,.18)':'rgba(0,0,0,.6)';x.beginPath();x.moveTo(X+W-2,Y+2);x.lineTo(X+W-2,Y+Hh-2);x.lineTo(X+2,Y+Hh-2);x.stroke();x.restore();
+      x.lineWidth=1.5;x.strokeStyle=`hsl(${H} 70% ${on?60:dim?22:40}%)`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=on?'#ffffff':`hsl(${H} 75% ${dim?32:66}%)`;break}
+    case 'halo':{x.fillStyle='#05070a';x.fill();x.save();x.shadowColor=`hsl(${H} 100% 55%)`;x.shadowBlur=on?22:dim?0:12;x.lineWidth=on?3:2;x.strokeStyle=`hsla(${H},100%,${on?72:62}%,${dim?.35:.95})`;
+      rrect(x,X+7,Y+7,W-14,Hh-14,Math.max(0,r-4));x.stroke();if(on){x.fillStyle=`hsla(${H},90%,55%,.18)`;x.fill()}x.restore();ic=on?'#ffffff':`hsl(${H} 100% ${dim?40:74}%)`;glow=dim?0:on?14:7;break}
+    case 'sunset':{const gr=x.createLinearGradient(0,Y,0,Y+Hh);gr.addColorStop(0,`hsl(${(H+330)%360} ${dim?20:80}% ${on?52:dim?14:30}%)`);gr.addColorStop(.55,`hsl(${H} ${dim?20:85}% ${on?46:dim?12:24}%)`);gr.addColorStop(1,`hsl(${(H+30)%360} ${dim?20:90}% ${on?40:dim?8:14}%)`);
+      x.fillStyle=gr;x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();x.fillStyle=`hsla(${(H+20)%360},100%,70%,${on?.5:dim?.08:.3})`;x.beginPath();x.ellipse(w/2,Y+Hh*1.05,W*.42,Hh*.42,0,0,Math.PI*2);x.fill();x.restore();
+      if(on){x.lineWidth=2.5;x.strokeStyle='rgba(255,255,255,.7)';rrect(x,X+2,Y+2,W-4,Hh-4,Math.max(0,r-1));x.stroke()}ic=dim?'rgba(255,255,255,.5)':'#ffffff';break}
+    case 'grid':{x.fillStyle=on?`hsl(${H} 55% 14%)`:'#050709';x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();x.strokeStyle=`hsla(${H},90%,60%,${on?.32:dim?.06:.16})`;x.lineWidth=1;const q=Math.max(8,Math.round(Hh/7));
+      x.beginPath();for(let xx=X+q/2;xx<X+W;xx+=q){x.moveTo(xx+.5,Y);x.lineTo(xx+.5,Y+Hh)}for(let yy=Y+q/2;yy<Y+Hh;yy+=q){x.moveTo(X,yy+.5);x.lineTo(X+W,yy+.5)}x.stroke();x.restore();
+      x.lineWidth=2;x.strokeStyle=`hsl(${H} 90% ${on?68:dim?26:52}%)`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=on?'#ffffff':`hsl(${H} 90% ${dim?32:70}%)`;glow=dim?0:4;break}
+    case 'slash':{x.fillStyle='#07090c';x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();x.fillStyle=`hsl(${H} ${dim?25:85}% ${on?55:dim?18:40}%)`;x.beginPath();
+      x.moveTo(X,Y);x.lineTo(X+W*(on?.36:.24),Y);x.lineTo(X+W*(on?.26:.14),Y+Hh);x.lineTo(X,Y+Hh);x.closePath();x.fill();x.restore();
+      x.lineWidth=1.5;x.strokeStyle=`hsla(${H},80%,60%,${on?.8:.35})`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=dim?'rgba(255,255,255,.45)':'#ffffff';break}
+    case 'notch':{const n=Math.min(W*.3,90),d=Math.max(4,Hh*.09),a=X+2,b=Y+2,c=X+W-2,e=Y+Hh-2;x.beginPath();x.moveTo(a,b);x.lineTo(w/2-n/2,b);x.lineTo(w/2-n/2+d,b+d);x.lineTo(w/2+n/2-d,b+d);x.lineTo(w/2+n/2,b);x.lineTo(c,b);x.lineTo(c,e);x.lineTo(a,e);x.closePath();
+      x.fillStyle=on?`hsl(${H} 55% 18%)`:'#06080b';x.fill();x.save();x.lineWidth=2;x.strokeStyle=`hsl(${H} 95% ${on?70:dim?26:56}%)`;x.shadowColor=x.strokeStyle;x.shadowBlur=dim?0:6;x.stroke();x.restore();
+      x.fillStyle=`hsl(${H} 100% ${on?80:dim?30:62}%)`;for(const k of [-1,0,1]){x.beginPath();x.arc(w/2+k*Math.min(10,n/6),e-6,1.8,0,7);x.fill()}ic=on?'#ffffff':`hsl(${H} 90% ${dim?30:68}%)`;glow=dim?0:4;break}
+    case 'stripes':{x.fillStyle=on?`hsl(${H} 60% 22%)`:'#0a0c10';x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();x.strokeStyle=`hsla(${H},85%,60%,${on?.22:dim?.05:.12})`;x.lineWidth=5;x.beginPath();
+      for(let k=-Hh;k<W+Hh;k+=14){x.moveTo(X+k,Y+Hh);x.lineTo(X+k+Hh,Y)}x.stroke();x.restore();x.lineWidth=2;x.strokeStyle=`hsl(${H} 80% ${on?62:dim?24:46}%)`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();
+      ic=on?'#ffffff':`hsl(${H} 85% ${dim?32:70}%)`;break}
+    case 'capsule':{const R=Math.min(Hh/2-1,W/2-1);rrect(x,X+1,Y+1,W-2,Hh-2,R);const gr=x.createLinearGradient(0,Y,0,Y+Hh);gr.addColorStop(0,`hsl(${H} ${dim?25:80}% ${on?66:dim?24:52}%)`);gr.addColorStop(1,`hsl(${H} ${dim?25:85}% ${on?38:dim?10:26}%)`);x.fillStyle=gr;x.fill();
+      x.save();rrect(x,X+1,Y+1,W-2,Hh-2,R);x.clip();const gl=x.createLinearGradient(0,Y,0,Y+Hh*.5);gl.addColorStop(0,`rgba(255,255,255,${on?.5:.38})`);gl.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gl;rrect(x,X+W*.06,Y+3,W*.88,Hh*.46,R*.8);x.fill();x.restore();
+      x.lineWidth=1.5;x.strokeStyle='rgba(255,255,255,.35)';rrect(x,X+1.5,Y+1.5,W-3,Hh-3,R);x.stroke();ic=dim?'rgba(255,255,255,.5)':'#ffffff';break}
     case 'frost':{x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();x.filter='blur(7px)';x.drawImage(bgc,-10,-10,w+20,h+20);x.filter='none';
       x.fillStyle=on?`hsla(${H},85%,55%,.42)`:`rgba(255,255,255,${dim?.05:.13})`;x.fillRect(X,Y,W,Hh);const gl=x.createLinearGradient(0,Y,0,Y+Hh);gl.addColorStop(0,'rgba(255,255,255,.18)');gl.addColorStop(.5,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh);x.restore();
       x.lineWidth=1.5;x.strokeStyle=on?`hsla(${H},90%,75%,.8)`:'rgba(255,255,255,.38)';rrect(x,X+1.5,Y+1.5,W-3,Hh-3,r);x.stroke();ic=dim?'rgba(255,255,255,.45)':'#ffffff';break}
@@ -2574,6 +2600,33 @@ function btnSheet(F,after,el){
   const dn=bs.querySelector('[data-done]');if(dn)dn.onclick=()=>{S.icRedraw=null;closeBS();after&&after()};
 }
 
+/* ---- Diseños listos: estilo + colores para todos los botones de la radio de una vez (Inicio y dentro) ----
+   look = estilo · hue = color del marco · ihue = color del icono (null = el de cada estilo) · bk = tono del negro de los fondos (null = negro original) */
+const PRESETS=[
+  ['neon-az','Neón azul','neon',210,null,215],['bisel-lima','Biselado lima','chamfer',75,null,null],['futuro-cian','Futurista cian','hud',185,null,195],
+  ['carbono-rojo','Carbono rojo','carbon',0,null,null],['aurora','Aurora morada','aurora',275,null,270],['cristal','Cristal blanco','glass',205,'white',null],
+  ['ocaso','Ocaso naranja','sunset',30,'white',25],['halo-verde','Halo verde','halo',140,null,150],['capsula-rosa','Cápsula rosa','capsule',330,'white',330],
+  ['muesca-roja','Muesca roja','notch',355,null,null],['rejilla-ambar','Rejilla ámbar','grid',35,null,30],['relieve-azul','Relieve acero','emboss',205,null,null],
+  ['aluminio','Aluminio','metal',210,null,null],['minimo-oro','Mínimo dorado','minimal',45,null,null]].map(([id,name,look,hue,ihue,bk])=>({id,name,look,hue,ihue,bk}));
+const presetInside=()=>{const T=genTargets();return S.files.filter(F=>kindOf(F)==='btn'&&canStyle(F)&&!T.includes(F))};
+const presetOn=P=>{const g=S.gen||{};return g.look===P.look&&g.color==='one'&&g.hue===P.hue};
+function presetTile(P){const T=genTargets(),R=T.find(F=>extractIcon(F))||T[0];if(!R)return null;const g=S.gen||(S.gen=defGen()),me={...(g.per[R.path]||{})};delete me.hue;if(P.ihue!=null)me.ihue=P.ihue;else delete me.ihue;
+  return miniTile(R,{...g,look:P.look,style:P.look,color:'one',hue:P.hue,per:{...g.per,[R.path]:me}},0)}
+async function applyPreset(P){const T=genTargets(),mine=T.filter(handRep);
+  if(mine.length&&!await confirmBS({title:'Aplicar «'+P.name+'»',text:`${mine.map(F=>esc(pretty(F))).join(', ')} ${mine.length===1?'tiene':'tienen'} una imagen que pusiste tú. El diseño la sustituirá. Podrás deshacerlo.`,ok:'Aplicar'}))return false;
+  before();const g=S.gen||(S.gen=defGen()),L=presetInside();g.look=P.look;g.style=P.look;g.color='one';g.hue=P.hue;
+  const setI=p=>{if(P.ihue!=null)p.ihue=P.ihue;else delete p.ihue};
+  for(const F of T){const p=g.per[F.path];if(p){delete p.hue;setI(p)}else if(P.ihue!=null)g.per[F.path]={ihue:P.ihue}}
+  for(const F of L){const p=g.per[F.path]||(g.per[F.path]={});p.look=P.look;p.hue=P.hue;setI(p)}
+  for(const n of new Set(SCRBG.values())){const B=byName(n);if(!B)continue;const o={...defOps(),...(S.ops.file[B.path]||{})};o.map={...(o.map||{})};
+    if(P.bk==null)delete o.map[13];else o.map[13]={to:P.bk,ts:.6,tl:.1};if(!Object.keys(o.map).length)delete o.map;setFileOps(B,o)}
+  toast('Aplicando «'+P.name+'»…',{ms:30000});await new Promise(r=>setTimeout(r,30));applyButtons([...T,...L]);
+  toast(`«${P.name}» en ${T.length+L.length} botones${P.bk!=null?' y los fondos':''}`,{label:'Deshacer',fn:undo});return true}
+function presetsHTML(id){return `<div class="card"><h3>Diseños listos <small class="cnt">${PRESETS.length}</small></h3><p class="note">Estilo y colores para todos los botones de la radio de una vez, también los de dentro. Deshacer lo quita.</p>
+  <div class="hs" id="${id}">${PRESETS.map(P=>`<button class="ocd" data-v="${P.id}" aria-pressed="${presetOn(P)}"><canvas width="1" height="1"></canvas><span>${esc(P.name)}</span></button>`).join('')}</div></div>`}
+function mountPresets(el,after){if(!el)return;const cvs=[...el.querySelectorAll('canvas')];let i=0;const step=()=>{for(let n=0;n<3&&i<cvs.length;n++,i++){if(!cvs[i].isConnected)return;const t=presetTile(PRESETS[i]);if(t)putMini(cvs[i],t)}if(i<cvs.length)requestAnimationFrame(step)};requestAnimationFrame(step);
+  el.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;const P=PRESETS.find(p=>p.id===b.dataset.v);if(!P)return;if(await applyPreset(P)){el.querySelectorAll('.ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));after&&after()}}}
+
 /* ============ ventana de cada pantalla de la radio ============
    Como solo se toca la skin, cada pantalla (Radio, Multimedia, Teléfono, Driving eco, Ajustes) es un conjunto cerrado de imágenes:
    aquí está todo lo suyo junto. «Común» reúne lo que comparten todas (barra superior, ventanas, teclados, cámara, ayudas, 4x4).
@@ -2776,7 +2829,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-28-4';
+const VER='2026-10-28-5';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -2784,6 +2837,8 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-28-5',['Diseños listos en Pantalla → Inicio: 14 combinaciones de estilo y colores que se aplican de una vez a todos los botones de la radio (Inicio y dentro) y al negro de los fondos. Deshacer lo quita',
+    '8 estilos de botón nuevos: Relieve, Halo, Ocaso, Rejilla, Diagonal, Muesca, Rayas y Cápsula brillante (30 en total)']],
   [VER,['Pantalla: arriba se ve el diseño que estás usando («Diseño «Biselado azul»», con aviso de cambios sin guardar, o «Diseño sin guardar»). Tócalo para ir a Mis diseños',
     'Al cargar o importar un diseño, la app te lleva a Pantalla para verlo']],
   ['2026-10-28-3',['Ventana de cada pantalla → Botones de esta pantalla: los estilos se ven en miniatura, dibujados sobre un botón de esa pantalla, y se aplican al momento al tocarlos (sin pedir confirmación; Deshacer lo quita)']],

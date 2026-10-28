@@ -126,3 +126,30 @@ function btnSheet(F,after,el){
   bs.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{const n=list[idx+ +b.dataset.mv];if(n)btnSheet(n,after)});
   const dn=bs.querySelector('[data-done]');if(dn)dn.onclick=()=>{S.icRedraw=null;closeBS();after&&after()};
 }
+
+/* ---- Diseños listos: estilo + colores para todos los botones de la radio de una vez (Inicio y dentro) ----
+   look = estilo · hue = color del marco · ihue = color del icono (null = el de cada estilo) · bk = tono del negro de los fondos (null = negro original) */
+const PRESETS=[
+  ['neon-az','Neón azul','neon',210,null,215],['bisel-lima','Biselado lima','chamfer',75,null,null],['futuro-cian','Futurista cian','hud',185,null,195],
+  ['carbono-rojo','Carbono rojo','carbon',0,null,null],['aurora','Aurora morada','aurora',275,null,270],['cristal','Cristal blanco','glass',205,'white',null],
+  ['ocaso','Ocaso naranja','sunset',30,'white',25],['halo-verde','Halo verde','halo',140,null,150],['capsula-rosa','Cápsula rosa','capsule',330,'white',330],
+  ['muesca-roja','Muesca roja','notch',355,null,null],['rejilla-ambar','Rejilla ámbar','grid',35,null,30],['relieve-azul','Relieve acero','emboss',205,null,null],
+  ['aluminio','Aluminio','metal',210,null,null],['minimo-oro','Mínimo dorado','minimal',45,null,null]].map(([id,name,look,hue,ihue,bk])=>({id,name,look,hue,ihue,bk}));
+const presetInside=()=>{const T=genTargets();return S.files.filter(F=>kindOf(F)==='btn'&&canStyle(F)&&!T.includes(F))};
+const presetOn=P=>{const g=S.gen||{};return g.look===P.look&&g.color==='one'&&g.hue===P.hue};
+function presetTile(P){const T=genTargets(),R=T.find(F=>extractIcon(F))||T[0];if(!R)return null;const g=S.gen||(S.gen=defGen()),me={...(g.per[R.path]||{})};delete me.hue;if(P.ihue!=null)me.ihue=P.ihue;else delete me.ihue;
+  return miniTile(R,{...g,look:P.look,style:P.look,color:'one',hue:P.hue,per:{...g.per,[R.path]:me}},0)}
+async function applyPreset(P){const T=genTargets(),mine=T.filter(handRep);
+  if(mine.length&&!await confirmBS({title:'Aplicar «'+P.name+'»',text:`${mine.map(F=>esc(pretty(F))).join(', ')} ${mine.length===1?'tiene':'tienen'} una imagen que pusiste tú. El diseño la sustituirá. Podrás deshacerlo.`,ok:'Aplicar'}))return false;
+  before();const g=S.gen||(S.gen=defGen()),L=presetInside();g.look=P.look;g.style=P.look;g.color='one';g.hue=P.hue;
+  const setI=p=>{if(P.ihue!=null)p.ihue=P.ihue;else delete p.ihue};
+  for(const F of T){const p=g.per[F.path];if(p){delete p.hue;setI(p)}else if(P.ihue!=null)g.per[F.path]={ihue:P.ihue}}
+  for(const F of L){const p=g.per[F.path]||(g.per[F.path]={});p.look=P.look;p.hue=P.hue;setI(p)}
+  for(const n of new Set(SCRBG.values())){const B=byName(n);if(!B)continue;const o={...defOps(),...(S.ops.file[B.path]||{})};o.map={...(o.map||{})};
+    if(P.bk==null)delete o.map[13];else o.map[13]={to:P.bk,ts:.6,tl:.1};if(!Object.keys(o.map).length)delete o.map;setFileOps(B,o)}
+  toast('Aplicando «'+P.name+'»…',{ms:30000});await new Promise(r=>setTimeout(r,30));applyButtons([...T,...L]);
+  toast(`«${P.name}» en ${T.length+L.length} botones${P.bk!=null?' y los fondos':''}`,{label:'Deshacer',fn:undo});return true}
+function presetsHTML(id){return `<div class="card"><h3>Diseños listos <small class="cnt">${PRESETS.length}</small></h3><p class="note">Estilo y colores para todos los botones de la radio de una vez, también los de dentro. Deshacer lo quita.</p>
+  <div class="hs" id="${id}">${PRESETS.map(P=>`<button class="ocd" data-v="${P.id}" aria-pressed="${presetOn(P)}"><canvas width="1" height="1"></canvas><span>${esc(P.name)}</span></button>`).join('')}</div></div>`}
+function mountPresets(el,after){if(!el)return;const cvs=[...el.querySelectorAll('canvas')];let i=0;const step=()=>{for(let n=0;n<3&&i<cvs.length;n++,i++){if(!cvs[i].isConnected)return;const t=presetTile(PRESETS[i]);if(t)putMini(cvs[i],t)}if(i<cvs.length)requestAnimationFrame(step)};requestAnimationFrame(step);
+  el.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;const P=PRESETS.find(p=>p.id===b.dataset.v);if(!P)return;if(await applyPreset(P)){el.querySelectorAll('.ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));after&&after()}}}
