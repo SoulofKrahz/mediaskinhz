@@ -251,6 +251,7 @@ input[type=range].hue{--trk:linear-gradient(90deg,hsl(0 80% 50%),hsl(60 80% 50%)
 .bts~*,.bs>.lbl,.bs>.hs,.bs>.hsw,.bs>.bt-more,.bs>.gnav{flex-shrink:0}
 .bts.inl{position:static;margin:0;padding:0;border:0;background:none}.cnt{font-size:13px;color:var(--mu);font-weight:600;margin-left:4px}
 .vwbar{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}.vwbar .chips{margin:0}.vwbar .vwb .chip{font-weight:700}
+.dsn-t{font:inherit;color:inherit;background:none;border:0;padding:0;text-align:left;cursor:pointer;text-decoration:underline;text-decoration-color:color-mix(in srgb,currentColor 35%,transparent);text-underline-offset:3px}.dsn-t b{color:var(--warn,#b7791f);font-weight:600}
 .sc-grid{grid-template-columns:repeat(auto-fill,minmax(min(130px,100%),1fr))}
 .hs{flex:none;display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;margin:0 -2px;scroll-snap-type:x proximity;scrollbar-width:none}.hs::-webkit-scrollbar{display:none}
 .hs .icb{flex:0 0 78px;scroll-snap-align:start}.hs .icb canvas{width:44px;height:44px}.hs .ocd{flex:0 0 112px;scroll-snap-align:start}
@@ -846,6 +847,10 @@ function go(r){if(ROOTN.has(r.n))S.stack=[];else S.stack.push(S.route);S.route=r
 function back(){S.route=S.stack.pop()||{n:'home'};render();}
 function navHTML(){return ROOTS.map(([k,l,d])=>`<button data-r="${k}">${ic(d)}<span>${l}</span>${k==='export'?'<b class="badge" data-badge hidden>0</b>':''}</button>`).join('')}
 function rootOf(){if(ROOTN.has(S.route.n))return S.route.n;for(let i=S.stack.length-1;i>=0;i--)if(ROOTN.has(S.stack[i].n))return S.stack[i].n;return 'home'}
+// Qué diseño estás usando: su nombre y si tiene cambios sin guardar
+function designLine(){const n=S.files.filter(changed).length;
+  if(S.base)return `Diseño «${esc(S.base.name)}»${S.curDesign===S.base.id?'':' · <b>cambios sin guardar</b>'}`;
+  return n?`Diseño sin guardar · ${n} ${n===1?'imagen cambiada':'imágenes cambiadas'}`:'Original de Renault · sin cambios'}
 function setTitle(t1,t2,mono){$('#ab-t').innerHTML=`<span class="t1">${t1}</span>${t2?`<span class="t2${mono?' mono':''}">${t2}</span>`:''}`}
 function render(keepScroll){
   const y=scrollY;S.pvs=[];S.live=null;S.slow=null;S.curF=null;closeBS();
@@ -859,7 +864,8 @@ function updBadge(){const n=S.files.filter(changed).length;$$('[data-badge]').fo
 
 /* ============ Pantalla ============ */
 function scrHome(v){
-  setTitle(S.demo?'Pantalla':'Pantalla',`<span class="lw">Mediaskin<em>hz</em></span> · ${S.demo?'ejemplo':'backup '+esc(S.root)}`);
+  setTitle('Pantalla',S.demo?`<span class="lw">Mediaskin<em>hz</em></span> · ejemplo`:`<button class="dsn-t" id="h-dsn" title="Mis diseños">${designLine()}</button>`);
+  const hd=$('#h-dsn');if(hd)hd.onclick=()=>{S.focus='s-des';go({n:'settings'})};
   const scr=S.scr,have=SCREENS.filter(s=>byName(s[2]));if(!have.some(s=>s[0]===scr)&&have.length)S.scr=have[0][0];
   const rows=[];const bg=byName(SCRBG.get(S.scr));if(bg)rows.push(fileRow(bg,'Fondo · 800×480'));
   if(S.scr==='home')for(const s of S.layout.slots){const F=slotF(s);if(F)rows.push(fileRow(F,'Botón · 4 estados'))}
@@ -1763,7 +1769,7 @@ async function restorePoint(id){
   const p=await getPoint(id);if(!p){toast('Ese diseño ya no está guardado');return}
   if(!await confirmBS({title:'Volver a este diseño',text:`Se cargará «${esc(p.label)}» (${p.n} ${p.n===1?'imagen cambiada':'imágenes cambiadas'}). Lo que tienes ahora se guarda antes como copia automática, por si quieres volver.`,ok:'Cargar',always:true}))return;
   await addPoint('Antes de volver a «'+p.label+'»','auto');before();for(const F of S.files)F.rep=null;S.src=new Map();S.ops={global:null,sec:{},file:{}};S.ex={};S.frames={};
-  applyState(p.st);if(!p.st.gen)S.gen=null;else if(!S.gen.look)migrateLook(p.st);if(p.kind==='manual'){S.curDesign=p.id;S.curDesignName=p.label;setBase(p.id,p.label)}else setBase(null);bump();render(true);toast(`«${p.label}» cargado`,{label:'Deshacer',fn:undo})}
+  applyState(p.st);if(!p.st.gen)S.gen=null;else if(!S.gen.look)migrateLook(p.st);if(p.kind==='manual'){S.curDesign=p.id;S.curDesignName=p.label;setBase(p.id,p.label)}else setBase(null);bump();S.scr='home';go({n:'home'});toast(`«${p.label}» cargado`,{label:'Deshacer',fn:undo})}
 async function recordExport(o){
   if(S.demo)return;const pid=await addPoint('Exportación · '+o.count+' '+(o.count===1?'imagen':'imágenes'),'export');
   const xs=await getList('exports');xs.unshift({id:Date.now().toString(36),t:Date.now(),sig:sig(),mode:o.mode,boot:!!o.boot,hw:o.hw,inc:o.inc,files:o.files,name:o.name,size:o.blob.size,pid,blob:o.blob.size<=25e6?o.blob:null});
@@ -1905,7 +1911,7 @@ async function importDesign(blob,fname){
   let addI=0;for(const m of meta.my||[])if(m&&m.id&&!MY.by.has(m.id)){MY.list.push(m);addI++}if(addI){myIndex();await mySave()}
   await addPoint('Antes de importar «'+nm+'»','auto');before();for(const F of S.files){F.rep=null;F.ico=undefined;F.icz=null}S.src=new Map();S.ops={global:null,sec:{},file:{}};S.ex={};S.frames={};S.gen=null;S.icx={};
   applyState({...meta.st,reps});if(S.gen&&!S.gen.look)migrateLook(meta.st);bump();
-  const id=await addPoint(nm,'manual');if(id){S.curDesign=id;S.curDesignName=nm;setBase(id,nm)}render(true);toast(`«${nm}» importado`+(addI?` con ${addI} ${addI===1?'icono tuyo':'iconos tuyos'}`:''),{label:'Deshacer',fn:undo})}
+  const id=await addPoint(nm,'manual');if(id){S.curDesign=id;S.curDesignName=nm;setBase(id,nm)}S.scr='home';go({n:'home'});toast(`«${nm}» importado`+(addI?` con ${addI} ${addI===1?'icono tuyo':'iconos tuyos'}`:''),{label:'Deshacer',fn:undo})}
 function pickDesignFile(){const i=document.createElement('input');i.type='file';i.accept='.mskz,.zip,application/zip';i.onchange=()=>{const f=i.files[0];if(f)importDesign(f,f.name)};i.click()}
 
 /* ============ instalación automática con MortScript ============
@@ -2770,7 +2776,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-28-3';
+const VER='2026-10-28-4';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -2778,7 +2784,9 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Ventana de cada pantalla → Botones de esta pantalla: los estilos se ven en miniatura, dibujados sobre un botón de esa pantalla, y se aplican al momento al tocarlos (sin pedir confirmación; Deshacer lo quita)']],
+  [VER,['Pantalla: arriba se ve el diseño que estás usando («Diseño «Biselado azul»», con aviso de cambios sin guardar, o «Diseño sin guardar»). Tócalo para ir a Mis diseños',
+    'Al cargar o importar un diseño, la app te lleva a Pantalla para verlo']],
+  ['2026-10-28-3',['Ventana de cada pantalla → Botones de esta pantalla: los estilos se ven en miniatura, dibujados sobre un botón de esa pantalla, y se aplican al momento al tocarlos (sin pedir confirmación; Deshacer lo quita)']],
   ['2026-10-28-2',['Driving eco: al exportar su casa, también se exporta la de 4WD (verde lima como ella; es la que parece usar tu radio en esa pantalla), dibujada igual y ajustada a su ancho. Si la radio usa la de Eco, no cambia nada',
     'El kit de letras de las casas incluye también la de 4WD (letra W)']],
   ['2026-10-28-1',['En la ventana de cada pantalla: «¿Un botón no cambia en el coche?». Descarga una prueba que pone una letra grande en cada casa (R, M, T, A, E, C) para ver en el coche qué imagen usa cada pantalla, y otro ZIP para quitarla y volver a tu diseño']],

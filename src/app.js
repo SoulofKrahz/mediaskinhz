@@ -271,6 +271,10 @@ function go(r){if(ROOTN.has(r.n))S.stack=[];else S.stack.push(S.route);S.route=r
 function back(){S.route=S.stack.pop()||{n:'home'};render();}
 function navHTML(){return ROOTS.map(([k,l,d])=>`<button data-r="${k}">${ic(d)}<span>${l}</span>${k==='export'?'<b class="badge" data-badge hidden>0</b>':''}</button>`).join('')}
 function rootOf(){if(ROOTN.has(S.route.n))return S.route.n;for(let i=S.stack.length-1;i>=0;i--)if(ROOTN.has(S.stack[i].n))return S.stack[i].n;return 'home'}
+// Qué diseño estás usando: su nombre y si tiene cambios sin guardar
+function designLine(){const n=S.files.filter(changed).length;
+  if(S.base)return `Diseño «${esc(S.base.name)}»${S.curDesign===S.base.id?'':' · <b>cambios sin guardar</b>'}`;
+  return n?`Diseño sin guardar · ${n} ${n===1?'imagen cambiada':'imágenes cambiadas'}`:'Original de Renault · sin cambios'}
 function setTitle(t1,t2,mono){$('#ab-t').innerHTML=`<span class="t1">${t1}</span>${t2?`<span class="t2${mono?' mono':''}">${t2}</span>`:''}`}
 function render(keepScroll){
   const y=scrollY;S.pvs=[];S.live=null;S.slow=null;S.curF=null;closeBS();
@@ -284,7 +288,8 @@ function updBadge(){const n=S.files.filter(changed).length;$$('[data-badge]').fo
 
 /* ============ Pantalla ============ */
 function scrHome(v){
-  setTitle(S.demo?'Pantalla':'Pantalla',`<span class="lw">Mediaskin<em>hz</em></span> · ${S.demo?'ejemplo':'backup '+esc(S.root)}`);
+  setTitle('Pantalla',S.demo?`<span class="lw">Mediaskin<em>hz</em></span> · ejemplo`:`<button class="dsn-t" id="h-dsn" title="Mis diseños">${designLine()}</button>`);
+  const hd=$('#h-dsn');if(hd)hd.onclick=()=>{S.focus='s-des';go({n:'settings'})};
   const scr=S.scr,have=SCREENS.filter(s=>byName(s[2]));if(!have.some(s=>s[0]===scr)&&have.length)S.scr=have[0][0];
   const rows=[];const bg=byName(SCRBG.get(S.scr));if(bg)rows.push(fileRow(bg,'Fondo · 800×480'));
   if(S.scr==='home')for(const s of S.layout.slots){const F=slotF(s);if(F)rows.push(fileRow(F,'Botón · 4 estados'))}
