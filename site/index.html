@@ -2632,7 +2632,7 @@ function scrScreen(v,r){
     ${bg?`<div class="stick sticky-pv">${VWS.has(s)?'<div id="sc-vw" class="vwbar"></div>':''}${pvBlock('pv')}<div class="e-bar"><div class="seg" id="sc-cmp" role="group" aria-label="Comparar"><button data-v="now" aria-pressed="${S.hcmp!=='orig'}">Ahora</button><button data-v="orig" aria-pressed="${S.hcmp==='orig'}">Original</button></div><span class="sp"></span><span class="hint" style="padding:0">${VWS.has(s)?(s==='common'?'Sobre el fondo de Radio. Toca una pieza para cambiarla':'Toca un botón de la pantalla para cambiarlo'):'Fondo de '+esc(scrName(s))+' con tus cambios'}</span></div></div>`:''}
     <div class="stack">
     ${sty.length?`<div class="card"><h3>Botones de esta pantalla <small class="cnt">${sty.length}</small></h3><p class="note">Todos a la vez. Para cambiar uno solo, tócalo en la pantalla de arriba.</p>
-      <p class="lbl">Estilo</p><div class="chips scroll" id="sc-lk">${LOOKS().map(([k,l])=>`<button class="chip" data-v="${k}" aria-pressed="${curLook===k}">${l}</button>`).join('')}</div>
+      <p class="lbl">Estilo <small>· se aplica al momento; Deshacer lo quita</small></p><div class="hs" id="sc-lk">${LOOKS().map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${curLook===k}"><canvas data-lk="${k}" width="1" height="1"></canvas><span>${l}</span></button>`).join('')}</div>
       <p class="lbl">Color del marco</p><div class="hsw" id="sc-fc">${swatches(same('hue'),{none:'El original',white:true,label:'Color del marco de todos'})}</div>
       <p class="lbl">Color del icono</p><div class="hsw" id="sc-icc">${swatches(same('ihue'),{none:'Como el original',white:true,label:'Color del icono de todos'})}</div>
       ${isInHTML('sc-isz')}</div>`:''}
@@ -2663,10 +2663,16 @@ function scrScreen(v,r){
   const bk=$('#sc-bk .swg');if(bk){const setBk=h=>{before();const o={...defOps(),...(S.ops.file[bg.path]||{})};o.map={...(o.map||{})};if(h==null)delete o.map[13];else o.map[13]={to:h,ts:.6,tl:.1};if(!Object.keys(o.map).length)delete o.map;setFileOps(bg,o);bump()};
     bk.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;bk.querySelectorAll('.swc').forEach(x=>x.setAttribute('aria-pressed',x===b));setBk(b.dataset.h==='none'?null:+b.dataset.h)};
     bk.querySelector('[data-pick]').onchange=e=>{const [h,,l]=hexHsl(e.target.value);before();const o={...defOps(),...(S.ops.file[bg.path]||{})};o.map={...(o.map||{}),13:{to:Math.round(h),ts:.6,tl:Math.min(.85,l)}};setFileOps(bg,o);bump()}}
-  const lk=$('#sc-lk');if(lk)lk.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;const k=b.dataset.v,nm=(LOOKS().find(x=>x[0]===k)||['',''])[1];
-    const L=k==='orig'?[...new Set([...sty,...btns.filter(G=>((g.per[G.path]||{}).look||'orig')!=='orig')])]:sty;
-    if(!await confirmBS({title:`«${nm}» en ${scrName(s)}`,text:k==='orig'?`Los ${L.length} botones de esta pantalla vuelven al estilo original de Renault (también las barras y piezas raras a las que pusiste estilo). El icono y el color de cada uno se mantienen. Podrás deshacerlo.`:`Se aplicará a los ${L.length} botones de esta pantalla (se saltan las barras alargadas). El icono y el color de cada uno se mantienen. Podrás deshacerlo.`,ok:'Aplicar'}))return;
-    before();for(const G of L)(g.per[G.path]||(g.per[G.path]={})).look=k;toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(L);render(true);toast(`${L.length} botones con «${nm}»`,{label:'Deshacer',fn:undo})};
+  const lk=$('#sc-lk');if(lk){
+    // miniaturas: cada estilo dibujado sobre un botón de esta pantalla que tenga icono (si no, el primero)
+    const R=sty.find(F=>extractIcon(F)&&F.w/frames(F)/F.h<2.2)||sty.find(F=>extractIcon(F))||sty[0];
+    const cvs=[...lk.querySelectorAll('canvas[data-lk]')];let ci=0;const step=()=>{for(let n=0;n<4&&ci<cvs.length;n++,ci++){const cv=cvs[ci],k=cv.dataset.lk;if(!cv.isConnected)return;
+        if(k==='orig'){const fw=R.w/frames(R),c=document.createElement('canvas');c.width=fw;c.height=R.h;c.getContext('2d').drawImage(renderOrig(R,false),0,0,fw,R.h,0,0,fw,R.h);putMini(cv,c)}else putMini(cv,miniTile(R,{...g,style:k},0))}
+      if(ci<cvs.length)requestAnimationFrame(step)};if(R)requestAnimationFrame(step);
+    lk.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;const k=b.dataset.v,nm=(LOOKS().find(x=>x[0]===k)||['',''])[1];
+      const L=k==='orig'?[...new Set([...sty,...btns.filter(G=>((g.per[G.path]||{}).look||'orig')!=='orig')])]:sty;
+      lk.querySelectorAll('.ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));before();for(const G of L)(g.per[G.path]||(g.per[G.path]={})).look=k;
+      toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(L);mountThumbs(v);schedule();toast(`«${nm}» en ${L.length} botones`,{label:'Deshacer',fn:undo})}}
   // colores de marco e icono para todos los botones de la pantalla a la vez
   const allCol=async(key,h)=>{before();for(const G of sty){const q=g.per[G.path]||(g.per[G.path]={});if(h==null)delete q[key];else q[key]=h}
     toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(sty);render(true);toast(`Color cambiado en ${sty.length} botones`,{label:'Deshacer',fn:undo})};
@@ -2764,7 +2770,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-28-2';
+const VER='2026-10-28-3';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -2772,7 +2778,8 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
-  [VER,['Driving eco: al exportar su casa, también se exporta la de 4WD (verde lima como ella; es la que parece usar tu radio en esa pantalla), dibujada igual y ajustada a su ancho. Si la radio usa la de Eco, no cambia nada',
+  [VER,['Ventana de cada pantalla → Botones de esta pantalla: los estilos se ven en miniatura, dibujados sobre un botón de esa pantalla, y se aplican al momento al tocarlos (sin pedir confirmación; Deshacer lo quita)']],
+  ['2026-10-28-2',['Driving eco: al exportar su casa, también se exporta la de 4WD (verde lima como ella; es la que parece usar tu radio en esa pantalla), dibujada igual y ajustada a su ancho. Si la radio usa la de Eco, no cambia nada',
     'El kit de letras de las casas incluye también la de 4WD (letra W)']],
   ['2026-10-28-1',['En la ventana de cada pantalla: «¿Un botón no cambia en el coche?». Descarga una prueba que pone una letra grande en cada casa (R, M, T, A, E, C) para ver en el coche qué imagen usa cada pantalla, y otro ZIP para quitarla y volver a tu diseño']],
   ['2026-10-28-0',['Ventana de cada pantalla mucho más corta: arriba la vista, luego «Botones de esta pantalla» (estilo, colores y tamaño de todos a la vez), el color de la pantalla y el fondo. «Su botón en Inicio» es una línea que abre su hoja, y «Todas las piezas» va plegado',
