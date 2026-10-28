@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-28-11';
+const VER='2026-10-28-12';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,9 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-28-12',['«Varios diseños en el USB» justo debajo de «Descargar ZIP»',
+    'Menú «⋯» ordenado por grupos: Tu diseño (guardar, Mis diseños), Backup (cargar, quitar cambios, cerrar) y Más (kit de prueba, Ajustes). El modo oscuro sale de ahí: está en Ajustes → Preferencias → Tema',
+    'Ajustes con pestañas claras: Mis diseños, Exportaciones, Preferencias y App. El kit de prueba ya no se repite en Pantalla']],
   ['2026-10-28-11',['Selector de diseños en el USB (Exportar → «Varios diseños en el USB»): eliges hasta 8 entre lo que tienes ahora, Mis diseños y los diseños listos; al arrancar con el USB, la radio enseña la lista y eliges con el dedo cuál instalar. Siempre lleva «Original de Renault», «Abrir Total Commander» y «Reiniciar». Cada diseño se instala completo (sin restos del anterior), con copia de seguridad y vuelta atrás si falla']],
   ['2026-10-28-10',['Las flechas grandes de avanzar y retroceder (presintonías, Multimedia, Driving eco) ya llevan el estilo del diseño listo, aunque vinieran de un diseño tuyo con otro estilo',
     'Estilos de líneas (Futurista, Neón, Halo, Contorno, Anillo, Esquinas…) sin placa negra encima: con un diseño listo el cuerpo del botón deja ver el fondo con un velo suave, también dentro de las pantallas (se calca el trozo de fondo que queda detrás de cada botón)',

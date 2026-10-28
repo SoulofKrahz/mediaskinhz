@@ -28,7 +28,7 @@ async function getPoint(id){try{return await idb.get('pt:'+id)}catch(_){return n
 async function putPoint(p){await ptIndex();await idb.set('pt:'+p.id,p);const m=ptMeta(p),i=PT.idx.findIndex(x=>x.id===p.id);if(i>=0)PT.idx[i]=m;else PT.idx.unshift(m);await idb.set('ptidx',PT.idx)}
 async function delPoint(id){await ptIndex();try{await idb.del('pt:'+id)}catch(_){}PT.idx=PT.idx.filter(x=>x.id!==id);await idb.set('ptidx',PT.idx)}
 async function prunePoints(){const ix=await ptIndex();for(const k of ['auto','export']){const L=ix.filter(x=>x.kind===k).sort((a,b)=>b.t-a.t).slice(PTKEEP);for(const x of L)await delPoint(x.id).catch(()=>{})}}
-const noSpace=()=>toast('No queda espacio en el navegador. Borra copias automáticas o diseños que no uses (Ajustes e historial → Diseños).',{ms:7000});
+const noSpace=()=>toast('No queda espacio en el navegador. Borra copias automáticas o diseños que no uses (⋯ → Mis diseños).',{ms:7000});
 // Datos de los botones para guardar: todo menos la imagen PNG en memoria (p.png)
 function packGen(){if(!S.gen)return null;const gen={...S.gen,per:{}};for(const [k,p] of Object.entries(S.gen.per||{})){const {png,...r}=p;gen.per[k]={...r,icon:p.icon==='png'?undefined:p.icon}}return structuredClone(gen)}
 function packState(){const reps={};for(const F of S.files)if(F.rep)reps[F.path]={pal:F.rep.pal,idx:F.rep.idx,keyIdx:F.rep.keyIdx,by:F.rep.by};
@@ -99,7 +99,7 @@ async function undoZip(x){
 const fdt=t=>new Date(t).toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
 const fsz=n=>n>1e6?(n/1e6).toFixed(1).replace('.',',')+' MB':Math.max(1,Math.round(n/1e3))+' kB';
 async function scrSettings(v){
-  setTitle('Ajustes e historial',`<span class="lw">Mediaskin<em>hz</em></span> · ${S.demo?'ejemplo':'backup '+esc(S.root)}`);
+  setTitle('Ajustes',`<span class="lw">Mediaskin<em>hz</em></span> · ${S.demo?'ejemplo':'backup '+esc(S.root)}`);
   v.innerHTML='<p class="note">Cargando…</p>';
   const [pts,xs]=await Promise.all([listPoints(),getList('exports')]),mine=p=>p.sig===sig(),P=pts.filter(mine),X=xs.filter(mine),D=P.filter(p=>p.kind==='manual'),A=P.filter(p=>p.kind!=='manual');
   let est=null;try{est=navigator.storage&&navigator.storage.estimate?await navigator.storage.estimate():null}catch(_){}
@@ -190,7 +190,7 @@ function accUi(){const box=$('#s-acs');if(!box)return;icnUi();const {h,s}=accGet
   let t;pk.oninput=e=>{const[ph,ps]=hsOf(e.target.value);if(window.msApply)msApply(ph,ps);clearTimeout(t);t=setTimeout(()=>{accSet(ph,+ps.toFixed(2));accUi()},250)}}
 
 /* Ajustes en pestañas: cada tarjeta va a su categoría (Diseños · Historial · Preferencias · App) */
-const STABS=[['des','Diseños'],['hist','Historial'],['pref','Preferencias'],['app','App']];
+const STABS=[['des','Mis diseños'],['hist','Exportaciones'],['pref','Preferencias'],['app','App']];
 const SCARD={'Mis diseños':'des','Historial de exportaciones':'hist','Seguridad':'pref','Exportación por defecto':'pref','Pantalla':'pref','Instalar la app':'app','Datos en este navegador':'app'};
 function settingsTabs(v){if(S.focus==='s-des')S.stab='des';const cur=S.stab||(S.stab='des');
   const cards=[...v.querySelectorAll('.card')].filter(c=>!c.parentElement.closest('.card')),abt=v.querySelector('.abt'),box=document.createElement('div');box.className='stack stw';

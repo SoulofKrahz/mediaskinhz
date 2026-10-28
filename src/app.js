@@ -309,7 +309,6 @@ function scrHome(v){
       ${S.scr==='home'&&!S.demo&&genTargets().length?presetsHTML('h-pre'):''}
       <p class="sec-t">En esta pantalla</p>
       <div class="list">${rows.join('')||'<p class="empty">No hay imágenes de esta pantalla en el backup.</p>'}</div>
-      ${!S.demo&&S.scr==='home'?`<div class="list"><button class="li" data-act="kit"><span class="ic">${ic('M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3')}</span><span class="tx"><b>Kit de prueba para el coche</b><small>3 imágenes para comprobar transparencia, estados y posiciones</small></span>${CHEV}</button></div>`:''}
       ${S.scr==='home'?`<div class="list"><button class="li" data-go="layout"><span class="ic">${ic('M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20')}</span><span class="tx"><b>Distribución de los botones</b><small>Moverlos, cuadrícula y qué botón va en cada hueco</small></span>${CHEV}</button></div>`:''}
       ${nSec&&S.scr!=='home'?`<div class="list"><button class="li" data-cat="${catOf({sec})}" data-sec="${esc(sec)}"><span class="ic">${ic('M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z')}</span><span class="tx"><b>Todas las imágenes de ${esc(SECL.get(sec))}</b><small>${nSec} imágenes</small></span>${CHEV}</button></div>`:''}
       <div class="list"><button class="li" data-go="theme"><span class="ic">${ic(ROOTS[1][2])}</span><span class="tx"><b>Cambiar el color de toda la radio</b><small>${esc(describe(S.ops.global)||'Sin tema')}</small></span>${CHEV}</button></div>
@@ -641,9 +640,9 @@ function scrExport(v){
       <div class="chk" id="x-chk"><span>Comprobando los archivos… <b id="x-n">0</b> de ${fs.length}</span></div>
       <label class="swrow" for="x-boot" id="x-bootrow"${S.xmode==='auto'?'':' hidden'}><span>Que se instale solo al arrancar<small>Para tu USB con ULC2_recovery: al arrancar pregunta si instalar (con el dedo, sin Total Commander). Si dices que no, abre Total Commander como siempre</small></span><input class="sw" type="checkbox" id="x-boot"${SET.xboot!==false?' checked':''}></label>
       <label class="swrow" for="x-orig"><span>Incluir los originales<small>Carpeta ORIGINALES con solo estos archivos, para deshacer</small></span><input class="sw" type="checkbox" id="x-orig"${SET.xorig?' checked':''}></label>
-      <button class="btn wide" id="x-go" disabled>Descargar ZIP</button></div>
+      <button class="btn wide" id="x-go" disabled>Descargar ZIP</button>${S.demo?'':`<button class="btn o wide" id="x-sel" style="margin-top:8px">${ic('M4 6h16M4 12h16M4 18h10')}Varios diseños en el USB</button><p class="note" style="margin-top:4px">Un selector: al arrancar con el USB eliges en la radio cuál poner.</p>`}</div>
     <div class="card"><h3>Archivos</h3><div class="fl" id="x-list"><p class="note">Comprobando…</p></div></div></div>
-    <div class="stack">${S.demo?'':`<div class="list"><button class="li" id="x-sel"><span class="ic">${ic('M4 6h16M4 12h16M4 18h10')}</span><span class="tx"><b>Varios diseños en el USB</b><small>Un selector: al arrancar eliges en la radio cuál poner</small></span>${CHEV}</button></div>`}<div class="card"><h3>Cómo instalarlo</h3><div id="x-steps"></div></div></div></div>`;
+    <div class="stack"><div class="card"><h3>Cómo instalarlo</h3><div id="x-steps"></div></div></div></div>`;
   {const xs=$('#x-sel');if(xs)xs.onclick=selectorSheet}
   const R0=esc(S.root);
   const stepsHTML=()=>S.xmode==='auto'&&SET.xboot!==false?`<ol class="steps">
@@ -653,7 +652,7 @@ function scrExport(v){
       <li>El script guarda en el USB lo que hay ahora en la radio, copia las imágenes y comprueba cada una. Si algo falla, deja la radio como estaba y abre Total Commander.</li>
       <li>Una ventana enseña el progreso. Al terminar sale «Instalación completada»: <b>primero pulsa Aceptar</b> y, <b>cuando la pantalla se apague</b>, saca el USB. Si sacas el USB antes de Aceptar, la pantalla se queda en negro (vuelve a meterlo y reinicia).</li>
       <li>Si la radio arranca otra vez con el USB puesto, no se reinstala: te ofrece reiniciar o abrir Total Commander.</li>
-      <li>Si pulsas <b>No</b>, se abre Total Commander como siempre. Para deshacer: Ajustes e historial → Historial → «Deshacer en el coche», y se instala igual.</li></ol>
+      <li>Si pulsas <b>No</b>, se abre Total Commander como siempre. Para deshacer: ⋯ → Ajustes → Exportaciones → «Deshacer en el coche», y se instala igual.</li></ol>
       <p class="note">Probado en el coche. Antes de descomprimir, guarda una copia de tu USB. Si el arranque no sale como esperas, vuelve a poner tu <code>Medianav.mscr</code> (está en <code>Mediaskinhz</code>) y todo queda como antes.</p>`:S.xmode==='auto'?`<ol class="steps">
       <li><b>Solo la primera vez:</b> copia <code>REINICIAR.exe</code> de tu USB dentro de la carpeta <code>Mediaskinhz</code> (así el script puede reiniciar la radio al terminar).</li>
       <li>Descomprime el ZIP en la raíz del USB y acepta sobrescribir. Quedará la carpeta <code>Mediaskinhz</code> con el script y las imágenes.</li>
@@ -736,20 +735,20 @@ async function saveBlob(blob,name){
 /* ============ hojas, menú y avisos ============ */
 function openBS(html){const b=$('#bs');$('#toast').hidden=true;b.innerHTML=html;b.hidden=false;$('#scrim').hidden=false;document.body.classList.add('lock');const f=b.querySelector('button');f&&f.focus({preventScroll:true})}
 function closeBS(){const b=$('#bs');if(b.hidden)return;b.hidden=true;$('#scrim').hidden=true;document.body.classList.remove('lock');const f=S.bsCancel;S.bsCancel=null;if(f)f()}
-function openMenu(){const dark=document.documentElement.dataset.theme?document.documentElement.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
-  openBS(`<button class="mi" data-m="load">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}<span>${S.demo?'Cargar mi backup':'Cargar otro backup'}<small>Carpeta M1 o un ZIP</small></span></button>
-    ${S.demo?'':`<button class="mi" data-m="kit">${ic('M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3')}<span>Kit de prueba para el coche<small>3 imágenes que resuelven las dudas antes de rediseñar</small></span></button>`}
-    ${S.demo?'':`<button class="mi" data-m="save">${ic('M5 3h11l3 3v15H5zM8 3v6h8V3M8 21v-7h8v7')}<span>Guardar el diseño<small>Con un nombre, para volver a él cuando quieras</small></span></button>`}
-    <button class="mi" data-m="settings">${ic('M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 12h2M19 12h2M12 3v2M12 19v2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4')}<span>Ajustes e historial<small>Mis diseños, exportaciones y preferencias</small></span></button>
-    <button class="mi" data-m="theme">${ic(dark?'M12 3v2M12 19v2M5 5l1.5 1.5M17.5 17.5L19 19M3 12h2M19 12h2M5 19l1.5-1.5M17.5 6.5L19 5M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z':'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z')}<span>${dark?'Modo claro':'Modo oscuro'}</span></button>
+function openMenu(){const G=t=>`<p class="lbl" style="margin:12px 6px 4px">${t}</p>`;
+  openBS(`${S.demo?'':`${G('Tu diseño')}<button class="mi" data-m="save">${ic('M5 3h11l3 3v15H5zM8 3v6h8V3M8 21v-7h8v7')}<span>Guardar el diseño<small>Con un nombre, para volver a él cuando quieras</small></span></button>
+    <button class="mi" data-m="designs">${ic('M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z')}<span>Mis diseños<small>Cargar, importar, llevar a la radio</small></span></button>`}
+    ${G('Backup')}<button class="mi" data-m="load">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}<span>${S.demo?'Cargar mi backup':'Cargar otro backup'}<small>Carpeta M1 o un ZIP</small></span></button>
     ${updBadge()?`<button class="mi dgr" data-m="reset">${ic('M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14')}<span>Quitar todos los cambios<small>Se puede deshacer</small></span></button>`:''}
-    ${S.demo?'':`<button class="mi dgr" data-m="close">${ic('M18 6L6 18M6 6l12 12')}<span>Cerrar el backup<small>Borra tu backup y tus cambios de este navegador</small></span></button>`}`);
+    ${S.demo?'':`<button class="mi dgr" data-m="close">${ic('M18 6L6 18M6 6l12 12')}<span>Cerrar el backup<small>Borra tu backup y tus cambios de este navegador</small></span></button>`}
+    ${G('Más')}${S.demo?'':`<button class="mi" data-m="kit">${ic('M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3')}<span>Kit de prueba para el coche<small>3 imágenes para resolver dudas en la radio</small></span></button>`}
+    <button class="mi" data-m="settings">${ic('M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 12h2M19 12h2M12 3v2M12 19v2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4')}<span>Ajustes<small>Exportaciones anteriores, preferencias, tema claro u oscuro</small></span></button>`);
   $('#bs').onclick=async e=>{const b=e.target.closest('[data-m]');if(!b)return;const m=b.dataset.m;
     if(m==='load')openLoad();
     else if(m==='kit'){closeBS();makeKit()}
-    else if(m==='settings'){closeBS();go({n:'settings'})}
+    else if(m==='settings'){closeBS();if(S.stab==='des')S.stab='pref';go({n:'settings'})}
+    else if(m==='designs'){closeBS();S.focus='s-des';go({n:'settings'})}
     else if(m==='save'){closeBS();saveDesign()}
-    else if(m==='theme'){const v=dark?'light':'dark';document.documentElement.dataset.theme=v;try{localStorage.setItem('skinhz-theme',v)}catch(_){}closeBS()}
     else if(m==='reset'){const n=updBadge();if(!await confirmBS({title:'Quitar todos los cambios',text:`Las ${n} imágenes cambiadas volverán a ser las originales. Se guardará antes una copia automática y también podrás deshacerlo.`,ok:'Quitar los cambios',danger:true}))return;
       await addPoint('Antes de quitar todos los cambios','auto');before();S.ops={global:null,sec:{},file:{}};S.ex={};for(const F of S.files)F.rep=null;S.src=new Map();bump();render(true);toast('Cambios quitados',{label:'Deshacer',fn:undo})}
     else if(m==='close'){if(!await confirmBS({title:'Cerrar el backup',text:'Se borran de este navegador tu backup y el diseño actual. El historial y los puntos de restauración se conservan y volverán a aparecer si cargas el mismo backup. Esto no se puede deshacer.',ok:'Cerrar el backup',danger:true,always:true}))return;
