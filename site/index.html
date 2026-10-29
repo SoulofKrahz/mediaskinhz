@@ -1521,7 +1521,9 @@ function borderColor(F){if(F.bdc)return F.bdc;const fw=F.w/frames(F),rs=[],gs=[]
   for(let x=0;x<fw;x++){add(x,0);add(x,F.h-1)}for(let y=0;y<F.h;y++){add(0,y);add(fw-1,y)}const m=a=>{a.sort((u,v)=>u-v);return a[a.length>>1]||0},r=m(rs),G=m(gs),B=m(bs);
   // las pantallas del MediaNav son oscuras: un borde claro o de color es parte del botón, no del fondo
   F.bdc=(r*.3+G*.59+B*.11)<60?`rgb(${r},${G},${B})`:'#000';return F.bdc}
-const NOBRITE=new Set(['metal','glass','frost']);
+const NOBRITE=new Set(['metal','frost']);
+// estilos que dibujan su cuerpo con rectángulos (no con el primer relleno): al pulsar se aclara encima para que se lea el texto negro de la radio
+const LIFT=new Set(['split','bevel3d','pixel','frost','soft','carbon']);
 const THRU=new Set(['hud','hudb','hudf','outline','neon','halo','grid','ring','corner','gborder','wave','circuit','duo','notch','scan','led','double','beam','dots','slash','minimal']);
 function vwPos(F){const kp=KNOWNPOS[F.lc];if(kp)return {x:kp[0],y:kp[1],s:'home'};if(typeof VW==='undefined'||!VW.data)return null;if(F.vpv===VW.data)return F.vp;let r=null;for(const o of VW.data){for(const c of o.c||[])if(c[0]===F.lc){r={x:c[1],y:c[2],w:c[3],h:c[4],s:o.s==='common'?'radio':o.s};break}if(r)break}F.vp=r;F.vpv=VW.data;return r}
 const presetBgOn=()=>[...SCRBG.values()].some(n=>{const B=byName(n);return B&&B.rep&&B.rep.by==='preset'});
@@ -1557,7 +1559,7 @@ function drawState(x,F,w,h,s,H,g,bgc){
     case 'neon':x.fillStyle=on?`hsl(${H} 90% 10%)`:'#020304';x.fill();x.save();x.shadowColor=`hsl(${H} 100% 55%)`;x.shadowBlur=on?18:10;x.lineWidth=2.5;x.strokeStyle=`hsl(${H} 100% ${dim?30:on?70:60}%)`;rrect(x,X+4,Y+4,W-8,Hh-8,Math.max(0,r-3));x.stroke();x.restore();ic=`hsl(${H} 100% ${dim?40:72}%)`;glow=dim?0:on?16:10;break;
     case 'tile':x.fillStyle=on?`hsl(${H} 85% 34%)`:`hsl(${H} 72% ${dim?20:44}%)`;x.fill();if(on){x.lineWidth=3;x.strokeStyle='rgba(255,255,255,.55)';rrect(x,X+2.5,Y+2.5,W-5,Hh-5,Math.max(0,r-1.5));x.stroke()}ic=dim?`hsl(${H} 25% 62%)`:'#ffffff';break;
     case 'minimal':x.fillStyle=on?`hsla(${H},85%,50%,.26)`:'rgba(0,0,0,0)';x.fill();x.fillStyle=`hsl(${H} 85% ${on?62:dim?26:50}%)`;x.fillRect(X+W*.2,Y+Hh-(on?5:3),W*.6,on?4:2);ic=on?'#ffffff':`hsl(${H} 80% ${dim?32:64}%)`;break;
-    case 'metal':{x.fillStyle=on?lin('#8d949c','#5c636b','#747b83'):lin(dim?'#5d6268':'#d9dde2',dim?'#3c4045':'#9aa1a9',dim?'#4a4f55':'#c2c8ce');x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();
+    case 'metal':{x.fillStyle=on?lin('#e6e9ec','#b3b9bf','#cdd2d7'):lin(dim?'#4a4f55':'#878e96',dim?'#2c3034':'#4b5158',dim?'#3a3e43':'#666d74');x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();
       let sd=w*7+h;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;for(let i=0;i<Hh*1.6;i++){x.fillStyle=`rgba(${rnd()<.5?'255,255,255':'0,0,0'},${.03+rnd()*.06})`;x.fillRect(X,Y+rnd()*Hh,W,1)}x.restore();
       x.fillStyle=`hsl(${H} 85% ${on?58:dim?30:46}%)`;x.fillRect(X+r*.6,Y+Hh-4,W-r*1.2,3);x.lineWidth=1.5;x.strokeStyle='rgba(255,255,255,.45)';rrect(x,X+1.5,Y+1.5,W-3,Hh-3,r);x.stroke();
       ic=on?`hsl(${H} 70% 85%)`:dim?'#2a2e33':'#1c2026';break}
@@ -1686,6 +1688,7 @@ function drawState(x,F,w,h,s,H,g,bgc){
       if(on){x.lineWidth=3;x.strokeStyle='rgba(255,255,255,.75)';rrect(x,X+2.5,Y+2.5,W-5,Hh-5,Math.max(0,r-1.5));x.stroke()}ic=dim?'rgba(255,255,255,.5)':'#ffffff';break}
     default:x.fillStyle=on?lin(`hsl(${H} 90% 62%)`,`hsl(${H} 85% 46%)`):lin('#16191e','#060708',`hsl(${H} 85% ${dim?20:44}%)`);x.fill();x.lineWidth=2;x.strokeStyle=on?`hsl(${H} 70% 40%)`:`hsl(${H} 55% ${dim?18:32}%)`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=on?`hsl(${H} 70% 20%)`:`hsl(${H} 85% ${dim?32:60}%)`}
   if(thru||brite)x.fill=of;
+  if(on&&LIFT.has(g.style)){x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();x.globalAlpha=.72;x.fillStyle=lin(`hsl(${H} 90% 68%)`,`hsl(${H} 88% 50%)`);x.fillRect(X,Y,W,Hh);x.restore()}
   if(brite){ic=`hsl(${H} 80% 9%)`;glow=0}
   const home=S.layout.slots.some(s=>s.p===F.path),isIn=g.isIn||1.15,isz=home?g.is:Math.max(14,Math.min(h*.44*isIn,Math.min(w,h)*.8)),src=grp?'orig':(!home&&w/h>4.6&&!(g.per[F.path]||{}).icon)?'none':genIconSrc(F,g),p=grp?{}:g.per[F.path]||{},cx=w/2,cy=home?Y+Hh*(g.iy/100):h/2;
   if(p.ihue!=null&&!on)ic=p.ihue==='white'?(dim?'rgba(255,255,255,.5)':'#ffffff'):`hsl(${p.ihue} 85% ${dim?34:62}%)`;
@@ -3449,7 +3452,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-20';
+const VER='2026-10-29-21';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3457,6 +3460,9 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-21',['Revisión uno a uno de los 47 estilos, en sus 4 estados y sobre fondo de color: esquinas y separadores sin cajas ni restos',
+    'Aluminio (Metal): en reposo ya no es casi blanco (el texto blanco de la radio no se leía); pulsado y elegido, claros',
+    'Dos tonos, Botón 3D, Píxel, Esmerilado, Suave y Carbono: pulsado y elegido claros para que se lea el texto negro de la radio. Cristal también']],
   ['2026-10-29-20',['Diseños listos con botones de cuerpo (Oro, Bronce, Carbono, Biselado, Cápsula, Aluminio…): sin la línea separadora entre los botones de la barra de abajo, que quedaba como una raya suelta. En los de solo líneas (Neón, Futurista, Halo…) se queda, del color del diseño']],
   ['2026-10-29-19',['Las pantallas en el orden de los botones de Inicio: Radio, Multimedia, Teléfono, Driving eco, Ajustes',
     'Al cambiar de un diseño listo a otro, la carátula de Multimedia, las listas y la hoja de Driving eco toman el color nuevo (se quedaban con el del anterior)',

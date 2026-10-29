@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-20';
+const VER='2026-10-29-21';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,9 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-21',['Revisión uno a uno de los 47 estilos, en sus 4 estados y sobre fondo de color: esquinas y separadores sin cajas ni restos',
+    'Aluminio (Metal): en reposo ya no es casi blanco (el texto blanco de la radio no se leía); pulsado y elegido, claros',
+    'Dos tonos, Botón 3D, Píxel, Esmerilado, Suave y Carbono: pulsado y elegido claros para que se lea el texto negro de la radio. Cristal también']],
   ['2026-10-29-20',['Diseños listos con botones de cuerpo (Oro, Bronce, Carbono, Biselado, Cápsula, Aluminio…): sin la línea separadora entre los botones de la barra de abajo, que quedaba como una raya suelta. En los de solo líneas (Neón, Futurista, Halo…) se queda, del color del diseño']],
   ['2026-10-29-19',['Las pantallas en el orden de los botones de Inicio: Radio, Multimedia, Teléfono, Driving eco, Ajustes',
     'Al cambiar de un diseño listo a otro, la carátula de Multimedia, las listas y la hoja de Driving eco toman el color nuevo (se quedaban con el del anterior)',
