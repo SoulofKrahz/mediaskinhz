@@ -159,13 +159,14 @@ function presetSet(P){const g=S.gen||(S.gen=defGen()),T=genTargets(),L=presetIns
   // color de toda la radio: en lo de color (iconos, textos en imagen…) cambia solo el tono; en fondos, barras, líneas, listas y botones de forma rara
   // se tiñe todo (también grises y el negro) para que el diseño quede de una pieza. Lo que pusiste tú a mano (una foto, el reposo) no se toca
   S.ops.global={...defOps(),tH:P.hue,tA:100,tG:false,s:P.gs||0};S.ops.sec={};const TL=new Set([...T,...L]),bgs=new Set([...SCRBG.values()].map(byName).filter(Boolean)),bk=P.bk==null?P.hue:P.bk;
-  for(const F of S.files){if(TL.has(F))continue;const k=kindOf(F),odd=k==='btn';if(k==='ico'&&!/line|_dot|scrollnumber|nowplay|pagenumber|pull_(down|up)_icon/.test(F.lc)){// iconos sueltos: solo cambian sus partes de color (los blancos y la barra de estado se quedan)
+  for(const F of S.files){if(TL.has(F))continue;if(STARS.test(F.lc)){setFileOps(F,{...defOps(),tH:44,tA:100,tG:false});continue}const k=kindOf(F),odd=k==='btn';if(k==='ico'&&!/line|_dot|scrollnumber|nowplay|pagenumber|pull_(down|up)_icon/.test(F.lc)){// iconos sueltos: solo cambian sus partes de color (los blancos y la barra de estado se quedan)
       if(!F.rep&&!/common_indi_/.test(F.lc)){const st=stats(F);let col=0,tot=0;for(const f of st.fam.values()){tot+=f.n;if(f.k<12)col+=f.n}if(col>tot*.03)setFileOps(F,{...defOps(),tH:P.hue,tA:100,tG:false,s:P.gs||0})}continue}
     if(odd){delete g.per[F.path];if(F.rep&&F.rep.by!=='stby')F.rep=null;if(S.icx)delete S.icx[F.path];if(S.ex[F.path]===true&&!F.rep)delete S.ex[F.path];F.cv=null}
     if(bgs.has(F)&&(!F.rep||F.rep.by==='preset')){presetBg(F,P,bk);continue}
     if(F.rep)continue;const o={...defOps(),tH:k==='bg'?bk:P.hue,tA:k==='bg'?90:100,tG:!TOPBAR.test(F.lc),s:P.gs||0};o.map={13:bgs.has(F)?{to:bk,ts:.65,tl:.11}:{to:bk,ts:.55,tl:.07}};setFileOps(F,o)}
   // dibujos con su propio recuadro negro (la hoja de Driving eco, la carátula vacía…): el negro que toca el borde pasa a transparente
-  S.ver++;for(const n of PCLEAR){const F=byName(n);if(F&&(!F.rep||F.rep.by==='preset'))clearBlack(F)}
+  // también el recuadro negro de las listas y del «1/2»: sobre un fondo de color quedaban como cajas negras
+  S.ver++;for(const F of [...PCLEAR.map(byName),...S.files.filter(F=>/list_line|scrollnumber_bg/.test(F.lc))]){if(F&&(!F.rep||F.rep.by==='preset'))clearBlack(F)}
   return {T,L}}
 /* Fondo nuevo para un diseño listo: negro con el color del diseño (degradado, resplandor abajo y un dibujo suave que sigue al estilo).
    Sustituye al fondo de Renault (sus rayas grises teñidas quedaban sucias). Se deshace como todo lo demás */
@@ -207,6 +208,8 @@ function presetBgCanvas(P,bk,scr){const c=document.createElement('canvas');c.wid
   x.fillStyle=`hsla(${h},90%,60%,.25)`;x.fillRect(0,477,800,3);return c}
 function presetBg(F,P,bk){const scr=[...SCRBG.entries()].find(e=>e[1]===F.lc||byName(e[1])===F);const c=presetBgCanvas(P,bk,scr?scr[0]:'');
   const d=c.getContext('2d').getImageData(0,0,800,480).data,q=quantize(d,800,480,{dither:true});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'preset'};S.ex[F.path]=true;delete S.ops.file[F.path];F.cv=null}
+// las estrellas de puntuación de Driving eco se quedan doradas, como unas estrellas de verdad
+const STARS=/eco_scoring_star|_star_img/;
 const PCLEAR=['eco/eco_scoring_img.bmp','eco/eco_coaching_elf_renault_img.bmp','eco/eco_coaching_elf_dacia_img.bmp','media/media_album_case_noalbum_img.bmp','media/media_device_icon.bmp','media/media_nearby_default_icon.bmp','setting/setting_direction_image.bmp','setting/setting_direction_center_image.bmp'];
 function clearBlack(F){F.rep=null;F.cv=null;const od=renderOrig(F,false).getContext('2d').getImageData(0,0,F.w,F.h).data,c=renderCanvas(F,false),w=c.width,h=c.height,x=c.getContext('2d'),im=x.getImageData(0,0,w,h),d=im.data,key=new Uint8Array(w*h),st=[];
   const dark=i=>od[i*4+3]>=128&&Math.max(od[i*4],od[i*4+1],od[i*4+2])<34,push=i=>{if(!key[i]&&dark(i)){key[i]=1;st.push(i)}};

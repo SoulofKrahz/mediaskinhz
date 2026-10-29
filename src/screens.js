@@ -68,7 +68,7 @@ const TOPBAR=/(fulldown_\d_l?ine|indi_l?ine)\.bmp$/;
 function screenPieces(s,files){const set=new Set(files);if(VW.st===2)for(const o of VW.data)if(o.s===s||(s==='radio'&&o.s==='common'&&false))for(const c of o.c){const F=c[0]&&byName(c[0]);if(F)set.add(F)}
   const bgs=new Set(SCREENS.map(x=>x[2]));return [...set].filter(F=>!bgs.has(F.lc)&&!/common_indi_(?!line)/.test(F.lc)&&F.sec!=='COMMON'||/common_pull_|indi_line/.test(F.lc))}
 function tintScreen(s,files,sty,h){const g=S.gen||(S.gen=defGen()),T=new Set([...sty,...genTargets()]),odd=[];
-  for(const F of screenPieces(s,files)){if(T.has(F)||(F.rep&&F.rep.by&&F.rep.by!=='gen'&&F.rep.by!=='btn'&&F.rep.by!=='preset'))continue;
+  for(const F of screenPieces(s,files)){if(STARS.test(F.lc)){setFileOps(F,{...defOps(),tH:44,tA:100,tG:false});continue}if(T.has(F)||(F.rep&&F.rep.by&&F.rep.by!=='gen'&&F.rep.by!=='btn'&&F.rep.by!=='preset'))continue;
     if(isBtnLike(F)&&frames(F)>=2&&canStyleOne(F)&&F.w/frames(F)/F.h<=4.6){const q=g.per[F.path]||(g.per[F.path]={});if(h==null)delete q.hue;else q.hue=h;odd.push(F);continue}
     const st=stats(F);let col=0,tot=0;for(const f of st.fam.values()){tot+=f.n;if(f.k<12)col+=f.n}const grey=LISTGREY.test(F.lc)||(isBtnLike(F)&&frames(F)>=2&&F.w/frames(F)/F.h>4.6&&!noStyle(F));if(!grey&&col<tot*.03)continue;
     const o={...defOps(),...(S.ops.file[F.path]||{})};o.map={...(o.map||{})};

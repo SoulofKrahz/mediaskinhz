@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-17';
+const VER='2026-10-29-18';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,8 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-18',['Diseños listos sin cajas negras: el recuadro de las listas y el del número de página («1/2») dejan ver el fondo de la pantalla',
+    'Las estrellas de puntuación de Driving eco son siempre doradas, pongas el color que pongas','Anillo en las flechas altas: marco normal en vez de un círculo descolocado']],
   ['2026-10-29-17',['Barras de arriba (la de la línea fina): ya no se tiñe su fondo gris, que se queda en el tono del estilo; solo la línea fina toma el color']],
   ['2026-10-29-16',['Tus diseños hechos antes de hoy se ponen al día solos al abrir la app o cargarlos: si los botones de una pantalla tienen un color de marco, sus listas, líneas, barras y fondo lo toman también (antes solo pasaba en Multimedia, cuyas líneas eran de color)',
     'Diseños listos: los puntos de las opciones, los iconos de «sonando ahora» y de número de página y demás iconos sueltos de color también toman el color del diseño (en Oro seguían morados)']],

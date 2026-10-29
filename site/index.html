@@ -1626,7 +1626,7 @@ function drawState(x,F,w,h,s,H,g,bgc){
       x.save();rrect(x,X+1,Y+1,W-2,Hh-2,R);x.clip();const gl=x.createLinearGradient(0,Y,0,Y+Hh*.5);gl.addColorStop(0,`rgba(255,255,255,${on?.5:.38})`);gl.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gl;rrect(x,X+W*.06,Y+3,W*.88,Hh*.46,R*.8);x.fill();x.restore();
       x.lineWidth=1.5;x.strokeStyle='rgba(255,255,255,.35)';rrect(x,X+1.5,Y+1.5,W-3,Hh-3,R);x.stroke();ic=dim?'rgba(255,255,255,.5)':'#ffffff';break}
     case 'ring':{x.fillStyle=on?`hsl(${H} 45% 14%)`:'#06080b';x.fill();x.lineWidth=1.5;x.strokeStyle=`hsla(${H},70%,55%,${dim?.2:.45})`;x.stroke();
-      const hm=S.layout.slots.some(q=>q.p===F.path),cy=hm?Y+Hh*(g.iy/100):Hh>100?Y+Hh*.4:h/2,R=hm?Math.max(14,Math.min(g.is*.7,Y+Hh*.66-cy-2,W*.42)):Math.min(W*.42,Hh>100?Hh*.34:Hh*.44);const hasI=S.layout.slots.some(q=>q.p===F.path)||!!extractIcon(F,grp);x.save();x.beginPath();if(W/Hh>2.2||!hasI)rrect(x,X+5,Y+5,W-10,Hh-10,Math.max(0,r-3));else x.arc(w/2,cy,R,0,7);x.fillStyle=`hsla(${H},85%,50%,${on?.35:dim?.04:.14})`;x.fill();
+      const hm=S.layout.slots.some(q=>q.p===F.path),cy=hm?Y+Hh*(g.iy/100):Hh>100?Y+Hh*.4:h/2,R=hm?Math.max(14,Math.min(g.is*.7,Y+Hh*.66-cy-2,W*.42)):Math.min(W*.42,Hh>100?Hh*.34:Hh*.44);const hasI=(S.layout.slots.some(q=>q.p===F.path)||!!extractIcon(F,grp))&&W/Hh>=.6;x.save();x.beginPath();if(W/Hh>2.2||!hasI)rrect(x,X+5,Y+5,W-10,Hh-10,Math.max(0,r-3));else x.arc(w/2,cy,R,0,7);x.fillStyle=`hsla(${H},85%,50%,${on?.35:dim?.04:.14})`;x.fill();
       x.lineWidth=on?3.5:2.5;x.strokeStyle=`hsl(${H} 95% ${on?70:dim?26:56}%)`;x.shadowColor=x.strokeStyle;x.shadowBlur=dim?0:on?14:6;x.stroke();x.restore();ic=on?'#ffffff':`hsl(${H} 95% ${dim?32:72}%)`;glow=dim?0:4;break}
     case 'tab':{x.fillStyle=on?`hsl(${H} 40% 18%)`:'#0b0e13';x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const th=Math.max(4,Math.round(Hh*.07));
       x.fillStyle=`hsl(${H} ${dim?30:90}% ${on?66:dim?24:52}%)`;x.fillRect(X,Y,W,th);if(on){const gr=x.createLinearGradient(0,Y,0,Y+Hh*.6);gr.addColorStop(0,`hsla(${H},90%,60%,.35)`);gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fillRect(X,Y+th,W,Hh*.6)}x.restore();
@@ -3050,13 +3050,14 @@ function presetSet(P){const g=S.gen||(S.gen=defGen()),T=genTargets(),L=presetIns
   // color de toda la radio: en lo de color (iconos, textos en imagen…) cambia solo el tono; en fondos, barras, líneas, listas y botones de forma rara
   // se tiñe todo (también grises y el negro) para que el diseño quede de una pieza. Lo que pusiste tú a mano (una foto, el reposo) no se toca
   S.ops.global={...defOps(),tH:P.hue,tA:100,tG:false,s:P.gs||0};S.ops.sec={};const TL=new Set([...T,...L]),bgs=new Set([...SCRBG.values()].map(byName).filter(Boolean)),bk=P.bk==null?P.hue:P.bk;
-  for(const F of S.files){if(TL.has(F))continue;const k=kindOf(F),odd=k==='btn';if(k==='ico'&&!/line|_dot|scrollnumber|nowplay|pagenumber|pull_(down|up)_icon/.test(F.lc)){// iconos sueltos: solo cambian sus partes de color (los blancos y la barra de estado se quedan)
+  for(const F of S.files){if(TL.has(F))continue;if(STARS.test(F.lc)){setFileOps(F,{...defOps(),tH:44,tA:100,tG:false});continue}const k=kindOf(F),odd=k==='btn';if(k==='ico'&&!/line|_dot|scrollnumber|nowplay|pagenumber|pull_(down|up)_icon/.test(F.lc)){// iconos sueltos: solo cambian sus partes de color (los blancos y la barra de estado se quedan)
       if(!F.rep&&!/common_indi_/.test(F.lc)){const st=stats(F);let col=0,tot=0;for(const f of st.fam.values()){tot+=f.n;if(f.k<12)col+=f.n}if(col>tot*.03)setFileOps(F,{...defOps(),tH:P.hue,tA:100,tG:false,s:P.gs||0})}continue}
     if(odd){delete g.per[F.path];if(F.rep&&F.rep.by!=='stby')F.rep=null;if(S.icx)delete S.icx[F.path];if(S.ex[F.path]===true&&!F.rep)delete S.ex[F.path];F.cv=null}
     if(bgs.has(F)&&(!F.rep||F.rep.by==='preset')){presetBg(F,P,bk);continue}
     if(F.rep)continue;const o={...defOps(),tH:k==='bg'?bk:P.hue,tA:k==='bg'?90:100,tG:!TOPBAR.test(F.lc),s:P.gs||0};o.map={13:bgs.has(F)?{to:bk,ts:.65,tl:.11}:{to:bk,ts:.55,tl:.07}};setFileOps(F,o)}
   // dibujos con su propio recuadro negro (la hoja de Driving eco, la carátula vacía…): el negro que toca el borde pasa a transparente
-  S.ver++;for(const n of PCLEAR){const F=byName(n);if(F&&(!F.rep||F.rep.by==='preset'))clearBlack(F)}
+  // también el recuadro negro de las listas y del «1/2»: sobre un fondo de color quedaban como cajas negras
+  S.ver++;for(const F of [...PCLEAR.map(byName),...S.files.filter(F=>/list_line|scrollnumber_bg/.test(F.lc))]){if(F&&(!F.rep||F.rep.by==='preset'))clearBlack(F)}
   return {T,L}}
 /* Fondo nuevo para un diseño listo: negro con el color del diseño (degradado, resplandor abajo y un dibujo suave que sigue al estilo).
    Sustituye al fondo de Renault (sus rayas grises teñidas quedaban sucias). Se deshace como todo lo demás */
@@ -3098,6 +3099,8 @@ function presetBgCanvas(P,bk,scr){const c=document.createElement('canvas');c.wid
   x.fillStyle=`hsla(${h},90%,60%,.25)`;x.fillRect(0,477,800,3);return c}
 function presetBg(F,P,bk){const scr=[...SCRBG.entries()].find(e=>e[1]===F.lc||byName(e[1])===F);const c=presetBgCanvas(P,bk,scr?scr[0]:'');
   const d=c.getContext('2d').getImageData(0,0,800,480).data,q=quantize(d,800,480,{dither:true});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'preset'};S.ex[F.path]=true;delete S.ops.file[F.path];F.cv=null}
+// las estrellas de puntuación de Driving eco se quedan doradas, como unas estrellas de verdad
+const STARS=/eco_scoring_star|_star_img/;
 const PCLEAR=['eco/eco_scoring_img.bmp','eco/eco_coaching_elf_renault_img.bmp','eco/eco_coaching_elf_dacia_img.bmp','media/media_album_case_noalbum_img.bmp','media/media_device_icon.bmp','media/media_nearby_default_icon.bmp','setting/setting_direction_image.bmp','setting/setting_direction_center_image.bmp'];
 function clearBlack(F){F.rep=null;F.cv=null;const od=renderOrig(F,false).getContext('2d').getImageData(0,0,F.w,F.h).data,c=renderCanvas(F,false),w=c.width,h=c.height,x=c.getContext('2d'),im=x.getImageData(0,0,w,h),d=im.data,key=new Uint8Array(w*h),st=[];
   const dark=i=>od[i*4+3]>=128&&Math.max(od[i*4],od[i*4+1],od[i*4+2])<34,push=i=>{if(!key[i]&&dark(i)){key[i]=1;st.push(i)}};
@@ -3251,7 +3254,7 @@ const TOPBAR=/(fulldown_\d_l?ine|indi_l?ine)\.bmp$/;
 function screenPieces(s,files){const set=new Set(files);if(VW.st===2)for(const o of VW.data)if(o.s===s||(s==='radio'&&o.s==='common'&&false))for(const c of o.c){const F=c[0]&&byName(c[0]);if(F)set.add(F)}
   const bgs=new Set(SCREENS.map(x=>x[2]));return [...set].filter(F=>!bgs.has(F.lc)&&!/common_indi_(?!line)/.test(F.lc)&&F.sec!=='COMMON'||/common_pull_|indi_line/.test(F.lc))}
 function tintScreen(s,files,sty,h){const g=S.gen||(S.gen=defGen()),T=new Set([...sty,...genTargets()]),odd=[];
-  for(const F of screenPieces(s,files)){if(T.has(F)||(F.rep&&F.rep.by&&F.rep.by!=='gen'&&F.rep.by!=='btn'&&F.rep.by!=='preset'))continue;
+  for(const F of screenPieces(s,files)){if(STARS.test(F.lc)){setFileOps(F,{...defOps(),tH:44,tA:100,tG:false});continue}if(T.has(F)||(F.rep&&F.rep.by&&F.rep.by!=='gen'&&F.rep.by!=='btn'&&F.rep.by!=='preset'))continue;
     if(isBtnLike(F)&&frames(F)>=2&&canStyleOne(F)&&F.w/frames(F)/F.h<=4.6){const q=g.per[F.path]||(g.per[F.path]={});if(h==null)delete q.hue;else q.hue=h;odd.push(F);continue}
     const st=stats(F);let col=0,tot=0;for(const f of st.fam.values()){tot+=f.n;if(f.k<12)col+=f.n}const grey=LISTGREY.test(F.lc)||(isBtnLike(F)&&frames(F)>=2&&F.w/frames(F)/F.h>4.6&&!noStyle(F));if(!grey&&col<tot*.03)continue;
     const o={...defOps(),...(S.ops.file[F.path]||{})};o.map={...(o.map||{})};
@@ -3440,7 +3443,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-17';
+const VER='2026-10-29-18';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3448,6 +3451,8 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-18',['Diseños listos sin cajas negras: el recuadro de las listas y el del número de página («1/2») dejan ver el fondo de la pantalla',
+    'Las estrellas de puntuación de Driving eco son siempre doradas, pongas el color que pongas','Anillo en las flechas altas: marco normal en vez de un círculo descolocado']],
   ['2026-10-29-17',['Barras de arriba (la de la línea fina): ya no se tiñe su fondo gris, que se queda en el tono del estilo; solo la línea fina toma el color']],
   ['2026-10-29-16',['Tus diseños hechos antes de hoy se ponen al día solos al abrir la app o cargarlos: si los botones de una pantalla tienen un color de marco, sus listas, líneas, barras y fondo lo toman también (antes solo pasaba en Multimedia, cuyas líneas eran de color)',
     'Diseños listos: los puntos de las opciones, los iconos de «sonando ahora» y de número de página y demás iconos sueltos de color también toman el color del diseño (en Oro seguían morados)']],
