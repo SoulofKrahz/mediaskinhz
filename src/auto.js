@@ -337,8 +337,8 @@ async function selectorZip(list,onp){await loadVistas().catch(()=>{});
     ents.push({name:`Mediaskinhz/disenos/${dir}/instalar.mscr`,data:ansi(mortInstall(R,items,id+'-'+k,when,{name,undo,sel:true}))});skins.push({dir,name})};
   list.forEach((x,i)=>add(x.name,maps[i],false));add('Original de Renault',null,true);
   const kit=SET.xkit!==false?await usbKit():null;
-  ents.unshift({name:'Medianav.mscr',data:ansi(mortMenu(skins,id,when))},{name:'Mediaskinhz/Medianav-original.mscr',data:kitOrig(kit)},{name:'Mediaskinhz/copia.mscr',data:ansi(mortCopia())},{name:'Mediaskinhz/informe.mscr',data:ansi(mortInforme())});
-  ents.push({name:'LEEME.txt',data:new TextEncoder().encode(['Mediaskinhz · USB completo: menú al arrancar','','Menú: Cambiar de diseño · Copia de seguridad de la radio · Informe del sistema · Total Commander · Reiniciar · Volver a la radio','',`Diseños: ${skins.map(s=>s.name).join(' · ')}`,`Archivos por diseño: ${U.length}`,'',
+  ents.unshift({name:'Medianav.mscr',data:ansi(mortMenu(skins,id,when))},{name:'Mediaskinhz/Medianav-original.mscr',data:kitOrig(kit)},{name:'Mediaskinhz/copia.mscr',data:ansi(mortCopia())},{name:'Mediaskinhz/informe.mscr',data:ansi(mortInforme())},{name:'Mediaskinhz/restaura.mscr',data:ansi(mortRestaura(R))});
+  ents.push({name:'LEEME.txt',data:new TextEncoder().encode(['Mediaskinhz · USB completo: menú al arrancar','','Menú: Cambiar de diseño · Copia de seguridad de la radio · Restaurar la última copia · Informe del sistema · Total Commander · Reiniciar · Volver a la radio','',`Diseños: ${skins.map(s=>s.name).join(' · ')}`,`Archivos por diseño: ${U.length}`,'',
     '1. Descomprime este ZIP en la raíz de tu USB de siempre (el de ULC2_recovery, MortScript y Total Commander) y acepta sobrescribir.','   Tu Medianav.mscr de antes queda en Mediaskinhz\\Medianav-original.mscr.',
     '2. Arranca la radio con el USB como para entrar a Total Commander. A los 25 s sale el menú.','3. «Cambiar de diseño»: toca el que quieras y pulsa Aceptar. Se guarda una copia, se instala, se comprueba y, si falla, la radio vuelve a como estaba.',
     '4. Al terminar: primero ACEPTAR y, cuando la pantalla se apague, saca el USB.','','Para cambiar otro día de diseño, vuelve a arrancar con el USB y elige otro. «Original de Renault» deja todo como de fábrica.','','«Copia de seguridad» guarda en Mediaskinhz\\copias las imágenes de la radio (o todo System). «Informe del sistema» escribe Mediaskinhz\\informe.txt.'].join('\r\n'))});
@@ -346,7 +346,7 @@ async function selectorZip(list,onp){await loadVistas().catch(()=>{});
 async function selectorSheet(){if(S.demo){toast('Carga tu backup para preparar el selector');return}
   const ds=(await listPoints()).filter(p=>p.kind==='manual'),cur=S.files.some(changed);
   const row=(v,t,sub,on)=>`<label class="ck" style="display:flex;gap:10px;align-items:center;padding:8px 2px"><input type="checkbox" value="${esc(v)}"${on?' checked':''}><span><b>${esc(t)}</b>${sub?`<br><small class="note">${esc(sub)}</small>`:''}</span></label>`;
-  openBS(`<h2>Preparar el USB completo</h2><p class="note">Al arrancar con el USB sale un menú: cambiar de diseño, copia de seguridad de la radio, informe del sistema, Total Commander o reiniciar. Elige hasta 8 diseños; siempre se añade «Original de Renault».</p>
+  openBS(`<h2>Preparar el USB completo</h2><p class="note">Al arrancar con el USB sale un menú: cambiar de diseño, copia de seguridad de la radio, restaurar la última copia, informe del sistema, Total Commander o reiniciar. Elige hasta 8 diseños; siempre se añade «Original de Renault».</p>
     <div id="sel-l" style="max-height:46vh;overflow:auto">${cur?row('cur','Lo que tienes ahora',S.curDesignName?'«'+S.curDesignName+'» con tus cambios':'Sin guardar',true):''}
     ${ds.length?'<p class="lbl">Mis diseños</p>'+ds.map(p=>row('d:'+p.id,p.label,p.n+' imágenes',false)).join(''):''}
     <p class="lbl">Diseños listos <small>· sobre lo que tienes ahora</small></p>${PRESETS.map(P=>row('p:'+P.id,P.name,'',false)).join('')}</div>
@@ -424,7 +424,7 @@ function mortMenu(skins,id,when){const L=[],w=x=>L.push(x);
   w('  If ( FileExists( mz \\ "actual.txt" ) )');
   w('    actual = ReadFile( mz \\ "actual.txt" )');
   w('  EndIf');
-  w('  op = Choice( "Mediaskinhz", "Diseño en la radio: " & actual, 0, 0, "Cambiar de diseño", "Copia de seguridad de la radio", "Informe del sistema", "Abrir Total Commander", "Reiniciar la radio", "Volver a la radio sin hacer nada" )');
+  w('  op = Choice( "Mediaskinhz", "Diseño en la radio: " & actual, 0, 0, "Cambiar de diseño", "Copia de seguridad de la radio", "Restaurar la última copia", "Informe del sistema", "Abrir Total Commander", "Reiniciar la radio", "Volver a la radio sin hacer nada" )');
   w('  If ( op = 1 )');
   w(`    sel = Choice( "Mediaskinhz · Diseños", "Ahora en la radio: " & actual & "^NL^Toca uno y pulsa Aceptar. Se guarda una copia antes de instalar.", 0, 0, ${skins.map(k=>qs(k.name)).join(', ')}, "Volver al menú" )`);
   skins.forEach((k,i)=>{w(`    If ( sel = ${i+1} )`);
@@ -451,12 +451,20 @@ function mortMenu(skins,id,when){const L=[],w=x=>L.push(x);
   w('    RunWait( ms, mz \\ "copia.mscr" )');
   w('  EndIf');
   w('  If ( op = 3 )');
+  w('    Delete( mz \\ "restaura-ok.txt" )');
+  w('    RunWait( ms, mz \\ "restaura.mscr" )');
+  w('    If ( FileExists( mz \\ "restaura-ok.txt" ) )');
+  w('      parado = 1');
+  w('      op = 6');
+  w('    EndIf');
+  w('  EndIf');
+  w('  If ( op = 4 )');
   w('    RunWait( ms, mz \\ "informe.mscr" )');
   w('  EndIf');
-  w('  If ( op = 4 or op = 0 )');
+  w('  If ( op = 5 or op = 0 )');
   w('    seguir = 0');
   w('  EndIf');
-  w('  If ( op = 5 or ( op = 6 and parado = 1 ) )');
+  w('  If ( op = 6 or ( op = 7 and parado = 1 ) )');
   w('    If ( FileExists( rb ) )');
   mortReboot(w,'      ');
   w('      BigMessage( "La radio se va a reiniciar.^NL^^NL^Pulsa ACEPTAR y, cuando la pantalla se apague, saca el USB.", "Mediaskinhz" )');
@@ -465,7 +473,7 @@ function mortMenu(skins,id,when){const L=[],w=x=>L.push(x);
   w('    EndIf');
   w('    seguir = 0');
   w('  EndIf');
-  w('  If ( op = 6 and parado = 0 )');
+  w('  If ( op = 7 and parado = 0 )');
   w('    Exit');
   w('  EndIf');
   w('EndWhile');
@@ -485,9 +493,21 @@ function mortCopia(){return ['# Mediaskinhz · copia de seguridad de la radio en
   '  StatusType( ST_MESSAGE )','  StatusInfo( "Mediaskinhz", "Copia de seguridad" )','  StatusMessage( "Copiando " & src & "^NL^^NL^Puede tardar. No apagues la radio ni saques el USB." )',
   '  XCopy( src \\ "*.*", d, 1, 1 )','  StatusType( ST_HIDDEN )',
   '  WriteFile( d \\ "copia.txt", "Copia de " & src & " hecha el " & FormatTime( "d/m/Y H:i:s" ) & "^NL^" )',
+  '  WriteFile( base \\ "copias\\ultima.txt", d )',
   '  ok = DirExists( d \\ "M1" ) or DirExists( d \\ "Img" )',
   '  If ( ok )','    Message( "Copia terminada.^NL^^NL^Está en el USB: Mediaskinhz\\copias\\" & FormatTime( "Ymd" ) & "-…^NL^^NL^Para cargarla en Mediaskinhz, elige su carpeta M1 (o un ZIP de ella) en «Cargar otro backup».", "Mediaskinhz" )',
   '  Else','    Message( "La copia no parece completa (¿USB lleno?). Revisa la carpeta Mediaskinhz\\copias en el USB.", "Mediaskinhz" )','  EndIf','EndIf'].join('\n')+'\n'}
+function mortRestaura(R){return ['# Mediaskinhz · restaurar las imágenes desde la última copia de seguridad del USB','ErrorLevel( "off" )',
+  'base = SystemPath( "ScriptPath" )','If ( not FileExists( base \\ "restaura.mscr" ) )','  base = "\\MD\\Mediaskinhz"','EndIf',
+  'Delete( base \\ "restaura-ok.txt" )','u = ""','If ( FileExists( base \\ "copias\\ultima.txt" ) )','  u = ReadFile( base \\ "copias\\ultima.txt" )','EndIf',
+  `src = ""`,`If ( u <> "" )`,`  If ( DirExists( u \\ "${R}" ) )`,`    src = u \\ "${R}"`,'  EndIf',`  If ( DirExists( u \\ "Img\\${R}" ) )`,`    src = u \\ "Img\\${R}"`,'  EndIf','EndIf',
+  'If ( src = "" )','  Message( "No hay ninguna copia de seguridad en este USB.^NL^^NL^Haz antes una con «Copia de seguridad de la radio».", "Mediaskinhz" )','  Exit','EndIf',
+  'cuando = ""','If ( FileExists( u \\ "copia.txt" ) )','  cuando = ReadFile( u \\ "copia.txt" )','EndIf',
+  `If ( not Question( "Restaurar las imágenes de la radio desde la última copia del USB.^NL^^NL^" & cuando & "^NL^Se sustituyen las imágenes (${R}). Los ajustes y programas de la radio no se tocan. Después se reinicia.^NL^^NL^¿Continuar?", "Mediaskinhz", "YesNo" ) )`,'  Exit','EndIf',
+  'Kill( "nngnavi.exe" )','Sleep( 3000 )','Kill( "AppMain.exe" )','Sleep( 5000 )',
+  'StatusType( ST_MESSAGE )','StatusInfo( "Mediaskinhz", "Restaurar la copia" )','StatusMessage( "Copiando las imágenes de la copia a la radio…^NL^^NL^No apagues la radio ni saques el USB." )',
+  `XCopy( src \\ "*.*", "\\Storage Card\\System\\Img\\${R}", 1, 1 )`,'StatusType( ST_HIDDEN )',
+  `If ( DirExists( "\\Storage Card\\System\\Img\\${R}\\HOME" ) )`,'  WriteFile( base \\ "restaura-ok.txt", "ok" )','  WriteFile( base \\ "actual.txt", "Copia de seguridad restaurada" )','EndIf'].join('\n')+'\n'}
 function mortInforme(){return ['# Mediaskinhz · informe del sistema (solo lee; escribe Mediaskinhz\\informe.txt en el USB)','ErrorLevel( "off" )',
   'base = SystemPath( "ScriptPath" )','If ( not FileExists( base \\ "informe.mscr" ) )','  base = "\\MD\\Mediaskinhz"','EndIf','f = base \\ "informe.txt"',
   'WriteFile( f, "Mediaskinhz · informe del sistema · " & FormatTime( "d/m/Y H:i:s" ) & "^NL^^NL^" )',

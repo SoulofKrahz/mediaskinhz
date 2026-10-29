@@ -1232,7 +1232,7 @@ function scrExport(v){
       <label class="swrow" for="x-boot" id="x-bootrow"${S.xmode==='auto'?'':' hidden'}><span>Que se instale solo al arrancar<small>Para tu USB con ULC2_recovery: al arrancar pregunta si instalar (con el dedo, sin Total Commander). Si dices que no, abre Total Commander como siempre</small></span><input class="sw" type="checkbox" id="x-boot"${SET.xboot!==false?' checked':''}></label>
       <div id="x-kit"${S.xmode==='auto'?'':' hidden'}></div>
       <label class="swrow" for="x-orig"><span>Incluir los originales<small>Carpeta ORIGINALES con solo estos archivos, para deshacer</small></span><input class="sw" type="checkbox" id="x-orig"${SET.xorig?' checked':''}></label>
-      <button class="btn wide" id="x-go" disabled>Descargar ZIP</button>${S.demo?'':`<button class="btn o wide" id="x-sel" style="margin-top:8px">${ic('M4 6h16M4 12h16M4 18h10')}Preparar el USB completo</button><p class="note" style="margin-top:4px">Menú al arrancar: varios diseños para elegir, copia de seguridad de la radio e informe del sistema.</p>`}</div>
+      <button class="btn wide" id="x-go" disabled>Descargar ZIP</button>${S.demo?'':`<button class="btn o wide" id="x-sel" style="margin-top:8px">${ic('M4 6h16M4 12h16M4 18h10')}Preparar el USB completo</button><p class="note" style="margin-top:4px">Menú al arrancar: varios diseños para elegir, copia de seguridad y restauración de la radio, e informe del sistema.</p>`}</div>
     <div class="card"><h3>Archivos</h3><div class="fl" id="x-list"><p class="note">Comprobando…</p></div></div></div>
     <div class="stack"><div class="card"><h3>Cómo instalarlo</h3><div id="x-steps"></div></div></div></div>`;
   {const xs=$('#x-sel');if(xs)xs.onclick=selectorSheet}
@@ -2358,8 +2358,8 @@ async function selectorZip(list,onp){await loadVistas().catch(()=>{});
     ents.push({name:`Mediaskinhz/disenos/${dir}/instalar.mscr`,data:ansi(mortInstall(R,items,id+'-'+k,when,{name,undo,sel:true}))});skins.push({dir,name})};
   list.forEach((x,i)=>add(x.name,maps[i],false));add('Original de Renault',null,true);
   const kit=SET.xkit!==false?await usbKit():null;
-  ents.unshift({name:'Medianav.mscr',data:ansi(mortMenu(skins,id,when))},{name:'Mediaskinhz/Medianav-original.mscr',data:kitOrig(kit)},{name:'Mediaskinhz/copia.mscr',data:ansi(mortCopia())},{name:'Mediaskinhz/informe.mscr',data:ansi(mortInforme())});
-  ents.push({name:'LEEME.txt',data:new TextEncoder().encode(['Mediaskinhz · USB completo: menú al arrancar','','Menú: Cambiar de diseño · Copia de seguridad de la radio · Informe del sistema · Total Commander · Reiniciar · Volver a la radio','',`Diseños: ${skins.map(s=>s.name).join(' · ')}`,`Archivos por diseño: ${U.length}`,'',
+  ents.unshift({name:'Medianav.mscr',data:ansi(mortMenu(skins,id,when))},{name:'Mediaskinhz/Medianav-original.mscr',data:kitOrig(kit)},{name:'Mediaskinhz/copia.mscr',data:ansi(mortCopia())},{name:'Mediaskinhz/informe.mscr',data:ansi(mortInforme())},{name:'Mediaskinhz/restaura.mscr',data:ansi(mortRestaura(R))});
+  ents.push({name:'LEEME.txt',data:new TextEncoder().encode(['Mediaskinhz · USB completo: menú al arrancar','','Menú: Cambiar de diseño · Copia de seguridad de la radio · Restaurar la última copia · Informe del sistema · Total Commander · Reiniciar · Volver a la radio','',`Diseños: ${skins.map(s=>s.name).join(' · ')}`,`Archivos por diseño: ${U.length}`,'',
     '1. Descomprime este ZIP en la raíz de tu USB de siempre (el de ULC2_recovery, MortScript y Total Commander) y acepta sobrescribir.','   Tu Medianav.mscr de antes queda en Mediaskinhz\\Medianav-original.mscr.',
     '2. Arranca la radio con el USB como para entrar a Total Commander. A los 25 s sale el menú.','3. «Cambiar de diseño»: toca el que quieras y pulsa Aceptar. Se guarda una copia, se instala, se comprueba y, si falla, la radio vuelve a como estaba.',
     '4. Al terminar: primero ACEPTAR y, cuando la pantalla se apague, saca el USB.','','Para cambiar otro día de diseño, vuelve a arrancar con el USB y elige otro. «Original de Renault» deja todo como de fábrica.','','«Copia de seguridad» guarda en Mediaskinhz\\copias las imágenes de la radio (o todo System). «Informe del sistema» escribe Mediaskinhz\\informe.txt.'].join('\r\n'))});
@@ -2367,7 +2367,7 @@ async function selectorZip(list,onp){await loadVistas().catch(()=>{});
 async function selectorSheet(){if(S.demo){toast('Carga tu backup para preparar el selector');return}
   const ds=(await listPoints()).filter(p=>p.kind==='manual'),cur=S.files.some(changed);
   const row=(v,t,sub,on)=>`<label class="ck" style="display:flex;gap:10px;align-items:center;padding:8px 2px"><input type="checkbox" value="${esc(v)}"${on?' checked':''}><span><b>${esc(t)}</b>${sub?`<br><small class="note">${esc(sub)}</small>`:''}</span></label>`;
-  openBS(`<h2>Preparar el USB completo</h2><p class="note">Al arrancar con el USB sale un menú: cambiar de diseño, copia de seguridad de la radio, informe del sistema, Total Commander o reiniciar. Elige hasta 8 diseños; siempre se añade «Original de Renault».</p>
+  openBS(`<h2>Preparar el USB completo</h2><p class="note">Al arrancar con el USB sale un menú: cambiar de diseño, copia de seguridad de la radio, restaurar la última copia, informe del sistema, Total Commander o reiniciar. Elige hasta 8 diseños; siempre se añade «Original de Renault».</p>
     <div id="sel-l" style="max-height:46vh;overflow:auto">${cur?row('cur','Lo que tienes ahora',S.curDesignName?'«'+S.curDesignName+'» con tus cambios':'Sin guardar',true):''}
     ${ds.length?'<p class="lbl">Mis diseños</p>'+ds.map(p=>row('d:'+p.id,p.label,p.n+' imágenes',false)).join(''):''}
     <p class="lbl">Diseños listos <small>· sobre lo que tienes ahora</small></p>${PRESETS.map(P=>row('p:'+P.id,P.name,'',false)).join('')}</div>
@@ -2445,7 +2445,7 @@ function mortMenu(skins,id,when){const L=[],w=x=>L.push(x);
   w('  If ( FileExists( mz \\ "actual.txt" ) )');
   w('    actual = ReadFile( mz \\ "actual.txt" )');
   w('  EndIf');
-  w('  op = Choice( "Mediaskinhz", "Diseño en la radio: " & actual, 0, 0, "Cambiar de diseño", "Copia de seguridad de la radio", "Informe del sistema", "Abrir Total Commander", "Reiniciar la radio", "Volver a la radio sin hacer nada" )');
+  w('  op = Choice( "Mediaskinhz", "Diseño en la radio: " & actual, 0, 0, "Cambiar de diseño", "Copia de seguridad de la radio", "Restaurar la última copia", "Informe del sistema", "Abrir Total Commander", "Reiniciar la radio", "Volver a la radio sin hacer nada" )');
   w('  If ( op = 1 )');
   w(`    sel = Choice( "Mediaskinhz · Diseños", "Ahora en la radio: " & actual & "^NL^Toca uno y pulsa Aceptar. Se guarda una copia antes de instalar.", 0, 0, ${skins.map(k=>qs(k.name)).join(', ')}, "Volver al menú" )`);
   skins.forEach((k,i)=>{w(`    If ( sel = ${i+1} )`);
@@ -2472,12 +2472,20 @@ function mortMenu(skins,id,when){const L=[],w=x=>L.push(x);
   w('    RunWait( ms, mz \\ "copia.mscr" )');
   w('  EndIf');
   w('  If ( op = 3 )');
+  w('    Delete( mz \\ "restaura-ok.txt" )');
+  w('    RunWait( ms, mz \\ "restaura.mscr" )');
+  w('    If ( FileExists( mz \\ "restaura-ok.txt" ) )');
+  w('      parado = 1');
+  w('      op = 6');
+  w('    EndIf');
+  w('  EndIf');
+  w('  If ( op = 4 )');
   w('    RunWait( ms, mz \\ "informe.mscr" )');
   w('  EndIf');
-  w('  If ( op = 4 or op = 0 )');
+  w('  If ( op = 5 or op = 0 )');
   w('    seguir = 0');
   w('  EndIf');
-  w('  If ( op = 5 or ( op = 6 and parado = 1 ) )');
+  w('  If ( op = 6 or ( op = 7 and parado = 1 ) )');
   w('    If ( FileExists( rb ) )');
   mortReboot(w,'      ');
   w('      BigMessage( "La radio se va a reiniciar.^NL^^NL^Pulsa ACEPTAR y, cuando la pantalla se apague, saca el USB.", "Mediaskinhz" )');
@@ -2486,7 +2494,7 @@ function mortMenu(skins,id,when){const L=[],w=x=>L.push(x);
   w('    EndIf');
   w('    seguir = 0');
   w('  EndIf');
-  w('  If ( op = 6 and parado = 0 )');
+  w('  If ( op = 7 and parado = 0 )');
   w('    Exit');
   w('  EndIf');
   w('EndWhile');
@@ -2506,9 +2514,21 @@ function mortCopia(){return ['# Mediaskinhz · copia de seguridad de la radio en
   '  StatusType( ST_MESSAGE )','  StatusInfo( "Mediaskinhz", "Copia de seguridad" )','  StatusMessage( "Copiando " & src & "^NL^^NL^Puede tardar. No apagues la radio ni saques el USB." )',
   '  XCopy( src \\ "*.*", d, 1, 1 )','  StatusType( ST_HIDDEN )',
   '  WriteFile( d \\ "copia.txt", "Copia de " & src & " hecha el " & FormatTime( "d/m/Y H:i:s" ) & "^NL^" )',
+  '  WriteFile( base \\ "copias\\ultima.txt", d )',
   '  ok = DirExists( d \\ "M1" ) or DirExists( d \\ "Img" )',
   '  If ( ok )','    Message( "Copia terminada.^NL^^NL^Está en el USB: Mediaskinhz\\copias\\" & FormatTime( "Ymd" ) & "-…^NL^^NL^Para cargarla en Mediaskinhz, elige su carpeta M1 (o un ZIP de ella) en «Cargar otro backup».", "Mediaskinhz" )',
   '  Else','    Message( "La copia no parece completa (¿USB lleno?). Revisa la carpeta Mediaskinhz\\copias en el USB.", "Mediaskinhz" )','  EndIf','EndIf'].join('\n')+'\n'}
+function mortRestaura(R){return ['# Mediaskinhz · restaurar las imágenes desde la última copia de seguridad del USB','ErrorLevel( "off" )',
+  'base = SystemPath( "ScriptPath" )','If ( not FileExists( base \\ "restaura.mscr" ) )','  base = "\\MD\\Mediaskinhz"','EndIf',
+  'Delete( base \\ "restaura-ok.txt" )','u = ""','If ( FileExists( base \\ "copias\\ultima.txt" ) )','  u = ReadFile( base \\ "copias\\ultima.txt" )','EndIf',
+  `src = ""`,`If ( u <> "" )`,`  If ( DirExists( u \\ "${R}" ) )`,`    src = u \\ "${R}"`,'  EndIf',`  If ( DirExists( u \\ "Img\\${R}" ) )`,`    src = u \\ "Img\\${R}"`,'  EndIf','EndIf',
+  'If ( src = "" )','  Message( "No hay ninguna copia de seguridad en este USB.^NL^^NL^Haz antes una con «Copia de seguridad de la radio».", "Mediaskinhz" )','  Exit','EndIf',
+  'cuando = ""','If ( FileExists( u \\ "copia.txt" ) )','  cuando = ReadFile( u \\ "copia.txt" )','EndIf',
+  `If ( not Question( "Restaurar las imágenes de la radio desde la última copia del USB.^NL^^NL^" & cuando & "^NL^Se sustituyen las imágenes (${R}). Los ajustes y programas de la radio no se tocan. Después se reinicia.^NL^^NL^¿Continuar?", "Mediaskinhz", "YesNo" ) )`,'  Exit','EndIf',
+  'Kill( "nngnavi.exe" )','Sleep( 3000 )','Kill( "AppMain.exe" )','Sleep( 5000 )',
+  'StatusType( ST_MESSAGE )','StatusInfo( "Mediaskinhz", "Restaurar la copia" )','StatusMessage( "Copiando las imágenes de la copia a la radio…^NL^^NL^No apagues la radio ni saques el USB." )',
+  `XCopy( src \\ "*.*", "\\Storage Card\\System\\Img\\${R}", 1, 1 )`,'StatusType( ST_HIDDEN )',
+  `If ( DirExists( "\\Storage Card\\System\\Img\\${R}\\HOME" ) )`,'  WriteFile( base \\ "restaura-ok.txt", "ok" )','  WriteFile( base \\ "actual.txt", "Copia de seguridad restaurada" )','EndIf'].join('\n')+'\n'}
 function mortInforme(){return ['# Mediaskinhz · informe del sistema (solo lee; escribe Mediaskinhz\\informe.txt en el USB)','ErrorLevel( "off" )',
   'base = SystemPath( "ScriptPath" )','If ( not FileExists( base \\ "informe.mscr" ) )','  base = "\\MD\\Mediaskinhz"','EndIf','f = base \\ "informe.txt"',
   'WriteFile( f, "Mediaskinhz · informe del sistema · " & FormatTime( "d/m/Y H:i:s" ) & "^NL^^NL^" )',
@@ -3188,20 +3208,26 @@ const STBF='common/etc_bg.bmp';
 const STFONTS=[['Inter','600 {s}px Inter, sans-serif','Moderna'],['serif','600 {s}px Newsreader, Georgia, serif','Clásica'],['radio','bold {s}px Tahoma, Verdana, sans-serif','Como la radio'],['black','900 {s}px "Arial Black", Impact, sans-serif','Gruesa'],['mono','bold {s}px "Courier New", monospace','Máquina']];
 const STCLK=['etc/etc_clock_font.bmp','etc/etc_clock_font_colon.bmp','etc/etc_clock_font_ampm.bmp'];
 const STPOS=[['top','Arriba'],['above','Sobre el reloj'],['below','Bajo el reloj'],['bottom','Abajo']];
-const stDef=()=>({l1:'',l2:'',font:'Inter',size:36,hue:'white',pos:'below',glow:true,caps:false,sp:2});
+const stDef=()=>({l1:'',l2:'',font:'Inter',size:36,hue:'white',pos:'below',glow:true,caps:false,sp:2,logo:null,lsz:110,lcol:'orig'});
+// Logo propio (PNG o JPG que subes tú): va encima del texto, en el mismo bloque. Se guarda reducido (máx. 420 px) dentro del diseño
+const STIMG=new Map();function stImg(u,redo){if(!u)return null;let i=STIMG.get(u);if(!i){i=new Image();i.onload=()=>redo&&redo();i.src=u;STIMG.set(u,i)}return i.complete&&i.naturalWidth?i:null}
 const stCol=h=>h==='white'?'#ffffff':`hsl(${h} 85% 62%)`;
 // Escribe las dos líneas en un lienzo de 800×480. El reloj ocupa más o menos y = 197…282
-function stDraw(x,st){const l1=(st.caps?st.l1.toUpperCase():st.l1).trim(),l2=(st.caps?st.l2.toUpperCase():st.l2).trim();if(!l1&&!l2)return;
-  const f=(STFONTS.find(q=>q[0]===st.font)||STFONTS[0])[1],s1=st.size,s2=Math.round(st.size*.6),gap=Math.round(st.size*.28),H=(l1?s1:0)+(l2?s2:0)+(l1&&l2?gap:0);
-  const top={top:Math.max(64,118-H/2),above:176-H,below:316,bottom:Math.min(458-H,412-H/2)}[st.pos]??316;
+function stDraw(x,st,redo){const l1=(st.caps?st.l1.toUpperCase():st.l1).trim(),l2=(st.caps?st.l2.toUpperCase():st.l2).trim(),im=stImg(st.logo,redo);if(!l1&&!l2&&!im)return;
+  // el bloque (logo + texto) no pisa el reloj (y ≈ 197…282): si no cabe, el logo se hace más pequeño
+  const tH=(l1?st.size:0)+(l2?Math.round(st.size*.6):0)+(l1&&l2?Math.round(st.size*.28):0),room=(st.pos==='top'||st.pos==='above'?128:178)-tH-(im&&(l1||l2)?Math.round((st.lsz||110)*.14):0);
+  const lh=im?Math.round(Math.max(28,Math.min(st.lsz||110,room))):0,lw=im?Math.round(im.naturalWidth*lh/im.naturalHeight):0,lg=im&&(l1||l2)?Math.round((st.lsz||110)*.14):0;
+  const f=(STFONTS.find(q=>q[0]===st.font)||STFONTS[0])[1],s1=st.size,s2=Math.round(st.size*.6),gap=Math.round(st.size*.28),H=(l1?s1:0)+(l2?s2:0)+(l1&&l2?gap:0)+lh+lg;
+  const top=Math.max(64,Math.min(470-H,{top:Math.max(64,118-H/2),above:176-H,below:300,bottom:Math.min(458-H,412-H/2)}[st.pos]??300));
   x.save();x.textAlign='center';x.textBaseline='top';x.fillStyle=stCol(st.hue);if('letterSpacing' in x)x.letterSpacing=(st.sp||0)+'px';
   if(st.glow){x.shadowColor=stCol(st.hue);x.shadowBlur=Math.round(st.size*.45)}
-  let y=top;if(l1){x.font=f.replace('{s}',s1);x.fillText(l1,400,y,760);y+=s1+gap}
+  let y=top;if(im){x.save();x.shadowBlur=0;const w=Math.min(lw,760),h=Math.round(lh*w/lw);if(st.lcol==='orig')x.drawImage(im,400-w/2,y,w,h);else{const t=document.createElement('canvas');t.width=w;t.height=h;const tx=t.getContext('2d');tx.drawImage(im,0,0,w,h);tx.globalCompositeOperation='source-in';tx.fillStyle=stCol(st.hue);tx.fillRect(0,0,w,h);x.drawImage(t,400-w/2,y)}x.restore();y+=h+lg}
+  if(l1){x.font=f.replace('{s}',s1);x.fillText(l1,400,y,760);y+=s1+gap}
   if(l2){x.font=f.replace('{s}',s2);x.globalAlpha=.85;x.fillText(l2,400,y,760)}x.restore()}
 let stT=0;
 function stApply(st,now){clearTimeout(stT);const run=()=>{const F=byName(STBF);if(!F)return;
-  if(!st||!(st.l1.trim()||st.l2.trim())){S.stby=st&&{...st,clk:S.stby&&S.stby.clk};if(F.rep&&F.rep.by==='stby'){F.rep=null;if(S.ex[F.path]===false)delete S.ex[F.path]}F.cv=null;bump();return}
-  S.stby={...st,clk:S.stby&&S.stby.clk};const c=document.createElement('canvas');c.width=F.w;c.height=F.h;const x=c.getContext('2d');x.drawImage(renderOrig(F,false),0,0);stDraw(x,st);
+  if(!st||!(st.l1.trim()||st.l2.trim()||st.logo)){S.stby=st&&{...st,clk:S.stby&&S.stby.clk};if(F.rep&&F.rep.by==='stby'){F.rep=null;if(S.ex[F.path]===false)delete S.ex[F.path]}F.cv=null;bump();return}
+  S.stby={...st,clk:S.stby&&S.stby.clk};const c=document.createElement('canvas');c.width=F.w;c.height=F.h;const x=c.getContext('2d');x.drawImage(renderOrig(F,false),0,0);if(st.logo&&!stImg(st.logo,()=>stApply(st,true)))return;stDraw(x,st);
   const d=x.getImageData(0,0,F.w,F.h).data,q=quantize(d,F.w,F.h,{key:new Uint8Array(F.w*F.h),dither:true});
   F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'stby'};S.ex[F.path]=false;F.cv=null;bump()};if(now)run();else stT=setTimeout(run,320)}
 // Vista previa: el fondo como quedará y, encima, el reloj con la hora de ahora (la radio lo dibuja con su propia letra)
@@ -3225,6 +3251,10 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
       <label class="swrow" for="st-glow"><span>Brillo alrededor</span><input class="sw" type="checkbox" id="st-glow"${st.glow?' checked':''}></label>
       <label class="swrow" for="st-caps"><span>En mayúsculas</span><input class="sw" type="checkbox" id="st-caps"${st.caps?' checked':''}></label>
       <button class="btn o wide" id="st-del">Quitar el texto</button></div>
+      <div class="card"><h3>Tu logo</h3><p class="note">Una imagen tuya (PNG con fondo transparente, mejor), encima del texto. Por ejemplo el logo de tu marca o uno que hayas hecho tú.</p>
+        <div class="stack" style="gap:8px"><button class="btn o wide" id="st-lup">${st.logo?'Cambiar el logo':'Subir un logo'}</button>${st.logo?'<button class="btn o wide" id="st-ldel">Quitar el logo</button>':''}</div>
+        ${st.logo?`<label class="field"><span class="lbl">Tamaño <b id="st-lszv">${st.lsz||110}</b></span><input type="range" id="st-lsz" min="40" max="220" step="2" value="${st.lsz||110}"></label>
+        <p class="lbl">Color del logo</p><div class="chips" id="st-lcol"><button class="chip" data-v="orig" aria-pressed="${st.lcol!=='text'}">Sus colores</button><button class="chip" data-v="text" aria-pressed="${st.lcol==='text'}">Del color del texto</button></div>`:''}</div>
       <div class="card"><h3>Color del reloj</h3><div class="hsw" id="st-clk">${swatches(S.stby&&S.stby.clk!=null?S.stby.clk:'none',{none:'Blanco (original)',label:'Color del reloj'})}</div>
       <p class="note">Tiñe los números, los dos puntos y el AM/PM del reloj de reposo (son imágenes de la radio: ETC/etc_clock_font…). El reloj pequeño de la barra de arriba está en Común → Barra de arriba.</p>
       <p class="note">Se guarda en la imagen del fondo de reposo y sale en la exportación como cualquier otra. Ese mismo fondo aparece detrás de la pantalla del código de la radio y de algunos avisos.</p></div>
@@ -3238,6 +3268,11 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
   const sw=$('#st-col .swg');sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;sw.querySelectorAll('.swc').forEach(q=>q.setAttribute('aria-pressed',q===b));st.hue=b.dataset.h==='white'?'white':+b.dataset.h;upd(true)};
   sw.querySelector('[data-pick]').onchange=e=>{st.hue=Math.round(hexHsl(e.target.value)[0]);upd(true)};
   $('#st-glow').onchange=e=>{st.glow=e.target.checked;upd(true)};$('#st-caps').onchange=e=>{st.caps=e.target.checked;upd(true)};
+  $('#st-lup').onclick=()=>{const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=async()=>{const f=i.files[0];if(!f)return;try{const bm=await createImageBitmap(f),k=Math.min(1,420/Math.max(bm.width,bm.height)),c2=document.createElement('canvas');c2.width=Math.round(bm.width*k);c2.height=Math.round(bm.height*k);c2.getContext('2d').drawImage(bm,0,0,c2.width,c2.height);
+    if(first){before();first=false}Object.assign(st,cur(),{logo:c2.toDataURL('image/png')});stApply(st,true);render(true)}catch(_){toast('No se ha podido abrir esa imagen')}};i.click()};
+  const ld=$('#st-ldel');if(ld)ld.onclick=()=>{before();Object.assign(st,cur(),{logo:null});stApply(st,true);render(true);toast('Logo quitado',{label:'Deshacer',fn:undo})};
+  const ls=$('#st-lsz');if(ls)ls.oninput=e=>{st.lsz=+e.target.value;$('#st-lszv').textContent=st.lsz;upd()};
+  const lc=$('#st-lcol');if(lc)chips('#st-lcol','lcol');
   $('#st-del').onclick=()=>{before();$('#st-l1').value='';$('#st-l2').value='';st.l1='';st.l2='';stApply(st,true);toast('Texto quitado',{label:'Deshacer',fn:undo})};
   const setClk=h=>{before();for(const n of STCLK){const G=byName(n);if(G)btnTintOps(G,h)}S.stby={...(S.stby||stDef()),clk:h};bump();toast(h==null?'Reloj en blanco original':'Color del reloj cambiado',{label:'Deshacer',fn:undo})};
   const ck=$('#st-clk .swg');ck.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;ck.querySelectorAll('.swc').forEach(q=>q.setAttribute('aria-pressed',q===b));setClk(b.dataset.h==='none'?null:+b.dataset.h)};
@@ -3248,7 +3283,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-3';
+const VER='2026-10-29-4';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3256,6 +3291,8 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-4',['Menú del USB: «Restaurar la última copia». Vuelve a poner en la radio las imágenes de la última copia de seguridad hecha desde el menú (solo imágenes; ajustes y programas no se tocan) y reinicia',
+    'Tu logo en la pantalla de reposo: sube un PNG o JPG, encima de tu nombre. Tamaño y color (sus colores o el del texto). Si no cabe junto al reloj, se ajusta solo']],
   ['2026-10-29-3',['El botón de la luna se calca con el fondo de su sitio real (x 30), según el análisis del programa de la radio']],
   ['2026-10-29-2',['La luna de Inicio (y cualquier imagen que la radio no dibuja con transparencia) ya no sale con fondo amarillo: en esas imágenes no se usa el amarillo transparente, se calca el trozo de fondo que queda detrás. La hoja de Driving eco, igual, en sus 10 estados',
     'Selector de diseños probado en el coche: funciona. El USB completo con menú pasa a la versión normal']],

@@ -656,7 +656,7 @@ function scrExport(v){
       <label class="swrow" for="x-boot" id="x-bootrow"${S.xmode==='auto'?'':' hidden'}><span>Que se instale solo al arrancar<small>Para tu USB con ULC2_recovery: al arrancar pregunta si instalar (con el dedo, sin Total Commander). Si dices que no, abre Total Commander como siempre</small></span><input class="sw" type="checkbox" id="x-boot"${SET.xboot!==false?' checked':''}></label>
       <div id="x-kit"${S.xmode==='auto'?'':' hidden'}></div>
       <label class="swrow" for="x-orig"><span>Incluir los originales<small>Carpeta ORIGINALES con solo estos archivos, para deshacer</small></span><input class="sw" type="checkbox" id="x-orig"${SET.xorig?' checked':''}></label>
-      <button class="btn wide" id="x-go" disabled>Descargar ZIP</button>${S.demo?'':`<button class="btn o wide" id="x-sel" style="margin-top:8px">${ic('M4 6h16M4 12h16M4 18h10')}Preparar el USB completo</button><p class="note" style="margin-top:4px">Menú al arrancar: varios diseños para elegir, copia de seguridad de la radio e informe del sistema.</p>`}</div>
+      <button class="btn wide" id="x-go" disabled>Descargar ZIP</button>${S.demo?'':`<button class="btn o wide" id="x-sel" style="margin-top:8px">${ic('M4 6h16M4 12h16M4 18h10')}Preparar el USB completo</button><p class="note" style="margin-top:4px">Menú al arrancar: varios diseños para elegir, copia de seguridad y restauración de la radio, e informe del sistema.</p>`}</div>
     <div class="card"><h3>Archivos</h3><div class="fl" id="x-list"><p class="note">Comprobando…</p></div></div></div>
     <div class="stack"><div class="card"><h3>Cómo instalarlo</h3><div id="x-steps"></div></div></div></div>`;
   {const xs=$('#x-sel');if(xs)xs.onclick=selectorSheet}

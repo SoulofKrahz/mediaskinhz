@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-3';
+const VER='2026-10-29-4';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,8 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-4',['Menú del USB: «Restaurar la última copia». Vuelve a poner en la radio las imágenes de la última copia de seguridad hecha desde el menú (solo imágenes; ajustes y programas no se tocan) y reinicia',
+    'Tu logo en la pantalla de reposo: sube un PNG o JPG, encima de tu nombre. Tamaño y color (sus colores o el del texto). Si no cabe junto al reloj, se ajusta solo']],
   ['2026-10-29-3',['El botón de la luna se calca con el fondo de su sitio real (x 30), según el análisis del programa de la radio']],
   ['2026-10-29-2',['La luna de Inicio (y cualquier imagen que la radio no dibuja con transparencia) ya no sale con fondo amarillo: en esas imágenes no se usa el amarillo transparente, se calca el trozo de fondo que queda detrás. La hoja de Driving eco, igual, en sus 10 estados',
     'Selector de diseños probado en el coche: funciona. El USB completo con menú pasa a la versión normal']],
