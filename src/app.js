@@ -319,7 +319,10 @@ function scrHome(v){
     c.onpointerdown=e=>{const h=slotAt(c,e);down=h.i;if(h.i>=0){S.press=h.i;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})}};
     c.onpointermove=e=>{if(e.pointerType!=='mouse')return;const h=slotAt(c,e);c.style.cursor=h.i>=0?'pointer':'default';if(down<0&&S.press!==h.i){S.press=h.i;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})}};
     c.onpointerleave=c.onpointercancel=()=>{down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})};
-    c.onpointerup=e=>{const h=slotAt(c,e);const i=down;down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'});if(i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F){const sc=slotScr(F);if(sc&&!S.demo)go({n:'scr',s:sc});else if(genTargets().includes(F))btnSheet(F);else go({n:'edit',p:F.path})}}}}
+    const wasLong=longPress(c,e=>{const h=slotAt(c,e);down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'});const F=h.i>=0&&slotF(S.layout.slots[h.i]);if(F&&!S.demo)styleMenu(F,genTargets(),()=>drawPreview(c,{scr:'home',orig:S.hcmp==='orig'}))});
+    c.onpointerup=e=>{const h=slotAt(c,e);const i=down;down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'});if(wasLong())return;
+      if(S.pasteMode&&S.clip&&i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F){pasteStyle([F]);drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})}return}
+      if(i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F){const sc=slotScr(F);if(sc&&!S.demo)go({n:'scr',s:sc});else if(genTargets().includes(F))btnSheet(F);else go({n:'edit',p:F.path})}}}}
   S.slow=()=>{};
 }
 
@@ -808,7 +811,7 @@ function themePref(){let v=null;try{v=localStorage.getItem('skinhz-theme')}catch
 function bind(){
   $('#bnav').innerHTML=navHTML();$('#tnav').innerHTML=navHTML();
   const nav=e=>{const b=e.target.closest('[data-r]');if(b)go({n:b.dataset.r})};$('#bnav').onclick=nav;$('#tnav').onclick=nav;
-  $('#ab-back').onclick=back;$('#ab-undo').onclick=undo;$('#ab-more').onclick=openMenu;$('#scrim').onclick=closeBS;
+  $('#ab-back').onclick=back;$('#ab-undo').onclick=undo;$('#ab-more').onclick=openMenu;$('#scrim').onclick=()=>{if(Date.now()-(S.lpT||0)<800)return;closeBS()};
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#bs').hidden)closeBS();else if(!ROOTN.has(S.route.n))back()}if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!/INPUT|SELECT/.test(document.activeElement.tagName)){e.preventDefault();undo()}
     // Ctrl+S: guardar el diseño con nombre (en vez de guardar la página)
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();if(!S.demo&&$('#bs').hidden)saveDesign()}});

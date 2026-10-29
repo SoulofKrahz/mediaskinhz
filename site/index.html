@@ -401,6 +401,8 @@ details.card>summary::-webkit-details-marker{display:none}
 .bs .mi svg{color:var(--mu)}.bs .mi.dgr{color:var(--bad)}.bs .mi.dgr svg{color:var(--bad)}
 .bs .mi small{display:block;font-size:12.5px;color:var(--mu);font-weight:400}
 .xfeat{list-style:none;margin:6px 0 14px;padding:0;display:grid;gap:10px}.xfeat li{display:flex;flex-direction:column;padding:10px 12px;border:1px solid var(--bd);border-radius:12px;background:var(--bg)}.xfeat b{font-size:15px}.xfeat span{font-size:13.5px;color:var(--mu)}
+.pastebar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav) + 74px + env(safe-area-inset-bottom,0px));z-index:55;background:var(--em);color:#fff;padding:8px 8px 8px 14px;border-radius:14px;display:flex;align-items:center;gap:12px;width:max-content;max-width:calc(100% - 24px);box-shadow:0 10px 30px -10px #0008}
+.pastebar .tx{display:flex;flex-direction:column}.pastebar small{opacity:.85;font-size:12.5px}.pastebar .btn{background:#fff;color:var(--em)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav) + 14px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--tx);color:var(--bg);padding:8px 8px 8px 16px;min-height:44px;border-radius:14px;font-size:14px;font-weight:500;width:max-content;max-width:calc(100% - 32px);box-shadow:0 10px 30px -10px #0008;display:flex;align-items:center;gap:10px}
 .toast button{color:var(--em2);font-weight:700;padding:6px 10px;border-radius:9px;min-height:36px;filter:brightness(1.2)}
 .toast:not(:has(button)){padding-right:16px}
@@ -896,7 +898,10 @@ function scrHome(v){
     c.onpointerdown=e=>{const h=slotAt(c,e);down=h.i;if(h.i>=0){S.press=h.i;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})}};
     c.onpointermove=e=>{if(e.pointerType!=='mouse')return;const h=slotAt(c,e);c.style.cursor=h.i>=0?'pointer':'default';if(down<0&&S.press!==h.i){S.press=h.i;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})}};
     c.onpointerleave=c.onpointercancel=()=>{down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})};
-    c.onpointerup=e=>{const h=slotAt(c,e);const i=down;down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'});if(i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F){const sc=slotScr(F);if(sc&&!S.demo)go({n:'scr',s:sc});else if(genTargets().includes(F))btnSheet(F);else go({n:'edit',p:F.path})}}}}
+    const wasLong=longPress(c,e=>{const h=slotAt(c,e);down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'});const F=h.i>=0&&slotF(S.layout.slots[h.i]);if(F&&!S.demo)styleMenu(F,genTargets(),()=>drawPreview(c,{scr:'home',orig:S.hcmp==='orig'}))});
+    c.onpointerup=e=>{const h=slotAt(c,e);const i=down;down=-1;S.press=-1;drawPreview(c,{scr:'home',orig:S.hcmp==='orig'});if(wasLong())return;
+      if(S.pasteMode&&S.clip&&i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F){pasteStyle([F]);drawPreview(c,{scr:'home',orig:S.hcmp==='orig'})}return}
+      if(i>=0&&h.i===i){const F=slotF(S.layout.slots[i]);if(F){const sc=slotScr(F);if(sc&&!S.demo)go({n:'scr',s:sc});else if(genTargets().includes(F))btnSheet(F);else go({n:'edit',p:F.path})}}}}
   S.slow=()=>{};
 }
 
@@ -1385,7 +1390,7 @@ function themePref(){let v=null;try{v=localStorage.getItem('skinhz-theme')}catch
 function bind(){
   $('#bnav').innerHTML=navHTML();$('#tnav').innerHTML=navHTML();
   const nav=e=>{const b=e.target.closest('[data-r]');if(b)go({n:b.dataset.r})};$('#bnav').onclick=nav;$('#tnav').onclick=nav;
-  $('#ab-back').onclick=back;$('#ab-undo').onclick=undo;$('#ab-more').onclick=openMenu;$('#scrim').onclick=closeBS;
+  $('#ab-back').onclick=back;$('#ab-undo').onclick=undo;$('#ab-more').onclick=openMenu;$('#scrim').onclick=()=>{if(Date.now()-(S.lpT||0)<800)return;closeBS()};
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#bs').hidden)closeBS();else if(!ROOTN.has(S.route.n))back()}if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!/INPUT|SELECT/.test(document.activeElement.tagName)){e.preventDefault();undo()}
     // Ctrl+S: guardar el diseño con nombre (en vez de guardar la página)
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();if(!S.demo&&$('#bs').hidden)saveDesign()}});
@@ -3135,6 +3140,41 @@ function presetsHTML(id){return `<div class="card"><h3>Diseños listos <small cl
 function mountPresets(el){if(!el)return;const cvs=[...el.querySelectorAll('canvas')];let i=0;const step=()=>{for(let n=0;n<3&&i<cvs.length;n++,i++){if(!cvs[i].isConnected)return;const t=presetTile(PRESETS[i]);if(t)putMini(cvs[i],t)}if(i<cvs.length)requestAnimationFrame(step)};requestAnimationFrame(step);
   el.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;const P=PRESETS.find(p=>p.id===b.dataset.v);if(P)presetSheet(P)}}
 
+/* ============ copiar y pegar estilo ============
+   Mantén pulsado (o clic derecho en el PC) un botón en la vista de una pantalla o en Inicio: Copiar estilo / Pegar aquí / Pegar en toda la pantalla.
+   Tras copiar se entra en «modo pegar»: cada toque en un botón le pone el estilo copiado, hasta pulsar «Hecho».
+   Se copia el aspecto (estilo) y los colores del marco y del icono; el icono no, porque cada botón tiene su función. */
+function styleOf(F){const g=S.gen||{},p=(g.per||{})[F.path]||{},home=genTargets().includes(F);return {look:home?btnLook():(p.look||'orig'),hue:p.hue,ihue:p.ihue,from:pretty(F)}}
+function pasteOne(F){const c=S.clip;if(!c||!isBtnLike(F))return false;const g=S.gen||(S.gen=defGen()),home=genTargets().includes(F),p=g.per[F.path]||(g.per[F.path]={});
+  if(!home&&frames(F)>=2&&canStyleOne(F))p.look=c.look;
+  if(c.hue==null)delete p.hue;else p.hue=c.hue;if(c.ihue==null)delete p.ihue;else p.ihue=c.ihue;return true}
+function pasteStyle(L){const D=L.filter(F=>isBtnLike(F));if(!D.length)return;before();let n=0;for(const F of D)if(pasteOne(F))n++;applyButtons(D);
+  const homeDiff=D.some(F=>genTargets().includes(F))&&S.clip.look!==btnLook();
+  toast(`Estilo pegado en ${n} ${n===1?'botón':'botones'}${homeDiff?' (en Inicio el estilo es común a los 6: se han pegado los colores)':''}`,{label:'Deshacer',fn:undo})}
+function copyStyle(F){S.clip=styleOf(F);pasteBar(true);toast(`Estilo de «${S.clip.from}» copiado: toca los botones donde quieras pegarlo`,{ms:3500})}
+function pasteBar(on){let b=$('#pastebar');if(!on){S.pasteMode=false;if(b)b.remove();return}S.pasteMode=true;
+  if(!b){b=document.createElement('div');b.id='pastebar';b.className='pastebar';document.body.appendChild(b)}
+  const nm=(LOOKS().find(x=>x[0]===S.clip.look)||['',''])[1];
+  b.innerHTML=`<span class="tx"><b>Pegando el estilo</b><small>De «${esc(S.clip.from)}» · ${esc(nm)}. Toca los botones</small></span><button class="btn sm" id="pb-ok">Hecho</button>`;
+  b.querySelector('#pb-ok').onclick=()=>pasteBar(false)}
+// menú al mantener pulsado. L = los botones de la pantalla (para «pegar en toda la pantalla»)
+function styleMenu(F,L,after){if(!isBtnLike(F)){go({n:'edit',p:F.path});return}const c=S.clip,nm=c&&(LOOKS().find(x=>x[0]===c.look)||['',''])[1];
+  openBS(`<h2>${esc(pretty(F))}</h2><div class="list">
+    <button class="li" data-c="copy"><span class="ic">${ic('M8 8h12v12H8zM4 16V4h12')}</span><span class="tx"><b>Copiar estilo</b><small>Aspecto y colores de este botón, para pegarlos en otros</small></span>${CHEV}</button>
+    ${c?`<button class="li" data-c="paste"><span class="ic">${ic('M9 4h6v3H9zM6 6h12v15H6z')}</span><span class="tx"><b>Pegar aquí</b><small>${esc(nm)} de «${esc(c.from)}»</small></span>${CHEV}</button>
+    ${L&&L.length>1?`<button class="li" data-c="all"><span class="ic">${ic('M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z')}</span><span class="tx"><b>Pegar en toda la pantalla</b><small>${L.length} botones</small></span>${CHEV}</button>`:''}`:''}
+    <button class="li" data-c="edit"><span class="ic">${ic('M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4')}</span><span class="tx"><b>Editar este botón</b></span>${CHEV}</button></div>
+    <button class="btn o wide" data-c="0">Cerrar</button>`);
+  $('#bs').onclick=e=>{const x=e.target.closest('[data-c]');if(!x)return;const k=x.dataset.c;closeBS();
+    if(k==='copy')copyStyle(F);else if(k==='paste'){pasteStyle([F]);after&&after()}else if(k==='all'){pasteStyle(L);after&&after()}else if(k==='edit')btnSheet(F,after)}}
+// mantener pulsado sobre un lienzo: llama a fn(e) a los 550 ms si el dedo no se ha movido. Devuelve true en el pointerup si ya se usó la pulsación larga
+function longPress(c,fn){let t=0,x0=0,y0=0,used=false;c.dataset.lp='1';
+  c.addEventListener('pointerdown',e=>{used=false;x0=e.clientX;y0=e.clientY;clearTimeout(t);t=setTimeout(()=>{used=true;S.lpT=Date.now();if(navigator.vibrate)try{navigator.vibrate(15)}catch(_){}fn(e)},550)});
+  c.addEventListener('pointermove',e=>{if(Math.hypot(e.clientX-x0,e.clientY-y0)>10)clearTimeout(t)});
+  ['pointerup','pointercancel','pointerleave'].forEach(k=>c.addEventListener(k,()=>clearTimeout(t)));
+  c.addEventListener('contextmenu',e=>{e.preventDefault();clearTimeout(t);used=true;fn(e)});
+  return ()=>{const u=used;used=false;return u}}
+
 /* ============ ventana de cada pantalla de la radio ============
    Como solo se toca la skin, cada pantalla (Radio, Multimedia, Teléfono, Driving eco, Ajustes) es un conjunto cerrado de imágenes:
    aquí está todo lo suyo junto. «Común» reúne lo que comparten todas (barra superior, ventanas, teclados, cámara, ayudas, 4x4).
@@ -3225,8 +3265,11 @@ function scrScreen(v,r){
       c.onpointerdown=e=>{const V=vwCur(s);if(!V)return;down=vwHit(V,c,e).i;press=down;schedule()};
       c.onpointermove=e=>{if(e.pointerType!=='mouse')return;const V=vwCur(s);if(!V)return;const h=vwHit(V,c,e);c.style.cursor=h.i>=0?'pointer':'default';if(h.i!==hov){hov=h.i;schedule()}};
       c.onpointerleave=c.onpointercancel=()=>{down=press=hov=-1;schedule()};
-      c.onpointerup=e=>{const V=vwCur(s),i=down;down=press=-1;schedule();if(!V||i<0)return;const h=vwHit(V,c,e);if(h.i!==i)return;
-        if(isBtnLike(h.F))btnSheet(h.F,()=>{mountThumbs(v);schedule()});else go({n:'edit',p:h.F.path})}}$('#sc-cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.hcmp=b.dataset.v;$$('#sc-cmp button').forEach(x=>x.setAttribute('aria-pressed',x===b));schedule()}}
+      const sBtns=()=>{const V=vwCur(s);return V?[...new Set(V.c.map(q=>byName(q[0])).filter(F=>F&&isBtnLike(F)&&frames(F)>=2))]:[]},redraw=()=>{mountThumbs(v);schedule()};
+      const wasLong=longPress(c,e=>{const V=vwCur(s);if(!V)return;const h=vwHit(V,c,e);down=press=-1;schedule();if(h.i>=0&&h.F)styleMenu(h.F,sBtns(),redraw)});
+      c.onpointerup=e=>{const V=vwCur(s),i=down;down=press=-1;schedule();if(wasLong())return;if(!V||i<0)return;const h=vwHit(V,c,e);if(h.i!==i)return;
+        if(S.pasteMode&&S.clip&&isBtnLike(h.F)){pasteStyle([h.F]);redraw();return}
+        if(isBtnLike(h.F))btnSheet(h.F,redraw);else go({n:'edit',p:h.F.path})}}$('#sc-cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.hcmp=b.dataset.v;$$('#sc-cmp button').forEach(x=>x.setAttribute('aria-pressed',x===b));schedule()}}
   const kb=$('#sc-kit');if(kb)kb.onclick=homeKit;
   const hbb=$('#sc-hb');if(hbb)hbb.onclick=()=>btnSheet(hb,()=>{mountThumbs(v);schedule()});
   const all=$('#sc-all');if(all)all.ontoggle=()=>{if(all.open)mountThumbs(v)};
@@ -3360,7 +3403,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-9';
+const VER='2026-10-29-10';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3368,6 +3411,7 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-10',['En pruebas: copiar y pegar estilo. Mantén pulsado un botón en la vista de una pantalla o en Inicio (clic derecho en el PC): Copiar estilo, Pegar aquí, Pegar en toda la pantalla o Editar. Tras copiar, cada toque en un botón le pega el estilo y los colores hasta que pulses «Hecho»; también entre pantallas']],
   ['2026-10-29-9',['Exportar ordenado en tres pestañas: USB completo (lo recomendado: menú con diseños, copias de seguridad y herramientas, y el contenido de tu USB para usar uno nuevo), Solo este diseño (el ZIP de siempre y sus modos) y Archivos (la lista larga, aparte)',
     'El nombre del backup que usas sale en Exportar, en el menú ⋯ y en Ajustes, con la fecha en que lo cargaste']],
   ['2026-10-29-7',['La fila de vistas de cada pantalla (Principal, Lista, Lista 2…) ya no vuelve al principio al cambiar de vista o al volver de editar un botón: se queda donde estaba y la vista elegida siempre se ve']],
