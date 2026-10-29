@@ -137,6 +137,8 @@ async function run(browser, label, viewport, mobile) {
   const yk = await p.evaluate(async () => { presetSheet(PRESETS[1]); await new Promise(r => setTimeout(r, 300)); document.querySelector('#ps-ok').click(); await new Promise(r => setTimeout(r, 900));
     const bad = []; for (const F of S.files) { if (F.keyCount || !changed(F)) continue; const b = parseBMP(outBytes(F).buffer); for (let i = 0; i < b.idx.length; i++) { const q = b.idx[i] * 3; if (b.pal[q] === 255 && b.pal[q + 1] === 255 && b.pal[q + 2] === 0) { bad.push(F.path); break } } } undo(); return bad; });
   ok(!yk.length, 'ningún archivo sin transparencia en el original sale con amarillo (transparente) tras un diseño listo' + (yk.length ? ': ' + yk.join(', ') : ''));
+  const br = await p.evaluate(() => { const F = genTargets()[0], t = genTile(F, { ...S.gen, style: 'corner', color: 'one', hue: 200 }), fw = t.width / frames(F), d = t.getContext('2d').getImageData(fw * 3 + fw / 2 - 5, t.height / 2 - 5, 10, 10).data; let l = 0; for (let i = 0; i < d.length; i += 4) l += (d[i] + d[i + 1] + d[i + 2]) / 3; return l / 100; });
+  ok(br > 110, `el estado seleccionado es claro para que se lea el texto negro de la radio (${Math.round(br)})`);
   ok(sty.n >= 47 && !sty.bad.length, `los ${sty.n} estilos de botón se dibujan` + (sty.bad.length ? ': fallan ' + sty.bad.join(', ') : ''));
   // Diálogo para poner nombre (lo usan «Mis diseños»)
   const nm = p.evaluate(() => promptBS({ title: 'Prueba', value: 'Mi diseño' })); await p.waitForTimeout(300);

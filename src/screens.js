@@ -53,6 +53,7 @@ function vwBar(s){const el=$('#sc-vw');if(!el)return;
     ${cur.aprox?'<p class="hint" style="padding:0">Vista dibujada a partir de fotos de la radio: las posiciones son aproximadas.</p>':''}`;
   el.onclick=e=>{const b=e.target.closest('[data-b],[data-w]');if(!b)return;const k=(S.vw||(S.vw={}))[s]||(S.vw[s]={});
     if(b.dataset.b!=null){k.band=b.dataset.b;delete k.v}else{k.v=b.dataset.w}vwBar(s);schedule()}}
+const ACCENT=/(_dot|list_press|parting_line|list_line|fulldown_\d_l?ine|indi_line|scrollnumber_bg|progress_bar\w*)\.bmp$/;
 function scrScreen(v,r){
   const s=r.s,secs=scrSecs(s),files=scrFiles(s),pscr=s==='common'?'radio':s,bg=byName(SCRBG.get(pscr)),hb=s==='common'?null:scrHomeBtn(s);
   setTitle(scrName(s),`${files.length+(bg?1:0)} imágenes de esta pantalla`);
@@ -106,7 +107,9 @@ function scrScreen(v,r){
       toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(L);mountThumbs(v);schedule();toast(`«${nm}» en ${L.length} botones`,{label:'Deshacer',fn:undo})}}
   // colores de marco e icono para todos los botones de la pantalla a la vez
   const allCol=async(key,h)=>{before();for(const G of sty){const q=g.per[G.path]||(g.per[G.path]={});if(h==null)delete q[key];else q[key]=h}
-    toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(sty);render(true);toast(`Color cambiado en ${sty.length} botones`,{label:'Deshacer',fn:undo})};
+    // el color del marco también tiñe los detalles de la pantalla: los puntos de las opciones, la barra de la fila elegida en las listas, las líneas separadoras…
+    if(key==='hue')for(const G of files.filter(F=>ACCENT.test(F.lc))){const o={...defOps(),...(S.ops.file[G.path]||{})};if(h==null||h==='white'){o.tA=0}else{o.tH=h;o.tA=100;o.tG=false}setFileOps(G,o)}
+    toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(sty);render(true);toast(key==='hue'?`Color cambiado en ${sty.length} botones y los detalles de la pantalla`:`Color cambiado en ${sty.length} botones`,{label:'Deshacer',fn:undo})};
   for(const [id,key] of [['#sc-fc','hue'],['#sc-icc','ihue']]){const sw=$(id+' .swg');if(!sw)continue;
     sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;const h=b.dataset.h;allCol(key,h==='none'?null:h==='white'?'white':+h)};
     sw.querySelector('[data-pick]').onchange=e=>allCol(key,Math.round(hexHsl(e.target.value)[0]))}

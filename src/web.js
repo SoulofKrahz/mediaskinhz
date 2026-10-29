@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-5';
+const VER='2026-10-29-6';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,8 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-6',['Botón pulsado y opción elegida legibles: la radio escribe ese texto en negro, así que en todos los estilos esos estados son ahora claros (como en los de Renault). Antes, en estilos como Esquinas o Futurista, la opción elegida («Desc», «Oscuro»…) no se veía',
+    'El color del marco de una pantalla tiñe también sus detalles: los puntos de las opciones, la barra de la fila elegida en las listas (p. ej. Bluetooth), las líneas separadoras y la barra de arriba']],
   ['2026-10-29-5',['Menú del USB ordenado en tres partes: Diseños · Copias de seguridad (hacer de las imágenes, de todo System o restaurar la última) · Herramientas (informe, Total Commander y prueba de aspecto), más Reiniciar y Volver a la radio. Cada lista tiene «« Volver»',
     'Prueba de aspecto (Herramientas): comprueba en tu radio si se pueden poner entradas y letra más grandes y si abre el logo de Mediaskinhz con un visor de imágenes, y lo apunta en Mediaskinhz\\prueba-aspecto.txt']],
   ['2026-10-29-4',['Menú del USB: «Restaurar la última copia». Vuelve a poner en la radio las imágenes de la última copia de seguridad hecha desde el menú (solo imágenes; ajustes y programas no se tocan) y reinicia',

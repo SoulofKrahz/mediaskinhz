@@ -1491,6 +1491,7 @@ function borderColor(F){if(F.bdc)return F.bdc;const fw=F.w/frames(F),rs=[],gs=[]
   for(let x=0;x<fw;x++){add(x,0);add(x,F.h-1)}for(let y=0;y<F.h;y++){add(0,y);add(fw-1,y)}const m=a=>{a.sort((u,v)=>u-v);return a[a.length>>1]||0},r=m(rs),G=m(gs),B=m(bs);
   // las pantallas del MediaNav son oscuras: un borde claro o de color es parte del botón, no del fondo
   F.bdc=(r*.3+G*.59+B*.11)<60?`rgb(${r},${G},${B})`:'#000';return F.bdc}
+const NOBRITE=new Set(['metal','glass','frost']);
 const THRU=new Set(['hud','hudb','hudf','outline','neon','halo','grid','ring','corner','gborder','wave','circuit','duo','notch','scan','led','double','beam','dots','slash','minimal']);
 function vwPos(F){const kp=KNOWNPOS[F.lc];if(kp)return {x:kp[0],y:kp[1],s:'home'};if(typeof VW==='undefined'||!VW.data)return null;if(F.vpv===VW.data)return F.vp;let r=null;for(const o of VW.data){for(const c of o.c||[])if(c[0]===F.lc){r={x:c[1],y:c[2],w:c[3],h:c[4],s:o.s==='common'?'radio':o.s};break}if(r)break}F.vp=r;F.vpv=VW.data;return r}
 const presetBgOn=()=>[...SCRBG.values()].some(n=>{const B=byName(n);return B&&B.rep&&B.rep.by==='preset'});
@@ -1513,7 +1514,10 @@ function drawState(x,F,w,h,s,H,g,bgc){
   // estilos de solo líneas sobre un fondo de diseño listo: el cuerpo en reposo deja ver el fondo (en Inicio, un velo suave; dentro, transparente)
   // en vez de una placa negra encima. Pulsado sigue relleno para que se note
   const thru=!on&&THRU.has(g.style)&&typeof presetBgOn==='function'&&presetBgOn(),hmT=S.layout.slots.some(q=>q.p===F.path)||!!bgc.full,of=x.fill;let firstF=true;
-  if(thru)x.fill=function(...a){if(firstF){firstF=false;if(hmT){x.save();x.fillStyle=dim?'rgba(0,0,0,.5)':'rgba(0,0,0,.32)';of.apply(x,a);x.restore()}return}return of.apply(x,a)};
+  // pulsado y seleccionado (estados 2 y 4): la radio escribe el texto en NEGRO encima, así que el cuerpo tiene que ser claro (como en los de Renault).
+  // Se cambia solo el primer relleno de cada estilo (su cuerpo, con su forma); los adornos del estilo se dibujan encima
+  const brite=on&&!NOBRITE.has(g.style);
+  if(thru||brite)x.fill=function(...a){if(firstF){firstF=false;if(brite){x.save();const sa=g.style==='alu'?6:88;x.fillStyle=lin(`hsl(${H} ${sa}% 68%)`,`hsl(${H} ${sa}% 47%)`);of.apply(x,a);x.restore();return}if(hmT){x.save();x.fillStyle=dim?'rgba(0,0,0,.5)':'rgba(0,0,0,.32)';of.apply(x,a);x.restore()}return}return of.apply(x,a)};
   switch(g.style){
     case 'flat':x.fillStyle=on?`hsl(${H} 78% 50%)`:`hsl(${H} 42% ${dim?9:19}%)`;x.fill();ic=on?'#ffffff':`hsl(${H} 80% ${dim?36:62}%)`;break;
     case 'outline':x.fillStyle=on?`hsl(${H} 70% 15%)`:'#030405';x.fill();x.lineWidth=on?4:3;x.strokeStyle=`hsl(${H} 85% ${on?60:dim?28:52}%)`;rrect(x,X+2.5,Y+2.5,W-5,Hh-5,Math.max(0,r-1.5));x.stroke();ic=on?'#ffffff':`hsl(${H} 80% ${dim?30:58}%)`;break;
@@ -1651,7 +1655,8 @@ function drawState(x,F,w,h,s,H,g,bgc){
       x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const gl=x.createLinearGradient(0,Y,0,Y+Hh*.5);gl.addColorStop(0,'rgba(255,255,255,.25)');gl.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh*.5);x.restore();
       if(on){x.lineWidth=3;x.strokeStyle='rgba(255,255,255,.75)';rrect(x,X+2.5,Y+2.5,W-5,Hh-5,Math.max(0,r-1.5));x.stroke()}ic=dim?'rgba(255,255,255,.5)':'#ffffff';break}
     default:x.fillStyle=on?lin(`hsl(${H} 90% 62%)`,`hsl(${H} 85% 46%)`):lin('#16191e','#060708',`hsl(${H} 85% ${dim?20:44}%)`);x.fill();x.lineWidth=2;x.strokeStyle=on?`hsl(${H} 70% 40%)`:`hsl(${H} 55% ${dim?18:32}%)`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=on?`hsl(${H} 70% 20%)`:`hsl(${H} 85% ${dim?32:60}%)`}
-  if(thru)x.fill=of;
+  if(thru||brite)x.fill=of;
+  if(brite){ic=`hsl(${H} 80% 9%)`;glow=0}
   const home=S.layout.slots.some(s=>s.p===F.path),isIn=g.isIn||1.15,isz=home?g.is:Math.max(14,Math.min(h*.44*isIn,Math.min(w,h)*.8)),src=grp?'orig':genIconSrc(F,g),p=grp?{}:g.per[F.path]||{},cx=w/2,cy=home?Y+Hh*(g.iy/100):h/2;
   if(p.ihue!=null&&!on)ic=p.ihue==='white'?(dim?'rgba(255,255,255,.5)':'#ffffff'):`hsl(${p.ihue} 85% ${dim?34:62}%)`;
   // el icono original: en Inicio a la medida elegida; dentro, a su tamaño de siempre (× el tamaño elegido) sin salirse del botón
@@ -3156,6 +3161,7 @@ function vwBar(s){const el=$('#sc-vw');if(!el)return;
     ${cur.aprox?'<p class="hint" style="padding:0">Vista dibujada a partir de fotos de la radio: las posiciones son aproximadas.</p>':''}`;
   el.onclick=e=>{const b=e.target.closest('[data-b],[data-w]');if(!b)return;const k=(S.vw||(S.vw={}))[s]||(S.vw[s]={});
     if(b.dataset.b!=null){k.band=b.dataset.b;delete k.v}else{k.v=b.dataset.w}vwBar(s);schedule()}}
+const ACCENT=/(_dot|list_press|parting_line|list_line|fulldown_\d_l?ine|indi_line|scrollnumber_bg|progress_bar\w*)\.bmp$/;
 function scrScreen(v,r){
   const s=r.s,secs=scrSecs(s),files=scrFiles(s),pscr=s==='common'?'radio':s,bg=byName(SCRBG.get(pscr)),hb=s==='common'?null:scrHomeBtn(s);
   setTitle(scrName(s),`${files.length+(bg?1:0)} imágenes de esta pantalla`);
@@ -3209,7 +3215,9 @@ function scrScreen(v,r){
       toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(L);mountThumbs(v);schedule();toast(`«${nm}» en ${L.length} botones`,{label:'Deshacer',fn:undo})}}
   // colores de marco e icono para todos los botones de la pantalla a la vez
   const allCol=async(key,h)=>{before();for(const G of sty){const q=g.per[G.path]||(g.per[G.path]={});if(h==null)delete q[key];else q[key]=h}
-    toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(sty);render(true);toast(`Color cambiado en ${sty.length} botones`,{label:'Deshacer',fn:undo})};
+    // el color del marco también tiñe los detalles de la pantalla: los puntos de las opciones, la barra de la fila elegida en las listas, las líneas separadoras…
+    if(key==='hue')for(const G of files.filter(F=>ACCENT.test(F.lc))){const o={...defOps(),...(S.ops.file[G.path]||{})};if(h==null||h==='white'){o.tA=0}else{o.tH=h;o.tA=100;o.tG=false}setFileOps(G,o)}
+    toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(sty);render(true);toast(key==='hue'?`Color cambiado en ${sty.length} botones y los detalles de la pantalla`:`Color cambiado en ${sty.length} botones`,{label:'Deshacer',fn:undo})};
   for(const [id,key] of [['#sc-fc','hue'],['#sc-icc','ihue']]){const sw=$(id+' .swg');if(!sw)continue;
     sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;const h=b.dataset.h;allCol(key,h==='none'?null:h==='white'?'white':+h)};
     sw.querySelector('[data-pick]').onchange=e=>allCol(key,Math.round(hexHsl(e.target.value)[0]))}
@@ -3319,7 +3327,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-5';
+const VER='2026-10-29-6';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3327,6 +3335,8 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-6',['Botón pulsado y opción elegida legibles: la radio escribe ese texto en negro, así que en todos los estilos esos estados son ahora claros (como en los de Renault). Antes, en estilos como Esquinas o Futurista, la opción elegida («Desc», «Oscuro»…) no se veía',
+    'El color del marco de una pantalla tiñe también sus detalles: los puntos de las opciones, la barra de la fila elegida en las listas (p. ej. Bluetooth), las líneas separadoras y la barra de arriba']],
   ['2026-10-29-5',['Menú del USB ordenado en tres partes: Diseños · Copias de seguridad (hacer de las imágenes, de todo System o restaurar la última) · Herramientas (informe, Total Commander y prueba de aspecto), más Reiniciar y Volver a la radio. Cada lista tiene «« Volver»',
     'Prueba de aspecto (Herramientas): comprueba en tu radio si se pueden poner entradas y letra más grandes y si abre el logo de Mediaskinhz con un visor de imágenes, y lo apunta en Mediaskinhz\\prueba-aspecto.txt']],
   ['2026-10-29-4',['Menú del USB: «Restaurar la última copia». Vuelve a poner en la radio las imágenes de la última copia de seguridad hecha desde el menú (solo imágenes; ajustes y programas no se tocan) y reinicia',

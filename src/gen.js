@@ -72,6 +72,7 @@ function borderColor(F){if(F.bdc)return F.bdc;const fw=F.w/frames(F),rs=[],gs=[]
   for(let x=0;x<fw;x++){add(x,0);add(x,F.h-1)}for(let y=0;y<F.h;y++){add(0,y);add(fw-1,y)}const m=a=>{a.sort((u,v)=>u-v);return a[a.length>>1]||0},r=m(rs),G=m(gs),B=m(bs);
   // las pantallas del MediaNav son oscuras: un borde claro o de color es parte del botón, no del fondo
   F.bdc=(r*.3+G*.59+B*.11)<60?`rgb(${r},${G},${B})`:'#000';return F.bdc}
+const NOBRITE=new Set(['metal','glass','frost']);
 const THRU=new Set(['hud','hudb','hudf','outline','neon','halo','grid','ring','corner','gborder','wave','circuit','duo','notch','scan','led','double','beam','dots','slash','minimal']);
 function vwPos(F){const kp=KNOWNPOS[F.lc];if(kp)return {x:kp[0],y:kp[1],s:'home'};if(typeof VW==='undefined'||!VW.data)return null;if(F.vpv===VW.data)return F.vp;let r=null;for(const o of VW.data){for(const c of o.c||[])if(c[0]===F.lc){r={x:c[1],y:c[2],w:c[3],h:c[4],s:o.s==='common'?'radio':o.s};break}if(r)break}F.vp=r;F.vpv=VW.data;return r}
 const presetBgOn=()=>[...SCRBG.values()].some(n=>{const B=byName(n);return B&&B.rep&&B.rep.by==='preset'});
@@ -94,7 +95,10 @@ function drawState(x,F,w,h,s,H,g,bgc){
   // estilos de solo líneas sobre un fondo de diseño listo: el cuerpo en reposo deja ver el fondo (en Inicio, un velo suave; dentro, transparente)
   // en vez de una placa negra encima. Pulsado sigue relleno para que se note
   const thru=!on&&THRU.has(g.style)&&typeof presetBgOn==='function'&&presetBgOn(),hmT=S.layout.slots.some(q=>q.p===F.path)||!!bgc.full,of=x.fill;let firstF=true;
-  if(thru)x.fill=function(...a){if(firstF){firstF=false;if(hmT){x.save();x.fillStyle=dim?'rgba(0,0,0,.5)':'rgba(0,0,0,.32)';of.apply(x,a);x.restore()}return}return of.apply(x,a)};
+  // pulsado y seleccionado (estados 2 y 4): la radio escribe el texto en NEGRO encima, así que el cuerpo tiene que ser claro (como en los de Renault).
+  // Se cambia solo el primer relleno de cada estilo (su cuerpo, con su forma); los adornos del estilo se dibujan encima
+  const brite=on&&!NOBRITE.has(g.style);
+  if(thru||brite)x.fill=function(...a){if(firstF){firstF=false;if(brite){x.save();const sa=g.style==='alu'?6:88;x.fillStyle=lin(`hsl(${H} ${sa}% 68%)`,`hsl(${H} ${sa}% 47%)`);of.apply(x,a);x.restore();return}if(hmT){x.save();x.fillStyle=dim?'rgba(0,0,0,.5)':'rgba(0,0,0,.32)';of.apply(x,a);x.restore()}return}return of.apply(x,a)};
   switch(g.style){
     case 'flat':x.fillStyle=on?`hsl(${H} 78% 50%)`:`hsl(${H} 42% ${dim?9:19}%)`;x.fill();ic=on?'#ffffff':`hsl(${H} 80% ${dim?36:62}%)`;break;
     case 'outline':x.fillStyle=on?`hsl(${H} 70% 15%)`:'#030405';x.fill();x.lineWidth=on?4:3;x.strokeStyle=`hsl(${H} 85% ${on?60:dim?28:52}%)`;rrect(x,X+2.5,Y+2.5,W-5,Hh-5,Math.max(0,r-1.5));x.stroke();ic=on?'#ffffff':`hsl(${H} 80% ${dim?30:58}%)`;break;
@@ -232,7 +236,8 @@ function drawState(x,F,w,h,s,H,g,bgc){
       x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const gl=x.createLinearGradient(0,Y,0,Y+Hh*.5);gl.addColorStop(0,'rgba(255,255,255,.25)');gl.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh*.5);x.restore();
       if(on){x.lineWidth=3;x.strokeStyle='rgba(255,255,255,.75)';rrect(x,X+2.5,Y+2.5,W-5,Hh-5,Math.max(0,r-1.5));x.stroke()}ic=dim?'rgba(255,255,255,.5)':'#ffffff';break}
     default:x.fillStyle=on?lin(`hsl(${H} 90% 62%)`,`hsl(${H} 85% 46%)`):lin('#16191e','#060708',`hsl(${H} 85% ${dim?20:44}%)`);x.fill();x.lineWidth=2;x.strokeStyle=on?`hsl(${H} 70% 40%)`:`hsl(${H} 55% ${dim?18:32}%)`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=on?`hsl(${H} 70% 20%)`:`hsl(${H} 85% ${dim?32:60}%)`}
-  if(thru)x.fill=of;
+  if(thru||brite)x.fill=of;
+  if(brite){ic=`hsl(${H} 80% 9%)`;glow=0}
   const home=S.layout.slots.some(s=>s.p===F.path),isIn=g.isIn||1.15,isz=home?g.is:Math.max(14,Math.min(h*.44*isIn,Math.min(w,h)*.8)),src=grp?'orig':genIconSrc(F,g),p=grp?{}:g.per[F.path]||{},cx=w/2,cy=home?Y+Hh*(g.iy/100):h/2;
   if(p.ihue!=null&&!on)ic=p.ihue==='white'?(dim?'rgba(255,255,255,.5)':'#ffffff'):`hsl(${p.ihue} 85% ${dim?34:62}%)`;
   // el icono original: en Inicio a la medida elegida; dentro, a su tamaño de siempre (× el tamaño elegido) sin salirse del botón
