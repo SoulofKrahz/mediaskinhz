@@ -53,7 +53,7 @@ class Run:
             r = F.real(a[0]); 
             if not os.path.isdir(os.path.dirname(r)): return 0
             open(r, 'a' if len(a) > 2 and a[2] else 'w', encoding='cp1252').write(a[1].replace('^NL^', '\n')); return 0
-        if f == 'formattime': return time.strftime('%d/%m/%Y %H:%M:%S')
+        if f == 'formattime': return ''.join(time.strftime({'d':'%d','m':'%m','Y':'%Y','H':'%H','i':'%M','s':'%S'}[c]) if c in 'dmYHis' else c for c in a[0])
         if f == 'message': F.msgs.append(a[0].replace('^NL^', ' | ')); return 0
         if f == 'question':
             assert a[2] == 'YesNo'; F.msgs.append('? ' + a[0].replace('^NL^', ' | ')); return F.answers.pop(0) if F.answers else 1
@@ -71,6 +71,18 @@ class Run:
             F.msgs.append('[elige] ' + str(a[0]) + ' :: ' + ' / '.join(map(str, a[4:]))); ch = getattr(F, 'choices', None); return ch.pop(0) if ch else 1
         if f == 'readfile':
             r = F.real(a[0]); return open(r, encoding='cp1252').read() if os.path.isfile(r) else ''
+        if f == 'xcopy':
+            src = a[0]; d = F.real(a[1]); base = src.rsplit('\\', 1)[0]; rec = len(a) > 3 and a[3]; r0 = F.real(base)
+            if not os.path.isdir(r0): return 0
+            for dp, dn, fn in os.walk(r0):
+                rel = os.path.relpath(dp, r0)
+                if rel != '.' and not rec: continue
+                td = d if rel == '.' else os.path.join(d, rel); os.makedirs(td, exist_ok=True)
+                for f2 in fn: shutil.copyfile(os.path.join(dp, f2), os.path.join(td, f2))
+            return 1
+        if f in ('freediskspace', 'totaldiskspace', 'freememory', 'totalmemory', 'screenwidth', 'screenheight'): return 123456
+        if f in ('systemversion', 'platform', 'getversion'): return 'CE6'
+        if f == 'regreadstring': return ''
         if f == 'bigmessage': F.msgs.append('[grande] ' + a[0].replace('^NL^', ' | ')); return 0
         raise NameError('función desconocida ' + f)
     # expresiones: or > and > not > comparación > + - & \ > átomo
@@ -123,30 +135,34 @@ class Run:
         raise SyntaxError('inesperado ' + v)
     def run(s, text):
         L = [l.strip() for l in text.splitlines()]
-        # comprobar que los If/EndIf cuadran
-        d = 0
-        for l in L:
-            w = l.split(' ')[0].lower()
-            if w == 'if': d += 1
-            if w == 'endif': d -= 1
-            assert d >= 0
-        assert d == 0, 'If/EndIf descuadrados'
-        st = []  # pila de (activo_padre, cond_cumplida)
-        act = True
+        # bloques: If/Else/EndIf y While/EndWhile, emparejados de antemano
+        st, match, els = [], {}, {}
         for n, l in enumerate(L):
-            if not l or l.startswith('#'): continue
-            m = re.match(r'(?i)if\s*\((.*)\)\s*$', l)
+            w = l.split('(')[0].split(' ')[0].lower() if l else ''
+            if w in ('if', 'while'): st.append((w, n))
+            elif w == 'else': els[st[-1][1]] = n
+            elif w in ('endif', 'endwhile'):
+                k, o = st.pop(); assert (k == 'if') == (w == 'endif'), 'bloques cruzados en ' + str(n); match[o] = n; match[n] = o
+        assert not st, 'bloques sin cerrar'
+        pc, guard = 0, 0
+        while pc < len(L):
+            guard += 1; assert guard < 200000, 'bucle infinito'
+            l = L[pc]; low = l.lower()
+            if not l or l.startswith('#'): pc += 1; continue
+            m = re.match(r'(?i)(if|while)\s*\((.*)\)\s*$', l)
             if m:
-                c = bool(s.expr(lex(m.group(1)))) if act else False
-                st.append((act, c)); act = act and c; continue
-            if l.lower() == 'else':
-                pa, c = st[-1]; act = pa and not c; continue
-            if l.lower() == 'endif':
-                act = st.pop()[0]; continue
-            if not act: continue
-            if l.lower() == 'exit': return 'exit'
+                c = bool(s.expr(lex(m.group(2))))
+                if c: pc += 1
+                elif m.group(1).lower() == 'if' and pc in els: pc = els[pc] + 1
+                else: pc = match[pc] + 1
+                continue
+            if low == 'else':  # fin de la rama verdadera: saltar al EndIf
+                o = [k for k, v in els.items() if v == pc][0]; pc = match[o] + 1; continue
+            if low == 'endif': pc += 1; continue
+            if low == 'endwhile': pc = match[pc]; continue
+            if low == 'exit': return 'exit'
             m = re.match(r'([A-Za-z_]\w*)\s*=\s*(.*)$', l)
-            if m and not l.lower().startswith(('if', 'copy', 'message')) and '(' not in m.group(1):
-                s.v[m.group(1)] = s.expr(lex(m.group(2))); continue
-            s.expr(lex(l))
+            if m and not low.startswith(('if', 'copy', 'message')) and '(' not in m.group(1):
+                s.v[m.group(1)] = s.expr(lex(m.group(2))); pc += 1; continue
+            s.expr(lex(l)); pc += 1
         return 'fin'
