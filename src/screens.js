@@ -116,7 +116,7 @@ function scrScreen(v,r){
   // colores de marco e icono para todos los botones de la pantalla a la vez
   const allCol=async(key,h)=>{before();for(const G of sty){const q=g.per[G.path]||(g.per[G.path]={});if(h==null)delete q[key];else q[key]=h}
     // el color del marco también tiñe los detalles de la pantalla: los puntos de las opciones, la barra de la fila elegida en las listas, las líneas separadoras…
-    if(key==='hue')for(const G of files.filter(F=>ACCENT.test(F.lc))){const o={...defOps(),...(S.ops.file[G.path]||{})};if(h==null||h==='white'){o.tA=0}else{o.tH=h;o.tA=100;o.tG=false}setFileOps(G,o)}
+    if(key==='hue')for(const G of files.filter(F=>ACCENT.test(F.lc))){const o={...defOps(),...(S.ops.file[G.path]||{})};o.map={...(o.map||{})};if(h==null||h==='white'){o.tA=0;o.tG=false;delete o.map[12]}else{o.tH=h;o.tA=100;o.tG=false;o.map[12]={to:h,ts:.85,tl:.62}}if(!Object.keys(o.map).length)delete o.map;setFileOps(G,o)}
     toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(sty);render(true);toast(key==='hue'?`Color cambiado en ${sty.length} botones y los detalles de la pantalla`:`Color cambiado en ${sty.length} botones`,{label:'Deshacer',fn:undo})};
   for(const [id,key] of [['#sc-fc','hue'],['#sc-icc','ihue']]){const sw=$(id+' .swg');if(!sw)continue;
     sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;const h=b.dataset.h;allCol(key,h==='none'?null:h==='white'?'white':+h)};

@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-11';
+const VER='2026-10-29-12';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,7 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-12',['Pegar el color en filas y líneas de las listas ya las cambia: eran grises y el tinte solo cambiaba las partes de color. Ahora los grises y blancos toman el color con su mismo brillo (la barra blanca de la fila elegida, el fondo de la ventana de lista del teléfono, las líneas de las listas de Ajustes…); los negros se quedan']],
   ['2026-10-29-11',['Pegar estilo también en las listas y piezas que no son botones (la barra de la fila elegida, líneas, puntos…): se les pega el color del marco. En las listas de Ajustes ya se puede tocar la barra de la fila elegida']],
   ['2026-10-29-10',['Copiar y pegar estilo. Mantén pulsado un botón en la vista de una pantalla o en Inicio (clic derecho en el PC): Copiar estilo, Pegar aquí, Pegar en toda la pantalla o Editar. Tras copiar, cada toque en un botón le pega el estilo y los colores hasta que pulses «Hecho»; también entre pantallas']],
   ['2026-10-29-9',['Exportar ordenado en tres pestañas: USB completo (lo recomendado: menú con diseños, copias de seguridad y herramientas, y el contenido de tu USB para usar uno nuevo), Solo este diseño (el ZIP de siempre y sus modos) y Archivos (la lista larga, aparte)',

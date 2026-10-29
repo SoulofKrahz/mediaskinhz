@@ -256,7 +256,7 @@ function mountPresets(el){if(!el)return;const cvs=[...el.querySelectorAll('canva
 function styleOf(F){const g=S.gen||{},p=(g.per||{})[F.path]||{},home=genTargets().includes(F);return {look:home?btnLook():(p.look||'orig'),hue:p.hue,ihue:p.ihue,from:pretty(F)}}
 // piezas que no son botones con estilo (barras de las listas, líneas, puntos, iconos sueltos): se les pega el color del marco como tinte
 const pasteAsTint=F=>!isBtnLike(F)||frames(F)<2||!canStyleOne(F)||/list_press|list2_btn|parting_line|_dot\.bmp$/.test(F.lc);
-function tintOne(F){const h=S.clip&&S.clip.hue;const o={...defOps(),...(S.ops.file[F.path]||{})};if(h==null||h==='white'){o.tA=0}else{o.tH=h;o.tA=100;o.tG=false}setFileOps(F,o);return true}
+function tintOne(F){const h=S.clip&&S.clip.hue;const o={...defOps(),...(S.ops.file[F.path]||{})};o.map={...(o.map||{})};if(h==null||h==='white'){o.tA=0;o.tG=false;delete o.map[12]}else{o.tH=h;o.tA=100;o.tG=false;o.map[12]={to:h,ts:.85,tl:.62}}if(!Object.keys(o.map).length)delete o.map;setFileOps(F,o);return true}  // los grises y blancos (filas y líneas de las listas, la barra blanca de la fila elegida) pasan al color con su brillo; los negros no
 function pasteOne(F){const c=S.clip;if(!c)return false;if(pasteAsTint(F))return tintOne(F);const g=S.gen||(S.gen=defGen()),home=genTargets().includes(F),p=g.per[F.path]||(g.per[F.path]={});
   if(!home&&frames(F)>=2&&canStyleOne(F))p.look=c.look;
   if(c.hue==null)delete p.hue;else p.hue=c.hue;if(c.ihue==null)delete p.ihue;else p.ihue=c.ihue;return true}
