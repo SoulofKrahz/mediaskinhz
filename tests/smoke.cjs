@@ -134,6 +134,9 @@ async function run(browser, label, viewport, mobile) {
   ok(sel.ok, 'el USB completo (menú, 2 diseños + original, copia e informe) se prepara sin tocar lo que tienes');
   const dz = await p.evaluate(async () => { S.ttab = 'mios'; go({ n: 'theme' }); await new Promise(r => setTimeout(r, 400)); const a = document.querySelectorAll('#t-tabs button').length; S.ttab = 'crear'; render(true); await new Promise(r => setTimeout(r, 300)); const b = !!document.querySelector('#t-tint'); const k = withKit([{ name: 'Medianav.mscr', data: new Uint8Array(1) }], { files: [{ name: 'MortScript.exe', data: new Uint8Array(2) }, { name: 'medianav.mscr', data: new Uint8Array(3) }], orig: new Uint8Array(3) }, true).map(e => e.name).join(','); S.ttab = 'listos'; go({ n: 'home' }); return a === 3 && b && k === 'MortScript.exe,Medianav.mscr'; });
   ok(dz, 'la pestaña Diseños tiene Listos, Mis diseños y Crear el tuyo; el lanzador del USB se junta sin repetir Medianav.mscr');
+  const yk = await p.evaluate(async () => { presetSheet(PRESETS[1]); await new Promise(r => setTimeout(r, 300)); document.querySelector('#ps-ok').click(); await new Promise(r => setTimeout(r, 900));
+    const bad = []; for (const F of S.files) { if (F.keyCount || !changed(F)) continue; const b = parseBMP(outBytes(F).buffer); for (let i = 0; i < b.idx.length; i++) { const q = b.idx[i] * 3; if (b.pal[q] === 255 && b.pal[q + 1] === 255 && b.pal[q + 2] === 0) { bad.push(F.path); break } } } undo(); return bad; });
+  ok(!yk.length, 'ningún archivo sin transparencia en el original sale con amarillo (transparente) tras un diseño listo' + (yk.length ? ': ' + yk.join(', ') : ''));
   ok(sty.n >= 47 && !sty.bad.length, `los ${sty.n} estilos de botón se dibujan` + (sty.bad.length ? ': fallan ' + sty.bad.join(', ') : ''));
   // Diálogo para poner nombre (lo usan «Mis diseños»)
   const nm = p.evaluate(() => promptBS({ title: 'Prueba', value: 'Mi diseño' })); await p.waitForTimeout(300);
