@@ -276,7 +276,8 @@ function scrGen(v){
   const ref=()=>S.lc.get(S.gsel.toLowerCase())||fs[0],sm=genSum(g);
   const item=(k,icon,title,sum,body)=>`<div class="acc-i${S.gopen===k?' open':''}" data-k="${k}"><button class="acc-h" aria-expanded="${S.gopen===k}"><span class="ic">${ic(icon)}</span><span class="tx"><b>${title}</b><small data-sum="${k}">${esc(sum)}</small></span>${CHEV}</button>${S.gopen===k?`<div class="acc-b">${body}</div>`:''}</div>`;
   const look=btnLook(),styleBody=`<div class="ocg" id="g-lk">${LOOKS().map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${look===k}"><canvas data-ms="${k}"></canvas><span>${l}</span></button>`).join('')}</div>`;
-  const shapeBody=`<div class="ocg">${GSHAPES.map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${g.shape===k}"><canvas data-mf="${k}"></canvas><span>${l}</span></button>`).join('')}</div>
+  const OWNSHAPE={chamfer:1,hex:1,notch:1,ticket:1,capsule:1,pixel:1},own=OWNSHAPE[btnLook()];
+  const shapeBody=`${own?`<p class="warnbox">El estilo «${esc((LOOKS().find(x=>x[0]===btnLook())||['',''])[1])}» tiene su propia forma: la forma y el redondeo no le cambian. El margen sí.</p>`:''}<div class="ocg">${GSHAPES.map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${g.shape===k}"><canvas data-mf="${k}"></canvas><span>${l}</span></button>`).join('')}</div>
     ${g.shape==='round'?`<label class="rg" for="g-r"><span>Redondeo <output>${g.r} px</output></span><input type="range" id="g-r" min="2" max="48" value="${g.r}"></label>`:''}
     <label class="rg" for="g-in"><span>Margen alrededor <output>${g.inset} px</output></span><input type="range" id="g-in" min="0" max="24" value="${g.inset}"></label>
     <div class="field"><span class="lbl">Esquinas y margen</span><div class="seg" id="g-co"><button data-v="bg" aria-pressed="${g.corners==='bg'}">Color del fondo</button><button data-v="key" aria-pressed="${g.corners==='key'}">Transparentes</button></div>
@@ -301,12 +302,17 @@ function scrGen(v){
     <p class="note">Solo cambia los botones de la pantalla de Inicio. Los cambios se aplican al momento y se pueden deshacer.</p></div></div>
     <div class="gbar"><button class="btn o" id="g-reset">Empezar de cero</button><button class="btn" id="g-ap">Listo</button></div>`;
   const c=$('#pv'),po=()=>({scr:'home',state:S.gstate||0});mountPreview(c,po);
-  const minis=()=>{const F=ref();$$('[data-ms]',v).forEach(cv=>{const k=cv.dataset.ms;if(k==='orig'){const fr=frames(F),fw=F.w/fr,t=document.createElement('canvas');t.width=fw;t.height=F.h;t.getContext('2d').drawImage(renderOrig(F,false),0,0,fw,F.h,0,0,fw,F.h);putMini(cv,t)}else putMini(cv,miniTile(F,{...g,style:k},0))});$$('[data-mf]',v).forEach(cv=>putMini(cv,miniTile(F,{...g,shape:cv.dataset.mf},0)));
-    $$('[data-gt]',v).forEach(cv=>{const G=S.lc.get(cv.dataset.gt.toLowerCase());if(G)putMini(cv,miniTile(G,g,0))});const s2=genSum(g);for(const k in s2){const e=$(`[data-sum="${k}"]`,v);if(e)e.textContent=s2[k]}};
-  const upd=()=>{if(btnLook()!=='orig')applyButtonsSoon();minis();saveState()};minis();
-  $('#g-tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;S.gtab=b.dataset.t;$$('#g-tabs button').forEach(x=>x.setAttribute('aria-pressed',x===b));$$('[data-pn]',v).forEach(p=>p.hidden=p.dataset.pn!==S.gtab);if(S.gtab==='icons'){const ist=$('#g-ist');if(ist)icStyleDraw(ist)}};
-  $$('.ocg',v).forEach(gr=>gr.onclick=e=>{const b=e.target.closest('.ocd');if(!b)return;if(b.querySelector('[data-ms]')){setLook(b.dataset.v).then(ok=>{if(ok){gr.querySelectorAll('.ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));minis()}})}else{g.shape=b.dataset.v;render(true)}});
-  const seg=(id,key)=>{const el=$(id);if(el)el.onclick=e=>{const b=e.target.closest('button[data-v]');if(!b)return;g[key]=b.dataset.v;render(true)}};seg('#g-co','corners');seg('#g-cm','color');
+  // miniaturas: se dibujan poco a poco (unas pocas por fotograma) y solo las de la pestaña abierta; si llega otro cambio, se cancela lo pendiente
+  let mTok=0;const minis=()=>{const tok=++mTok,F=ref(),jobs=[];
+    if(S.gtab==='style')$$('[data-ms]',v).forEach(cv=>jobs.push(()=>{const k=cv.dataset.ms;if(k==='orig'){const fr=frames(F),fw=F.w/fr,t=document.createElement('canvas');t.width=fw;t.height=F.h;t.getContext('2d').drawImage(renderOrig(F,false),0,0,fw,F.h,0,0,fw,F.h);putMini(cv,t)}else putMini(cv,miniTile(F,{...g,style:k},0))}));
+    if(S.gtab==='shape')$$('[data-mf]',v).forEach(cv=>jobs.push(()=>putMini(cv,miniTile(F,{...g,style:btnLook()==='orig'?(g.style||'glow'):btnLook(),shape:cv.dataset.mf},0))));
+    if(S.gtab==='btn')$$('[data-gt]',v).forEach(cv=>jobs.push(()=>{const G=S.lc.get(cv.dataset.gt.toLowerCase());if(G)putMini(cv,miniTile(G,g,0))}));
+    const s2=genSum(g);for(const k in s2){const e=$(`[data-sum="${k}"]`,v);if(e)e.textContent=s2[k]}
+    const step=()=>{if(tok!==mTok||!v.isConnected)return;const t0=performance.now();while(jobs.length&&performance.now()-t0<12)jobs.shift()();if(jobs.length)requestAnimationFrame(step)};requestAnimationFrame(step)};
+  let mT=0;const upd=()=>{if(btnLook()!=='orig')applyButtonsSoon();clearTimeout(mT);mT=setTimeout(minis,220);saveState()};minis();
+  $('#g-tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;S.gtab=b.dataset.t;$$('#g-tabs button').forEach(x=>x.setAttribute('aria-pressed',x===b));$$('[data-pn]',v).forEach(p=>p.hidden=p.dataset.pn!==S.gtab);minis();if(S.gtab==='icons'){const ist=$('#g-ist');if(ist)icStyleDraw(ist)}};
+  $$('.ocg',v).forEach(gr=>gr.onclick=e=>{const b=e.target.closest('.ocd');if(!b)return;if(b.querySelector('[data-ms]')){setLook(b.dataset.v).then(ok=>{if(ok){gr.querySelectorAll('.ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));minis()}})}else{before();g.shape=b.dataset.v;if(btnLook()!=='orig')applyButtons();render(true)}});
+  const seg=(id,key)=>{const el=$(id);if(el)el.onclick=e=>{const b=e.target.closest('button[data-v]');if(!b)return;before();g[key]=b.dataset.v;if(btnLook()!=='orig')applyButtons();render(true)}};seg('#g-co','corners');seg('#g-cm','color');
   $('#g-st').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;S.gstate=+b.dataset.s;$$('#g-st button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawPreview(c,po())};
   const rng=(id,key,suf)=>{const i=$(id);if(!i)return;paintRange(i);const out=i.closest('.rg').querySelector('output');i.oninput=()=>{g[key]=+i.value;out.textContent=i.value+suf;paintRange(i);upd()}};
   const ist=$('#g-ist');if(ist)icStyleBind(ist,()=>minis());
