@@ -167,6 +167,8 @@ function presetSet(P){const g=S.gen||(S.gen=defGen()),T=genTargets(),L=presetIns
     if(F.rep)continue;const o={...defOps(),tH:k==='bg'?bk:P.hue,tA:k==='bg'?90:100,tG:!TOPBAR.test(F.lc),s:P.gs||0};o.map={13:bgs.has(F)?{to:bk,ts:.65,tl:.11}:{to:bk,ts:.55,tl:.07}};setFileOps(F,o)}
   // dibujos con su propio recuadro negro (la hoja de Driving eco, la carátula vacía…): el negro que toca el borde pasa a transparente
   // también el recuadro negro de las listas y del «1/2»: sobre un fondo de color quedaban como cajas negras
+  // estilos con cuerpo (Oro, Carbono, Biselado…): la línea separadora de la barra de abajo se quita (deja ver el fondo); en los de solo líneas se queda, del color del diseño
+  S.ver++;for(const F of S.files.filter(F=>/softkey|_parting_line\.bmp$/.test(F.lc)&&/parting_line/.test(F.lc))){if(F.rep&&F.rep.by!=='preset')continue;F.rep=null;F.cv=null;if(THRU.has(P.look))continue;hideLine(F)}
   S.ver++;for(const F of [...PCLEAR.map(byName),...S.files.filter(F=>/list_line|scrollnumber_bg/.test(F.lc))]){if(F&&(!F.rep||F.rep.by==='preset'))clearBlack(F)}
   return {T,L}}
 /* Fondo nuevo para un diseño listo: negro con el color del diseño (degradado, resplandor abajo y un dibujo suave que sigue al estilo).
@@ -211,6 +213,9 @@ function presetBg(F,P,bk){const scr=[...SCRBG.entries()].find(e=>e[1]===F.lc||by
   const d=c.getContext('2d').getImageData(0,0,800,480).data,q=quantize(d,800,480,{dither:true});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'preset'};S.ex[F.path]=true;delete S.ops.file[F.path];F.cv=null}
 // las estrellas de puntuación de Driving eco se quedan doradas, como unas estrellas de verdad
 const STARS=/eco_scoring_star|_star_img/;
+function hideLine(F){const p=vwPos(F),B=p&&byName(SCRBG.get(p.s));const c=document.createElement('canvas');c.width=F.w;c.height=F.h;const x=c.getContext('2d');
+  const fw=F.w/frames(F);for(let k=0;k<frames(F);k++){if(B)x.drawImage(renderCanvas(B,false),p.x,p.y,fw,F.h,k*fw,0,fw,F.h);else{x.fillStyle='#000';x.fillRect(k*fw,0,fw,F.h)}}
+  const d=x.getImageData(0,0,F.w,F.h).data,q=quantize(d,F.w,F.h,{dither:false});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'preset'};S.ex[F.path]=true;delete S.ops.file[F.path];F.cv=null}
 const PCLEAR=['eco/eco_scoring_img.bmp','eco/eco_coaching_elf_renault_img.bmp','eco/eco_coaching_elf_dacia_img.bmp','media/media_album_case_noalbum_img.bmp','media/media_device_icon.bmp','media/media_nearby_default_icon.bmp','setting/setting_direction_image.bmp','setting/setting_direction_center_image.bmp'];
 function clearBlack(F){F.rep=null;F.cv=null;const od=renderOrig(F,false).getContext('2d').getImageData(0,0,F.w,F.h).data,c=renderCanvas(F,false),w=c.width,h=c.height,x=c.getContext('2d'),im=x.getImageData(0,0,w,h),d=im.data,key=new Uint8Array(w*h),st=[];
   const dark=i=>od[i*4+3]>=128&&Math.max(od[i*4],od[i*4+1],od[i*4+2])<34,push=i=>{if(!key[i]&&dark(i)){key[i]=1;st.push(i)}};
