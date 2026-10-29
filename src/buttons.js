@@ -263,7 +263,8 @@ function pasteOne(F){const c=S.clip;if(!c)return false;if(pasteAsTint(F))return 
 function pasteStyle(L){const D=L.filter(Boolean);if(!D.length)return;before();let n=0;for(const F of D)if(pasteOne(F))n++;applyButtons(D.filter(F=>!pasteAsTint(F)));S.ver++;schedule();saveState();
   const homeDiff=D.some(F=>genTargets().includes(F))&&S.clip.look!==btnLook();
   toast(`Estilo pegado en ${n} ${n===1?'pieza':'piezas'}${homeDiff?' (en Inicio el estilo es común a los 6: se han pegado los colores)':''}`,{label:'Deshacer',fn:undo})}
-function copyStyle(F){S.clip=styleOf(F);pasteBar(true);toast(`Estilo de «${S.clip.from}» copiado: toca los botones donde quieras pegarlo`,{ms:3500})}
+// sin modo pegar ni barra: copiar es a propósito, y se pega también a propósito (mantener pulsado → Pegar aquí)
+function copyStyle(F){S.clip=styleOf(F);toast(`Estilo de «${S.clip.from}» copiado. Mantén pulsado otro botón para pegarlo`,{ms:3000})}
 function pasteBar(on){let b=$('#pastebar');if(!on){S.pasteMode=false;if(b)b.remove();return}S.pasteMode=true;
   if(!b){b=document.createElement('div');b.id='pastebar';b.className='pastebar';document.body.appendChild(b)}
   const nm=(LOOKS().find(x=>x[0]===S.clip.look)||['',''])[1];

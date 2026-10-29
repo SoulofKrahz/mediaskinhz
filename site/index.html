@@ -3154,7 +3154,8 @@ function pasteOne(F){const c=S.clip;if(!c)return false;if(pasteAsTint(F))return 
 function pasteStyle(L){const D=L.filter(Boolean);if(!D.length)return;before();let n=0;for(const F of D)if(pasteOne(F))n++;applyButtons(D.filter(F=>!pasteAsTint(F)));S.ver++;schedule();saveState();
   const homeDiff=D.some(F=>genTargets().includes(F))&&S.clip.look!==btnLook();
   toast(`Estilo pegado en ${n} ${n===1?'pieza':'piezas'}${homeDiff?' (en Inicio el estilo es común a los 6: se han pegado los colores)':''}`,{label:'Deshacer',fn:undo})}
-function copyStyle(F){S.clip=styleOf(F);pasteBar(true);toast(`Estilo de «${S.clip.from}» copiado: toca los botones donde quieras pegarlo`,{ms:3500})}
+// sin modo pegar ni barra: copiar es a propósito, y se pega también a propósito (mantener pulsado → Pegar aquí)
+function copyStyle(F){S.clip=styleOf(F);toast(`Estilo de «${S.clip.from}» copiado. Mantén pulsado otro botón para pegarlo`,{ms:3000})}
 function pasteBar(on){let b=$('#pastebar');if(!on){S.pasteMode=false;if(b)b.remove();return}S.pasteMode=true;
   if(!b){b=document.createElement('div');b.id='pastebar';b.className='pastebar';document.body.appendChild(b)}
   const nm=(LOOKS().find(x=>x[0]===S.clip.look)||['',''])[1];
@@ -3406,7 +3407,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-12';
+const VER='2026-10-29-13';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3414,6 +3415,7 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-13',['Copiar estilo sin barra de «Hecho»: tras copiar, los toques normales siguen abriendo el botón como siempre. Para pegar, mantén pulsado otro botón → Pegar aquí o Pegar en toda la pantalla']],
   ['2026-10-29-12',['Pegar el color en filas y líneas de las listas ya las cambia: eran grises y el tinte solo cambiaba las partes de color. Ahora los grises y blancos toman el color con su mismo brillo (la barra blanca de la fila elegida, el fondo de la ventana de lista del teléfono, las líneas de las listas de Ajustes…); los negros se quedan']],
   ['2026-10-29-11',['Pegar estilo también en las listas y piezas que no son botones (la barra de la fila elegida, líneas, puntos…): se les pega el color del marco. En las listas de Ajustes ya se puede tocar la barra de la fila elegida']],
   ['2026-10-29-10',['Copiar y pegar estilo. Mantén pulsado un botón en la vista de una pantalla o en Inicio (clic derecho en el PC): Copiar estilo, Pegar aquí, Pegar en toda la pantalla o Editar. Tras copiar, cada toque en un botón le pega el estilo y los colores hasta que pulses «Hecho»; también entre pantallas']],
