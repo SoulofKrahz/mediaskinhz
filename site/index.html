@@ -815,7 +815,7 @@ function drawPreview(c,o){
     x.font='700 20px Inter,sans-serif';x.fillStyle=on?'#3ddc9a':'rgba(61,220,154,.85)';x.fillText(String(i+1),s.x+10,s.y+28);
     if(on){const t=`x ${s.x} · y ${s.y}`;x.font='600 18px Inter,sans-serif';const tw=x.measureText(t).width+16,ty=s.y>36?s.y-32:s.y+F.h+6;x.fillStyle='#3ddc9a';x.fillRect(s.x,ty,tw,26);x.fillStyle='#05140e';x.fillText(t,s.x+8,ty+19)}});
 }
-const KNOWNPOS={'home/home_set time_btn.bmp':[0,415],'home/home_dark_btn.bmp':[0,0]};
+const KNOWNPOS={'home/home_set time_btn.bmp':[0,415],'home/home_dark_btn.bmp':[30,0]};
 function scrOfFile(F){if(F.sec==='COMMON'){for(const [k,,b] of SCREENS)if(F.lc===b)return k;return 'home'}return SECSCR[F.sec]||'home'}
 function pvFor(F,state,orig){const scr=scrOfFile(F),o={scr,state:state==='all'?0:(state||0),orig};
   if(scr==='home'&&S.layout.slots.some(s=>s.p===F.path))o.selP=F.path;else if(F.lc!==SCRBG.get(scr)&&!/indi_line/.test(F.lc))o.place=F;return o}
@@ -3248,7 +3248,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-2';
+const VER='2026-10-29-3';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3256,6 +3256,7 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-3',['El botón de la luna se calca con el fondo de su sitio real (x 30), según el análisis del programa de la radio']],
   ['2026-10-29-2',['La luna de Inicio (y cualquier imagen que la radio no dibuja con transparencia) ya no sale con fondo amarillo: en esas imágenes no se usa el amarillo transparente, se calca el trozo de fondo que queda detrás. La hoja de Driving eco, igual, en sus 10 estados',
     'Selector de diseños probado en el coche: funciona. El USB completo con menú pasa a la versión normal']],
   ['2026-10-29-1',['USB completo con menú al arrancar (Exportar → «Preparar el USB completo»). Cambiar de diseño, copia de seguridad de la radio (solo imágenes o todo System) en el USB, informe del sistema, Total Commander, reiniciar o volver a la radio. El menú vuelve a salir después de cada herramienta']],

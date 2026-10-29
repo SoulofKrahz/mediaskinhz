@@ -239,7 +239,7 @@ function drawPreview(c,o){
     x.font='700 20px Inter,sans-serif';x.fillStyle=on?'#3ddc9a':'rgba(61,220,154,.85)';x.fillText(String(i+1),s.x+10,s.y+28);
     if(on){const t=`x ${s.x} · y ${s.y}`;x.font='600 18px Inter,sans-serif';const tw=x.measureText(t).width+16,ty=s.y>36?s.y-32:s.y+F.h+6;x.fillStyle='#3ddc9a';x.fillRect(s.x,ty,tw,26);x.fillStyle='#05140e';x.fillText(t,s.x+8,ty+19)}});
 }
-const KNOWNPOS={'home/home_set time_btn.bmp':[0,415],'home/home_dark_btn.bmp':[0,0]};
+const KNOWNPOS={'home/home_set time_btn.bmp':[0,415],'home/home_dark_btn.bmp':[30,0]};
 function scrOfFile(F){if(F.sec==='COMMON'){for(const [k,,b] of SCREENS)if(F.lc===b)return k;return 'home'}return SECSCR[F.sec]||'home'}
 function pvFor(F,state,orig){const scr=scrOfFile(F),o={scr,state:state==='all'?0:(state||0),orig};
   if(scr==='home'&&S.layout.slots.some(s=>s.p===F.path))o.selP=F.path;else if(F.lc!==SCRBG.get(scr)&&!/indi_line/.test(F.lc))o.place=F;return o}
