@@ -159,7 +159,8 @@ function presetSet(P){const g=S.gen||(S.gen=defGen()),T=genTargets(),L=presetIns
   // color de toda la radio: en lo de color (iconos, textos en imagen…) cambia solo el tono; en fondos, barras, líneas, listas y botones de forma rara
   // se tiñe todo (también grises y el negro) para que el diseño quede de una pieza. Lo que pusiste tú a mano (una foto, el reposo) no se toca
   S.ops.global={...defOps(),tH:P.hue,tA:100,tG:false,s:P.gs||0};S.ops.sec={};const TL=new Set([...T,...L]),bgs=new Set([...SCRBG.values()].map(byName).filter(Boolean)),bk=P.bk==null?P.hue:P.bk;
-  for(const F of S.files){if(TL.has(F))continue;const k=kindOf(F),odd=k==='btn';if(k==='ico'&&!/line/.test(F.lc))continue;
+  for(const F of S.files){if(TL.has(F))continue;const k=kindOf(F),odd=k==='btn';if(k==='ico'&&!/line|_dot|scrollnumber|nowplay|pagenumber|pull_(down|up)_icon/.test(F.lc)){// iconos sueltos: solo cambian sus partes de color (los blancos y la barra de estado se quedan)
+      if(!F.rep&&!/common_indi_/.test(F.lc)){const st=stats(F);let col=0,tot=0;for(const f of st.fam.values()){tot+=f.n;if(f.k<12)col+=f.n}if(col>tot*.03)setFileOps(F,{...defOps(),tH:P.hue,tA:100,tG:false,s:P.gs||0})}continue}
     if(odd){delete g.per[F.path];if(F.rep&&F.rep.by!=='stby')F.rep=null;if(S.icx)delete S.icx[F.path];if(S.ex[F.path]===true&&!F.rep)delete S.ex[F.path];F.cv=null}
     if(bgs.has(F)&&(!F.rep||F.rep.by==='preset')){presetBg(F,P,bk);continue}
     if(F.rep)continue;const o={...defOps(),tH:k==='bg'?bk:P.hue,tA:k==='bg'?90:100,tG:true,s:P.gs||0};o.map={13:bgs.has(F)?{to:bk,ts:.65,tl:.11}:{to:bk,ts:.55,tl:.07}};setFileOps(F,o)}

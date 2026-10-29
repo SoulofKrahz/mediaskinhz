@@ -82,7 +82,7 @@ async function restorePoint(id){
   const p=await getPoint(id);if(!p){toast('Ese diseño ya no está guardado');return}
   if(!await confirmBS({title:'Volver a este diseño',text:`Se cargará «${esc(p.label)}» (${p.n} ${p.n===1?'imagen cambiada':'imágenes cambiadas'}). Lo que tienes ahora se guarda antes como copia automática, por si quieres volver.`,ok:'Cargar',always:true}))return;
   await addPoint('Antes de volver a «'+p.label+'»','auto');before();for(const F of S.files)F.rep=null;S.src=new Map();S.ops={global:null,sec:{},file:{}};S.ex={};S.frames={};
-  applyState(p.st);if(!p.st.gen)S.gen=null;else if(!S.gen.look)migrateLook(p.st);if(p.kind==='manual'){S.curDesign=p.id;S.curDesignName=p.label;setBase(p.id,p.label)}else setBase(null);bump();S.scr='home';go({n:'home'});toast(`«${p.label}» cargado`,{label:'Deshacer',fn:undo})}
+  applyState(p.st);if(!p.st.gen)S.gen=null;else if(!S.gen.look)migrateLook(p.st);if(p.kind==='manual'){S.curDesign=p.id;S.curDesignName=p.label;setBase(p.id,p.label)}else setBase(null);loadVistas().then(()=>{if(syncScreenTints())bump()}).catch(()=>{});bump();S.scr='home';go({n:'home'});toast(`«${p.label}» cargado`,{label:'Deshacer',fn:undo})}
 async function recordExport(o){
   if(S.demo)return;const pid=await addPoint('Exportación · '+o.count+' '+(o.count===1?'imagen':'imágenes'),'export');
   const xs=await getList('exports');xs.unshift({id:Date.now().toString(36),t:Date.now(),sig:sig(),mode:o.mode,boot:!!o.boot,hw:o.hw,inc:o.inc,files:o.files,name:o.name,size:o.blob.size,pid,blob:o.blob.size<=25e6?o.blob:null});

@@ -834,6 +834,6 @@ function bind(){
   let rz=0;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(S.route.n==='edit'&&S.eview==='img')drawEdit(S.curF)},150)});
 }
 async function boot(){themePref();bind();recall();loadSet();webInit();await myLoad().catch(()=>{});let ok=false;
-  try{const fl=await idb.get('files');if(fl&&fl.list&&fl.list.length&&await ingest(fl.list,{restore:true,png:fl.png,name:fl.name,t:fl.t})){applyState(await idb.get('state'));await recallBase();ok=true}}catch(_){}
+  try{const fl=await idb.get('files');if(fl&&fl.list&&fl.list.length&&await ingest(fl.list,{restore:true,png:fl.png,name:fl.name,t:fl.t})){applyState(await idb.get('state'));loadVistas().then(()=>{if(syncScreenTints()){bump();toast('Diseño puesto al día: el color de cada pantalla llega ya a sus listas y fondos')}}).catch(()=>{});await recallBase();ok=true}}catch(_){}
   if(!ok)await demo();render()}
 boot();

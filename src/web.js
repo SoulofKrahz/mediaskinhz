@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-15';
+const VER='2026-10-29-16';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,8 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-16',['Tus diseños hechos antes de hoy se ponen al día solos al abrir la app o cargarlos: si los botones de una pantalla tienen un color de marco, sus listas, líneas, barras y fondo lo toman también (antes solo pasaba en Multimedia, cuyas líneas eran de color)',
+    'Diseños listos: los puntos de las opciones, los iconos de «sonando ahora» y de número de página y demás iconos sueltos de color también toman el color del diseño (en Oro seguían morados)']],
   ['2026-10-29-15',['«Color del marco» de cada pantalla cambia ya todo lo que se ve en ella, no solo los botones: líneas y filas de todas las listas (también las grises), ventanas de lista, cabeceras, flechas grandes, barras largas (Buscar por nombre, resultados, teclado), iconos de «sonando ahora», número de página, estrellas y cabecera de Driving eco… También el resplandor de color del fondo de esa pantalla y las barras largas grises (teclado, Buscar por nombre), y el borde de los botones de Multimedia, para que todo vaya a juego. El negro del fondo, el texto blanco y los iconos de la barra de estado se quedan',
     '«Estilo» de cada pantalla incluye también las flechas altas (presintonías, Multimedia, Driving eco) y los botones pequeños']],
   ['2026-10-29-14',['Los iconos pequeños con estados (los tipos de número de la agenda: casa, oficina, móvil…) y las barras de la fila elegida ya no se convierten en botones con estilo: se quedan como iconos y aceptan solo color. Si ya los tenías con estilo, vuelven a su imagen al cargar',

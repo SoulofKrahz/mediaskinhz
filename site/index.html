@@ -1413,7 +1413,7 @@ function bind(){
   let rz=0;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(S.route.n==='edit'&&S.eview==='img')drawEdit(S.curF)},150)});
 }
 async function boot(){themePref();bind();recall();loadSet();webInit();await myLoad().catch(()=>{});let ok=false;
-  try{const fl=await idb.get('files');if(fl&&fl.list&&fl.list.length&&await ingest(fl.list,{restore:true,png:fl.png,name:fl.name,t:fl.t})){applyState(await idb.get('state'));await recallBase();ok=true}}catch(_){}
+  try{const fl=await idb.get('files');if(fl&&fl.list&&fl.list.length&&await ingest(fl.list,{restore:true,png:fl.png,name:fl.name,t:fl.t})){applyState(await idb.get('state'));loadVistas().then(()=>{if(syncScreenTints()){bump();toast('Diseño puesto al día: el color de cada pantalla llega ya a sus listas y fondos')}}).catch(()=>{});await recallBase();ok=true}}catch(_){}
   if(!ok)await demo();render()}
 const LGU_HDR='TEdVMAcAAAAABAAAOlIBBAAAAAABAAAANThR/QAAAAAAAAAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAAAD+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+AAD+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v4AAP7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/gAA/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFwJFEAAAAAAAAAAA==',LGU_X0='AipxJbuKvRzlvC394UMVoZfBPE5/oKURFFvzemBMVoOoVmAOPHOgrmEM8zzynmRXqI6DVw6wGNoyZRlkEd88RLZVlrakzCTyATyhnoilklJOeeYrVdKanXJqq/IUwl8423eqeSMzGxddKEeXahtzMMvTDvpbFaYHZdaEOkxsgcCWYknsmKUqywFQB1sWpTOUWZcvP9rmDUwROxGSULQ2wtldN+gXBMjG69aXZb3TTiWi35Yzw5zuo27M0Rdt2mQli9nIDGkXw0OPAsZ0RxIXDcjrpFU3b0TKamTdKCL9yFWD5+i1jIg9+1M98AnLNLJ6YKBOaYx61gDl/lxqoaXxxRI+lowuZSm1khgL6hlyGyFuBhx1zL5GBzU9i8VUOkRo97Xi+TUiz7ScwxyjL+edt/FHKEY5oAWnoWU9ZtMJ+DjszHSpuRRPQTQYv4BGlN13WbSl6EFpWS1p3VU9c0KYsBklhQ4I9ZerjxCjlMVaTx8JQtayjcNe57y0T3yy/YbRG4Vk2iFl7URbS4y2y4K8c9kIFTr3wQSqQJw2nsu0dCGEVnSKOOXp37WLUn8qNkS4lkHL2Q5WCk6NZyzeqMLpKNymqtm2XXrZMTjdzeWHVzsBTXuwlNoLLrEQ5jzpa0NxnCkSybkW3Y7V2zHDOOY7yEoxuSN/C2+oLTIu++HRMY+ysccfET4qYB4mXscQroqznZWs1vuI9SL1kOEmmYA2FgE8f2TB6Mc0eGmLgw+Ys9OURJG4ZtYyg/OO8IdM5KkeXWR+5QMNdHTJm/VliET2A7+vuXXSXgs2BbXhL2jQucOR7SA0w4O/D2dZa6AINWkgpGgIA4bruiz4sk3xEnjjqFw90CYiDA90nGFQKcnSd426qXSW/C/P15bUYeag9nzwb14VUvNHG5solRw7wGjcMuvNjKtkvK2vFhTd66DHLMRw/YGYQL3w/D5919KRpa14G9TwAx+Ni7EliBmgUM3s0HptQRjG13AXBcMlNBUdzE8a4VOcQ31z3GNt/WijTpBHGqKStnTlz+qYNzZk2Ud0KTM+/kMcTUOzZqSG68HwudpSuMee7xmW/oZM0i4h/jR9oFVPfigirz43skUXB0VgxRhsxTsSiCLbUhdWnuAFbcWSNzOgmYI+idNBYJqCPFDDV6CIP+QuIxDyVC8JQfnUgS0YMDvX28ojLJ0QafiqqBVs250eq2ceLVRj4YOh53SyiU5eJft/AyElNyM930pffytFp5JZeOvIVEWEZ5I4qmCy1ul6VSDoGRkkeZDjOLlLVqxdmJcIOXxGI0PTWTwoFanRkxrmV9Wm0xyHpWP11MQrg4jxQZ4HZfFF26nvpXRf34OuJ2ahc2uWfdh/8+ggPA==',LGU_X2='AAAAAHcHMJbuDmEsmQlRugdtxBlwavSP6WOlNZ5klaMO24gyedy4pODV6R6X0tmICbZMK36xfL3nuC0HkL8dkR23EGRqsCDy87lxSIS+Qd4a2tR9bd3k6/TUtVGD04XHE2yYVmRrqMD9Yvl6imXJ7BQBXE9jBmzZ+g89Y40IDfU7biDITGkQXtVgQeSiZ3FyPAPk0UsE1EfSDYX9pQq1azW1qPpCsphs27vJ1qy8+UAy2GzjRd9cddzWDc+r0T1ZJtkwrFHeADrI11GAv9BhFiG09LVWs8Qjz7qVmbi9pQ8oArieXwWICMYM2bKxC+kkL298h1hoTBHBYR2rtmYtPXbcQZAB23EGmNIgvO/VECpxsYWJBra1H5+/5KXouNQzeAfJog8A+TSWCaiO4Q6YGH9qDbsIbT0tkWRsl+ZjXAFra1H0HGxhYoVlMNjyYgBObAaV7RsBpXuCCPTB9Q/EV2Ww2cYSt+lQi7646vy5iHxi3R3fFdotSYzTfPP71ExlTbJhWDq1Uc6jvAB01Lsw4krfpUE92JXXpNHEbdPW9PtDaelqNG7Z/K1niEbaYLjQRAQtczMDHeWqCkxf3Q18yVAFcTwnAkGqvgsQEMkMIIZXaLUlIG+Fs7lm1AnOYeSfXt75DinZyZiw0Jgix9eotFmzPRcutA2Bt71cO8C6bK3tuIMgmr+ztgO24gx0sdKa6tVHOZ3Sd68E2yYVc9wWg+NjCxKUZDuEDW1qPnpqWqjkDs8Lkwn/nQoArid9B56x8A+TRIcIo9IeAfJoaQbC/vdiV12AZWfLGWw2cW5rBuf+1Bt2idMr4BDaelpn3UrM+bnfb46+7/kXt75DYLCO1dbWo+ih0ZN+ONjCxE/f8lLRu2fxprxXZz+1Bt1IsjZL2A0r2q8KG0w2A0r2QQR6YN9g78OoZ99VMW6O70ZpvnnLYbOMvGaDGiVv0qBSaOI2zAx3lbsLRwMiAha5VQUmL8W6O76yvQsoK7RaklyzagTC1/+ntdDPMSzZnotb3q4dm2TCsOxj8iZ1aqOcAm2TCpwJBqnrDjY/cgdnhQUAVxOVv0qC4rh6FHuxK64Mths4ktKOm+XVvg183O+3C9vfIYbT0tTx1OJCaN2z+B/ag26BvhbN9rkmW2+wd+EYt0d3iAha5v8PanBmBjvKEQELXI9lnv/4Yq5pYWv/0xZsz0WgCuJ41w3S7k4Eg1Q5A7PCp2cmYdBgFvdJaUdNPm53267RakrZ1lrcQN8LZjfYO/CpvK5T3ruexUeyz38wtf/pvb3yHMq6wopTs5MwJLSjprrQNgXN1waTVN5XKSPZZ7+zZnouxGFKuF1oGwIqbyuUtAu+N8MMjqFaBd8bLQLvjQ==';
 /* ============ paquete de actualización upgrade.lgu ============
@@ -1910,7 +1910,7 @@ async function restorePoint(id){
   const p=await getPoint(id);if(!p){toast('Ese diseño ya no está guardado');return}
   if(!await confirmBS({title:'Volver a este diseño',text:`Se cargará «${esc(p.label)}» (${p.n} ${p.n===1?'imagen cambiada':'imágenes cambiadas'}). Lo que tienes ahora se guarda antes como copia automática, por si quieres volver.`,ok:'Cargar',always:true}))return;
   await addPoint('Antes de volver a «'+p.label+'»','auto');before();for(const F of S.files)F.rep=null;S.src=new Map();S.ops={global:null,sec:{},file:{}};S.ex={};S.frames={};
-  applyState(p.st);if(!p.st.gen)S.gen=null;else if(!S.gen.look)migrateLook(p.st);if(p.kind==='manual'){S.curDesign=p.id;S.curDesignName=p.label;setBase(p.id,p.label)}else setBase(null);bump();S.scr='home';go({n:'home'});toast(`«${p.label}» cargado`,{label:'Deshacer',fn:undo})}
+  applyState(p.st);if(!p.st.gen)S.gen=null;else if(!S.gen.look)migrateLook(p.st);if(p.kind==='manual'){S.curDesign=p.id;S.curDesignName=p.label;setBase(p.id,p.label)}else setBase(null);loadVistas().then(()=>{if(syncScreenTints())bump()}).catch(()=>{});bump();S.scr='home';go({n:'home'});toast(`«${p.label}» cargado`,{label:'Deshacer',fn:undo})}
 async function recordExport(o){
   if(S.demo)return;const pid=await addPoint('Exportación · '+o.count+' '+(o.count===1?'imagen':'imágenes'),'export');
   const xs=await getList('exports');xs.unshift({id:Date.now().toString(36),t:Date.now(),sig:sig(),mode:o.mode,boot:!!o.boot,hw:o.hw,inc:o.inc,files:o.files,name:o.name,size:o.blob.size,pid,blob:o.blob.size<=25e6?o.blob:null});
@@ -3050,7 +3050,8 @@ function presetSet(P){const g=S.gen||(S.gen=defGen()),T=genTargets(),L=presetIns
   // color de toda la radio: en lo de color (iconos, textos en imagen…) cambia solo el tono; en fondos, barras, líneas, listas y botones de forma rara
   // se tiñe todo (también grises y el negro) para que el diseño quede de una pieza. Lo que pusiste tú a mano (una foto, el reposo) no se toca
   S.ops.global={...defOps(),tH:P.hue,tA:100,tG:false,s:P.gs||0};S.ops.sec={};const TL=new Set([...T,...L]),bgs=new Set([...SCRBG.values()].map(byName).filter(Boolean)),bk=P.bk==null?P.hue:P.bk;
-  for(const F of S.files){if(TL.has(F))continue;const k=kindOf(F),odd=k==='btn';if(k==='ico'&&!/line/.test(F.lc))continue;
+  for(const F of S.files){if(TL.has(F))continue;const k=kindOf(F),odd=k==='btn';if(k==='ico'&&!/line|_dot|scrollnumber|nowplay|pagenumber|pull_(down|up)_icon/.test(F.lc)){// iconos sueltos: solo cambian sus partes de color (los blancos y la barra de estado se quedan)
+      if(!F.rep&&!/common_indi_/.test(F.lc)){const st=stats(F);let col=0,tot=0;for(const f of st.fam.values()){tot+=f.n;if(f.k<12)col+=f.n}if(col>tot*.03)setFileOps(F,{...defOps(),tH:P.hue,tA:100,tG:false,s:P.gs||0})}continue}
     if(odd){delete g.per[F.path];if(F.rep&&F.rep.by!=='stby')F.rep=null;if(S.icx)delete S.icx[F.path];if(S.ex[F.path]===true&&!F.rep)delete S.ex[F.path];F.cv=null}
     if(bgs.has(F)&&(!F.rep||F.rep.by==='preset')){presetBg(F,P,bk);continue}
     if(F.rep)continue;const o={...defOps(),tH:k==='bg'?bk:P.hue,tA:k==='bg'?90:100,tG:true,s:P.gs||0};o.map={13:bgs.has(F)?{to:bk,ts:.65,tl:.11}:{to:bk,ts:.55,tl:.07}};setFileOps(F,o)}
@@ -3248,7 +3249,7 @@ const LISTGREY=/(list_line|list_press|list\d?_bg|list_btn|folder_name\d?_bg|_dot
 function screenPieces(s,files){const set=new Set(files);if(VW.st===2)for(const o of VW.data)if(o.s===s||(s==='radio'&&o.s==='common'&&false))for(const c of o.c){const F=c[0]&&byName(c[0]);if(F)set.add(F)}
   const bgs=new Set(SCREENS.map(x=>x[2]));return [...set].filter(F=>!bgs.has(F.lc)&&!/common_indi_(?!line)/.test(F.lc)&&F.sec!=='COMMON'||/common_pull_|indi_line/.test(F.lc))}
 function tintScreen(s,files,sty,h){const g=S.gen||(S.gen=defGen()),T=new Set([...sty,...genTargets()]),odd=[];
-  for(const F of screenPieces(s,files)){if(T.has(F)||(F.rep&&F.rep.by!=='gen'&&F.rep.by!=='btn'&&F.rep.by!=='preset'))continue;
+  for(const F of screenPieces(s,files)){if(T.has(F)||(F.rep&&F.rep.by&&F.rep.by!=='gen'&&F.rep.by!=='btn'&&F.rep.by!=='preset'))continue;
     if(isBtnLike(F)&&frames(F)>=2&&canStyleOne(F)&&F.w/frames(F)/F.h<=4.6){const q=g.per[F.path]||(g.per[F.path]={});if(h==null)delete q.hue;else q.hue=h;odd.push(F);continue}
     const st=stats(F);let col=0,tot=0;for(const f of st.fam.values()){tot+=f.n;if(f.k<12)col+=f.n}const grey=LISTGREY.test(F.lc)||(isBtnLike(F)&&frames(F)>=2&&F.w/frames(F)/F.h>4.6&&!noStyle(F));if(!grey&&col<tot*.03)continue;
     const o={...defOps(),...(S.ops.file[F.path]||{})};o.map={...(o.map||{})};
@@ -3257,10 +3258,19 @@ function tintScreen(s,files,sty,h){const g=S.gen||(S.gen=defGen()),T=new Set([..
   // el resplandor de color del fondo de la pantalla, del mismo color (el negro no cambia; para teñirlo está «Color del negro del fondo»)
   const B=byName(SCRBG.get(s==='common'?'radio':s));if(B&&!B.rep&&s!=='common'){const o={...defOps(),...(S.ops.file[B.path]||{})};if(h==null||h==='white')o.tA=0;else{o.tH=h;o.tA=100;o.tG=false}setFileOps(B,o)}
   if(odd.length)applyButtons(odd)}
+// Diseños hechos antes de que el color de la pantalla llegara a todo (listas grises, fondo…): si los botones de una pantalla
+// comparten un color de marco y sus listas aún no lo tienen, se aplica al cargar. Devuelve cuántas pantallas ha puesto al día
+const styOf=files=>files.filter(F=>isBtnLike(F)&&kindOf(F)==='btn'&&canStyleOne(F)&&F.w/frames(F)/F.h<=4.6);
+function syncScreenTints(){const g=S.gen;if(!g||!g.per||S.demo)return 0;let n=0;
+  for(const s of ['radio','media','phone','setting','eco']){const files=scrFiles(s),sty=styOf(files);const hs=new Set(sty.map(F=>(g.per[F.path]||{}).hue).filter(h=>h!=null));
+    if(hs.size!==1)continue;const h=[...hs][0];if(typeof h!=='number')continue;if(sty.filter(F=>(g.per[F.path]||{}).hue===h).length<sty.length*.6)continue;
+    const lines=files.filter(F=>LISTGREY.test(F.lc)&&!isBtnLike(F));if(!lines.length||lines.every(F=>{const o=S.ops.file[F.path];return o&&o.map&&o.map[12]&&o.map[12].to===h}))continue;
+    tintScreen(s,files,sty,h);n++}
+  if(n){S.ver++;saveState()}return n}
 function scrScreen(v,r){
   const s=r.s,secs=scrSecs(s),files=scrFiles(s),pscr=s==='common'?'radio':s,bg=byName(SCRBG.get(pscr)),hb=s==='common'?null:scrHomeBtn(s);
   setTitle(scrName(s),`${files.length+(bg?1:0)} imágenes de esta pantalla`);
-  const btns=files.filter(isBtnLike),rest=files.filter(F=>!isBtnLike(F)),sty=btns.filter(F=>kindOf(F)==='btn'&&canStyleOne(F)&&F.w/frames(F)/F.h<=4.6);
+  const btns=files.filter(isBtnLike),rest=files.filter(F=>!isBtnLike(F)),sty=styOf(btns);
   const g=S.gen||(S.gen=defGen()),looks=new Set(sty.map(F=>(g.per[F.path]||{}).look||'orig')),curLook=looks.size===1?[...looks][0]:null;
   const same=k=>{const vs=new Set(sty.map(F=>{const h=(g.per[F.path]||{})[k];return h==null?'none':h}));return vs.size===1?[...vs][0]:''};
   v.innerHTML=`<div class="two">
@@ -3425,7 +3435,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-15';
+const VER='2026-10-29-16';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3433,6 +3443,8 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-16',['Tus diseños hechos antes de hoy se ponen al día solos al abrir la app o cargarlos: si los botones de una pantalla tienen un color de marco, sus listas, líneas, barras y fondo lo toman también (antes solo pasaba en Multimedia, cuyas líneas eran de color)',
+    'Diseños listos: los puntos de las opciones, los iconos de «sonando ahora» y de número de página y demás iconos sueltos de color también toman el color del diseño (en Oro seguían morados)']],
   ['2026-10-29-15',['«Color del marco» de cada pantalla cambia ya todo lo que se ve en ella, no solo los botones: líneas y filas de todas las listas (también las grises), ventanas de lista, cabeceras, flechas grandes, barras largas (Buscar por nombre, resultados, teclado), iconos de «sonando ahora», número de página, estrellas y cabecera de Driving eco… También el resplandor de color del fondo de esa pantalla y las barras largas grises (teclado, Buscar por nombre), y el borde de los botones de Multimedia, para que todo vaya a juego. El negro del fondo, el texto blanco y los iconos de la barra de estado se quedan',
     '«Estilo» de cada pantalla incluye también las flechas altas (presintonías, Multimedia, Driving eco) y los botones pequeños']],
   ['2026-10-29-14',['Los iconos pequeños con estados (los tipos de número de la agenda: casa, oficina, móvil…) y las barras de la fila elegida ya no se convierten en botones con estilo: se quedan como iconos y aceptan solo color. Si ya los tenías con estilo, vuelven a su imagen al cargar',
