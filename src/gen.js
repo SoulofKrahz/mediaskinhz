@@ -87,7 +87,7 @@ function rrect(x,X,Y,W,H,r){r=Math.max(0,Math.min(r,W/2,H/2));x.beginPath();x.mo
 const gRad=(g,h)=>g.shape==='rect'?0:g.shape==='pill'?(h-2*g.inset)/2:g.r;
 function genIconSrc(F,g){const p=g.per[F.path]||{};const k=p.icon||(extractIcon(F)?'orig':S.layout.slots.some(s=>s.p===F.path)?'lib:'+defIcon(F):'none');return k}  // fuera de Inicio, un botón sin dibujo (solo texto) sigue sin icono
 function drawState(x,F,w,h,s,H,g,bgc){
-  const grp=fgroups(F)>1?s>>2:0;s=s%4;if(grp)H=grpHue(F,grp);
+  const grp=fgroups(F)>1?s>>2:0;s=s%4;if(grp&&/dial_btn_call/.test(F.lc))H=grpHue(F,grp);// el botón de llamar conserva su verde/rojo de colgar; el resto de tiras dobles van del color del diseño
   const on=s%2===1,dim=s===2,ins=g.inset,X=ins,Y=ins,W=w-2*ins,Hh=h-2*ins,r=gRad(g,h);
   x.drawImage(bgc,0,0);
   const lin=(a,b,c)=>{const gr=x.createLinearGradient(0,Y,0,Y+Hh);gr.addColorStop(0,a);if(c){gr.addColorStop(.62,b);gr.addColorStop(1,c)}else gr.addColorStop(1,b);return gr};

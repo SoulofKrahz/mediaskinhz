@@ -590,7 +590,7 @@ const KINDS=[['all','Todo'],['bg','Fondos'],['btn','Botones'],['part','Barras y 
 const SLOT_NAMES=['home_radio_btn','home_media_btn','home_phone_btn','home_driving eco_btn','home_navi_btn','home_setting_btn'];
 const SLOT_POS=[[76,114],[295,114],[514,114],[76,262],[295,262],[514,262]];
 const LABELS={home_radio_btn:'Radio',home_media_btn:'Multimedia',home_phone_btn:'Teléfono','home_driving eco_btn':'Driving eco',home_navi_btn:'Navegación',home_setting_btn:'Ajustes',home_map_btn:'Mapa',home_smartphone_btn:'Smartphone','home_phone_second line_btn':'Teléfono','home_smartphone_second line_btn':'Smartphone'};
-const SCREENS=[['home','Inicio','common/home_bg.bmp'],['media','Multimedia','common/media_bg.bmp'],['phone','Teléfono','common/phone_bg.bmp'],['radio','Radio','common/fmradio_bg.bmp'],['eco','Driving eco','common/eco_bg.bmp'],['setting','Ajustes','common/setting_bg.bmp']];
+const SCREENS=[['home','Inicio','common/home_bg.bmp'],['radio','Radio','common/fmradio_bg.bmp'],['media','Multimedia','common/media_bg.bmp'],['phone','Teléfono','common/phone_bg.bmp'],['eco','Driving eco','common/eco_bg.bmp'],['setting','Ajustes','common/setting_bg.bmp']];
 const SCRBG=new Map(SCREENS.map(s=>[s[0],s[2]])),SCRL=new Map(SCREENS.map(s=>[s[0],s[1]]));
 const SCRSEC={home:'HOME',media:'MEDIA',phone:'PHONE',radio:'FM RADIO',eco:'ECO',setting:'SETTING'};
 const SECSCR={'HOME':'home','COMMON':'home','FM RADIO':'radio','MEDIA':'media','PHONE':'phone','SETTING':'setting','ECO':'eco'};
@@ -1536,7 +1536,7 @@ function rrect(x,X,Y,W,H,r){r=Math.max(0,Math.min(r,W/2,H/2));x.beginPath();x.mo
 const gRad=(g,h)=>g.shape==='rect'?0:g.shape==='pill'?(h-2*g.inset)/2:g.r;
 function genIconSrc(F,g){const p=g.per[F.path]||{};const k=p.icon||(extractIcon(F)?'orig':S.layout.slots.some(s=>s.p===F.path)?'lib:'+defIcon(F):'none');return k}  // fuera de Inicio, un botón sin dibujo (solo texto) sigue sin icono
 function drawState(x,F,w,h,s,H,g,bgc){
-  const grp=fgroups(F)>1?s>>2:0;s=s%4;if(grp)H=grpHue(F,grp);
+  const grp=fgroups(F)>1?s>>2:0;s=s%4;if(grp&&/dial_btn_call/.test(F.lc))H=grpHue(F,grp);// el botón de llamar conserva su verde/rojo de colgar; el resto de tiras dobles van del color del diseño
   const on=s%2===1,dim=s===2,ins=g.inset,X=ins,Y=ins,W=w-2*ins,Hh=h-2*ins,r=gRad(g,h);
   x.drawImage(bgc,0,0);
   const lin=(a,b,c)=>{const gr=x.createLinearGradient(0,Y,0,Y+Hh);gr.addColorStop(0,a);if(c){gr.addColorStop(.62,b);gr.addColorStop(1,c)}else gr.addColorStop(1,b);return gr};
@@ -3054,6 +3054,7 @@ function presetSet(P){const g=S.gen||(S.gen=defGen()),T=genTargets(),L=presetIns
       if(!F.rep&&!/common_indi_/.test(F.lc)){const st=stats(F);let col=0,tot=0;for(const f of st.fam.values()){tot+=f.n;if(f.k<12)col+=f.n}if(col>tot*.03)setFileOps(F,{...defOps(),tH:P.hue,tA:100,tG:false,s:P.gs||0})}continue}
     if(odd){delete g.per[F.path];if(F.rep&&F.rep.by!=='stby')F.rep=null;if(S.icx)delete S.icx[F.path];if(S.ex[F.path]===true&&!F.rep)delete S.ex[F.path];F.cv=null}
     if(bgs.has(F)&&(!F.rep||F.rep.by==='preset')){presetBg(F,P,bk);continue}
+    if(F.rep&&F.rep.by==='preset'){F.rep=null;delete S.ex[F.path];F.cv=null}// lo calcado por un diseño listo anterior se rehace con el color nuevo
     if(F.rep)continue;const o={...defOps(),tH:k==='bg'?bk:P.hue,tA:k==='bg'?90:100,tG:!TOPBAR.test(F.lc),s:P.gs||0};o.map={13:bgs.has(F)?{to:bk,ts:.65,tl:.11}:{to:bk,ts:.55,tl:.07}};setFileOps(F,o)}
   // dibujos con su propio recuadro negro (la hoja de Driving eco, la carátula vacía…): el negro que toca el borde pasa a transparente
   // también el recuadro negro de las listas y del «1/2»: sobre un fondo de color quedaban como cajas negras
@@ -3443,7 +3444,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-18';
+const VER='2026-10-29-19';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3451,6 +3452,9 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-19',['Las pantallas en el orden de los botones de Inicio: Radio, Multimedia, Teléfono, Driving eco, Ajustes',
+    'Al cambiar de un diseño listo a otro, la carátula de Multimedia, las listas y la hoja de Driving eco toman el color nuevo (se quedaban con el del anterior)',
+    'Revisión de color con los 24 diseños listos en todas las pantallas: la flecha de resultados del teclado ya va del color del diseño. El botón de llamar conserva su verde y su rojo de colgar a propósito']],
   ['2026-10-29-18',['Diseños listos sin cajas negras: el recuadro de las listas y el del número de página («1/2») dejan ver el fondo de la pantalla',
     'Las estrellas de puntuación de Driving eco son siempre doradas, pongas el color que pongas','Anillo en las flechas altas: marco normal en vez de un círculo descolocado']],
   ['2026-10-29-17',['Barras de arriba (la de la línea fina): ya no se tiñe su fondo gris, que se queda en el tono del estilo; solo la línea fina toma el color']],

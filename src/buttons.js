@@ -163,6 +163,7 @@ function presetSet(P){const g=S.gen||(S.gen=defGen()),T=genTargets(),L=presetIns
       if(!F.rep&&!/common_indi_/.test(F.lc)){const st=stats(F);let col=0,tot=0;for(const f of st.fam.values()){tot+=f.n;if(f.k<12)col+=f.n}if(col>tot*.03)setFileOps(F,{...defOps(),tH:P.hue,tA:100,tG:false,s:P.gs||0})}continue}
     if(odd){delete g.per[F.path];if(F.rep&&F.rep.by!=='stby')F.rep=null;if(S.icx)delete S.icx[F.path];if(S.ex[F.path]===true&&!F.rep)delete S.ex[F.path];F.cv=null}
     if(bgs.has(F)&&(!F.rep||F.rep.by==='preset')){presetBg(F,P,bk);continue}
+    if(F.rep&&F.rep.by==='preset'){F.rep=null;delete S.ex[F.path];F.cv=null}// lo calcado por un diseño listo anterior se rehace con el color nuevo
     if(F.rep)continue;const o={...defOps(),tH:k==='bg'?bk:P.hue,tA:k==='bg'?90:100,tG:!TOPBAR.test(F.lc),s:P.gs||0};o.map={13:bgs.has(F)?{to:bk,ts:.65,tl:.11}:{to:bk,ts:.55,tl:.07}};setFileOps(F,o)}
   // dibujos con su propio recuadro negro (la hoja de Driving eco, la carátula vacía…): el negro que toca el borde pasa a transparente
   // también el recuadro negro de las listas y del «1/2»: sobre un fondo de color quedaban como cajas negras

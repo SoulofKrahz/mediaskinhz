@@ -11,7 +11,7 @@ const KINDS=[['all','Todo'],['bg','Fondos'],['btn','Botones'],['part','Barras y 
 const SLOT_NAMES=['home_radio_btn','home_media_btn','home_phone_btn','home_driving eco_btn','home_navi_btn','home_setting_btn'];
 const SLOT_POS=[[76,114],[295,114],[514,114],[76,262],[295,262],[514,262]];
 const LABELS={home_radio_btn:'Radio',home_media_btn:'Multimedia',home_phone_btn:'Teléfono','home_driving eco_btn':'Driving eco',home_navi_btn:'Navegación',home_setting_btn:'Ajustes',home_map_btn:'Mapa',home_smartphone_btn:'Smartphone','home_phone_second line_btn':'Teléfono','home_smartphone_second line_btn':'Smartphone'};
-const SCREENS=[['home','Inicio','common/home_bg.bmp'],['media','Multimedia','common/media_bg.bmp'],['phone','Teléfono','common/phone_bg.bmp'],['radio','Radio','common/fmradio_bg.bmp'],['eco','Driving eco','common/eco_bg.bmp'],['setting','Ajustes','common/setting_bg.bmp']];
+const SCREENS=[['home','Inicio','common/home_bg.bmp'],['radio','Radio','common/fmradio_bg.bmp'],['media','Multimedia','common/media_bg.bmp'],['phone','Teléfono','common/phone_bg.bmp'],['eco','Driving eco','common/eco_bg.bmp'],['setting','Ajustes','common/setting_bg.bmp']];
 const SCRBG=new Map(SCREENS.map(s=>[s[0],s[2]])),SCRL=new Map(SCREENS.map(s=>[s[0],s[1]]));
 const SCRSEC={home:'HOME',media:'MEDIA',phone:'PHONE',radio:'FM RADIO',eco:'ECO',setting:'SETTING'};
 const SECSCR={'HOME':'home','COMMON':'home','FM RADIO':'radio','MEDIA':'media','PHONE':'phone','SETTING':'setting','ECO':'eco'};
