@@ -144,6 +144,9 @@ const PRESETS=[
   ['synth','Synthwave','duo',300,null,300,'synth'],['tron','Tron','hudf',190,null,190,'tron'],['cyber','Cyberpunk','chamfer',52,null,52,'cyber'],
   ['matrix','Matrix','neon',135,null,135,'matrix'],['ambiente','Luz ambiente','halo',30,null,28,'ambient'],['deportivo','Deportivo rojo','side',0,'white',0,'racing'],
   ['oled','Negro puro','outline',210,'white',210,'oled'],
+  ['rs','R.S. amarillo','carbon',50,'white',48,'racing'],['alpine','Alpine azul','brushed',222,null,222,'racing'],
+  ['cabina','Cabina digital','tab',356,'white',0,'oled'],['ejecutivo','Ejecutivo ámbar','side',30,'white',28,'ambient'],
+  ['electrico','Eléctrico minimal','flat',205,'white',205,'oled'],
   ['aluminio','Aluminio','alu',210,null,210,'metal'],['titanio','Titanio azul','brushed',212,null,212,'metal'],['oro','Oro','brushed',42,null,40,'gold'],['bronce','Bronce','brushed',24,null,24,'gold']
 ].map(([id,name,look,hue,ihue,bk,bg])=>({id,name,look,hue,ihue,bk,bg,gs:look==='alu'?-92:0}));
 // también las formas raras (las flechas altas de presintonías, Multimedia y Driving eco); solo se quedan fuera las barras larguísimas de las listas

@@ -344,13 +344,14 @@ function scrTheme(v){
   setTitle('Diseños',`<span class="lw">Mediaskin<em>hz</em></span> · ${tt==='listos'?'listos para usar':tt==='mios'?'los que has guardado':'crea el tuyo'}`);
   const strip=stripFiles(sc);
   const actives=[['global','Toda la radio',S.ops.global],...Object.entries(S.ops.sec).map(([k,o])=>[k,SECL.get(k)||k,o])].filter(a=>!empty(a[2]));
-  v.innerHTML=`<div class="two">
-    <div class="stick sticky-pv" id="t-pv">
+  // pestañas arriba y fijas en su sitio (no flotan); la vista previa solo en «Crear el tuyo»
+  v.innerHTML=`<div class="seg gtabs" style="position:static;margin-bottom:12px" id="t-tabs" role="tablist">${[['listos','Listos'],['mios','Mis diseños'],['crear','Crear el tuyo']].map(([k,l])=>`<button data-t="${k}" aria-pressed="${tt===k}">${l}</button>`).join('')}</div>
+  <div class="two">
+${tt==='crear'?`    <div class="stick sticky-pv" id="t-pv">
       <div class="screen"><canvas id="pv" width="800" height="480" aria-label="Vista previa con el tema"></canvas></div>
       <div class="strip" aria-label="Muestras">${strip.map(F=>`<button data-f="${S.files.indexOf(F)}" data-edit title="${esc(pretty(F))}">${th(F,66,42)}</button>`).join('')}</div>
-    </div>
+    </div>`:''}
     <div class="stack">
-      <div class="seg gtabs" id="t-tabs" role="tablist">${[['listos','Listos'],['mios','Mis diseños'],['crear','Crear el tuyo']].map(([k,l])=>`<button data-t="${k}" aria-pressed="${tt===k}">${l}</button>`).join('')}</div>
       ${tt==='listos'?(S.demo||!genTargets().length?'<p class="note">Carga tu backup para usar los diseños listos.</p>':presetsHTML('t-pre')+'<p class="note">Cada diseño listo cambia de una vez los botones, los fondos y los colores de toda la radio. Después puedes retocarlo en «Crear el tuyo» o pantalla a pantalla.</p>'):''}
       ${tt==='mios'?'<div id="t-mios"><p class="note">Cargando…</p></div>':''}
       ${tt==='crear'?`<div class="list"><button class="li" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><span class="tx"><b>Estilo de los botones</b><small>Forma, estilo, iconos y su color</small></span>${CHEV}</button></div>
@@ -360,7 +361,7 @@ function scrTheme(v){
       <details class="card" id="t-fine"${(scopeOps(sc)||{}).h||(scopeOps(sc)||{}).s||(scopeOps(sc)||{}).l?' open':''}><summary>Ajustes finos</summary><div id="t-fn"></div></details>
       <div class="card"><h3>Temas activos</h3>${actives.length?`<div class="applies">${actives.map(([k,l,o])=>`<div class="ap"><span class="dt" style="background:${opsDot(o)}"></span><span class="tx"><b>${esc(l)}</b><small>${esc(describe(o))}</small></span><button class="lnk" data-rm="${esc(k)}">Quitar</button></div>`).join('')}</div>`:'<p class="note">Todavía no hay ningún tema. Elige un color arriba.</p>'}</div>`:''}
     </div></div>`;
-  const c=$('#pv');mountPreview(c,()=>({scr:tt==='crear'?SECSCR[sc]||'home':'home'}));
+  const c=$('#pv');if(c)mountPreview(c,()=>({scr:SECSCR[sc]||'home'}));
   $('#t-tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;S.ttab=b.dataset.t;render(true)};
   if(tt==='listos'){mountPresets($('#t-pre'));return}
   if(tt==='mios'){mineUI($('#t-mios'));return}

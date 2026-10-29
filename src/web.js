@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-22';
+const VER='2026-10-29-23';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,8 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-23',['Diseños: las pestañas Listos · Mis diseños · Crear el tuyo arriba y quietas; la vista previa solo en «Crear el tuyo» (antes se montaba encima de la lista al desplazarse)',
+    '5 diseños listos nuevos inspirados en coches y marcas: R.S. amarillo (Renault Sport, carbono y amarillo), Alpine azul (metal cepillado azul), Cabina digital (cuadros digitales: negro y rojo), Ejecutivo ámbar (luz ambiente de berlina) y Eléctrico minimal (pantallas de eléctricos: negro puro y azul limpio)']],
   ['2026-10-29-22',['Tus iconos de cobertura y batería de colores (rojo, ámbar y verde según el nivel) van por defecto en todos los diseños y estilos. Se quitan en Ajustes → Preferencias',
     'Líneas entre los botones de abajo: Automático (se ocultan con los estilos de cuerpo), Ocultar o Mostrar. En los diseños listos y en «Botones de esta pantalla»',
     'Sin esquinas negras en los botones de los que no se sabe la posición (teclado alternativo, flechas de dirección, hora, sonido…): toman el color del fondo de su pantalla. Era lo que se veía en Cápsula rosa']],

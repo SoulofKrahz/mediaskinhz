@@ -923,13 +923,14 @@ function scrTheme(v){
   setTitle('Diseños',`<span class="lw">Mediaskin<em>hz</em></span> · ${tt==='listos'?'listos para usar':tt==='mios'?'los que has guardado':'crea el tuyo'}`);
   const strip=stripFiles(sc);
   const actives=[['global','Toda la radio',S.ops.global],...Object.entries(S.ops.sec).map(([k,o])=>[k,SECL.get(k)||k,o])].filter(a=>!empty(a[2]));
-  v.innerHTML=`<div class="two">
-    <div class="stick sticky-pv" id="t-pv">
+  // pestañas arriba y fijas en su sitio (no flotan); la vista previa solo en «Crear el tuyo»
+  v.innerHTML=`<div class="seg gtabs" style="position:static;margin-bottom:12px" id="t-tabs" role="tablist">${[['listos','Listos'],['mios','Mis diseños'],['crear','Crear el tuyo']].map(([k,l])=>`<button data-t="${k}" aria-pressed="${tt===k}">${l}</button>`).join('')}</div>
+  <div class="two">
+${tt==='crear'?`    <div class="stick sticky-pv" id="t-pv">
       <div class="screen"><canvas id="pv" width="800" height="480" aria-label="Vista previa con el tema"></canvas></div>
       <div class="strip" aria-label="Muestras">${strip.map(F=>`<button data-f="${S.files.indexOf(F)}" data-edit title="${esc(pretty(F))}">${th(F,66,42)}</button>`).join('')}</div>
-    </div>
+    </div>`:''}
     <div class="stack">
-      <div class="seg gtabs" id="t-tabs" role="tablist">${[['listos','Listos'],['mios','Mis diseños'],['crear','Crear el tuyo']].map(([k,l])=>`<button data-t="${k}" aria-pressed="${tt===k}">${l}</button>`).join('')}</div>
       ${tt==='listos'?(S.demo||!genTargets().length?'<p class="note">Carga tu backup para usar los diseños listos.</p>':presetsHTML('t-pre')+'<p class="note">Cada diseño listo cambia de una vez los botones, los fondos y los colores de toda la radio. Después puedes retocarlo en «Crear el tuyo» o pantalla a pantalla.</p>'):''}
       ${tt==='mios'?'<div id="t-mios"><p class="note">Cargando…</p></div>':''}
       ${tt==='crear'?`<div class="list"><button class="li" data-go="gen"><span class="ic">${ic('M12 3l1.9 5.8L20 10l-5 3.6L16.8 20 12 16.4 7.2 20 9 13.6 4 10l6.1-1.2z')}</span><span class="tx"><b>Estilo de los botones</b><small>Forma, estilo, iconos y su color</small></span>${CHEV}</button></div>
@@ -939,7 +940,7 @@ function scrTheme(v){
       <details class="card" id="t-fine"${(scopeOps(sc)||{}).h||(scopeOps(sc)||{}).s||(scopeOps(sc)||{}).l?' open':''}><summary>Ajustes finos</summary><div id="t-fn"></div></details>
       <div class="card"><h3>Temas activos</h3>${actives.length?`<div class="applies">${actives.map(([k,l,o])=>`<div class="ap"><span class="dt" style="background:${opsDot(o)}"></span><span class="tx"><b>${esc(l)}</b><small>${esc(describe(o))}</small></span><button class="lnk" data-rm="${esc(k)}">Quitar</button></div>`).join('')}</div>`:'<p class="note">Todavía no hay ningún tema. Elige un color arriba.</p>'}</div>`:''}
     </div></div>`;
-  const c=$('#pv');mountPreview(c,()=>({scr:tt==='crear'?SECSCR[sc]||'home':'home'}));
+  const c=$('#pv');if(c)mountPreview(c,()=>({scr:SECSCR[sc]||'home'}));
   $('#t-tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;S.ttab=b.dataset.t;render(true)};
   if(tt==='listos'){mountPresets($('#t-pre'));return}
   if(tt==='mios'){mineUI($('#t-mios'));return}
@@ -3043,6 +3044,9 @@ const PRESETS=[
   ['synth','Synthwave','duo',300,null,300,'synth'],['tron','Tron','hudf',190,null,190,'tron'],['cyber','Cyberpunk','chamfer',52,null,52,'cyber'],
   ['matrix','Matrix','neon',135,null,135,'matrix'],['ambiente','Luz ambiente','halo',30,null,28,'ambient'],['deportivo','Deportivo rojo','side',0,'white',0,'racing'],
   ['oled','Negro puro','outline',210,'white',210,'oled'],
+  ['rs','R.S. amarillo','carbon',50,'white',48,'racing'],['alpine','Alpine azul','brushed',222,null,222,'racing'],
+  ['cabina','Cabina digital','tab',356,'white',0,'oled'],['ejecutivo','Ejecutivo ámbar','side',30,'white',28,'ambient'],
+  ['electrico','Eléctrico minimal','flat',205,'white',205,'oled'],
   ['aluminio','Aluminio','alu',210,null,210,'metal'],['titanio','Titanio azul','brushed',212,null,212,'metal'],['oro','Oro','brushed',42,null,40,'gold'],['bronce','Bronce','brushed',24,null,24,'gold']
 ].map(([id,name,look,hue,ihue,bk,bg])=>({id,name,look,hue,ihue,bk,bg,gs:look==='alu'?-92:0}));
 // también las formas raras (las flechas altas de presintonías, Multimedia y Driving eco); solo se quedan fuera las barras larguísimas de las listas
@@ -3479,7 +3483,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-22';
+const VER='2026-10-29-23';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3487,6 +3491,8 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-23',['Diseños: las pestañas Listos · Mis diseños · Crear el tuyo arriba y quietas; la vista previa solo en «Crear el tuyo» (antes se montaba encima de la lista al desplazarse)',
+    '5 diseños listos nuevos inspirados en coches y marcas: R.S. amarillo (Renault Sport, carbono y amarillo), Alpine azul (metal cepillado azul), Cabina digital (cuadros digitales: negro y rojo), Ejecutivo ámbar (luz ambiente de berlina) y Eléctrico minimal (pantallas de eléctricos: negro puro y azul limpio)']],
   ['2026-10-29-22',['Tus iconos de cobertura y batería de colores (rojo, ámbar y verde según el nivel) van por defecto en todos los diseños y estilos. Se quitan en Ajustes → Preferencias',
     'Líneas entre los botones de abajo: Automático (se ocultan con los estilos de cuerpo), Ocultar o Mostrar. En los diseños listos y en «Botones de esta pantalla»',
     'Sin esquinas negras en los botones de los que no se sabe la posición (teclado alternativo, flechas de dirección, hora, sonido…): toman el color del fondo de su pantalla. Era lo que se veía en Cápsula rosa']],
