@@ -3054,7 +3054,7 @@ function presetSet(P){const g=S.gen||(S.gen=defGen()),T=genTargets(),L=presetIns
       if(!F.rep&&!/common_indi_/.test(F.lc)){const st=stats(F);let col=0,tot=0;for(const f of st.fam.values()){tot+=f.n;if(f.k<12)col+=f.n}if(col>tot*.03)setFileOps(F,{...defOps(),tH:P.hue,tA:100,tG:false,s:P.gs||0})}continue}
     if(odd){delete g.per[F.path];if(F.rep&&F.rep.by!=='stby')F.rep=null;if(S.icx)delete S.icx[F.path];if(S.ex[F.path]===true&&!F.rep)delete S.ex[F.path];F.cv=null}
     if(bgs.has(F)&&(!F.rep||F.rep.by==='preset')){presetBg(F,P,bk);continue}
-    if(F.rep)continue;const o={...defOps(),tH:k==='bg'?bk:P.hue,tA:k==='bg'?90:100,tG:true,s:P.gs||0};o.map={13:bgs.has(F)?{to:bk,ts:.65,tl:.11}:{to:bk,ts:.55,tl:.07}};setFileOps(F,o)}
+    if(F.rep)continue;const o={...defOps(),tH:k==='bg'?bk:P.hue,tA:k==='bg'?90:100,tG:!TOPBAR.test(F.lc),s:P.gs||0};o.map={13:bgs.has(F)?{to:bk,ts:.65,tl:.11}:{to:bk,ts:.55,tl:.07}};setFileOps(F,o)}
   // dibujos con su propio recuadro negro (la hoja de Driving eco, la carátula vacía…): el negro que toca el borde pasa a transparente
   S.ver++;for(const n of PCLEAR){const F=byName(n);if(F&&(!F.rep||F.rep.by==='preset'))clearBlack(F)}
   return {T,L}}
@@ -3245,7 +3245,9 @@ const ACCENT=/(_dot|list_press|parting_line|list_line|fulldown_\d_l?ine|indi_lin
 // Color del marco de una pantalla: además de sus botones con estilo, todo lo demás que se ve en ella toma el color:
 // barras largas, flechas, iconos de lista, líneas, cabeceras, ventanas emergentes… Las partes de color cambian de tono;
 // en listas y ventanas también los grises y blancos. Los fondos de pantalla, el texto blanco y los iconos de estado no se tocan.
-const LISTGREY=/(list_line|list_press|list\d?_bg|list_btn|folder_name\d?_bg|_dot|parting_line|fulldown_\d_l?ine|indi_l?ine|scrollnumber_bg|search_type_bg)\w*\.bmp$/;
+// las barras de arriba (indi_line, fulldown_line) no: sus grises son el tono del estilo y solo cambia la línea fina de color
+const LISTGREY=/(list_line|list_press|list\d?_bg|list_btn|folder_name\d?_bg|_dot|parting_line|scrollnumber_bg|search_type_bg)\w*\.bmp$/;
+const TOPBAR=/(fulldown_\d_l?ine|indi_l?ine)\.bmp$/;
 function screenPieces(s,files){const set=new Set(files);if(VW.st===2)for(const o of VW.data)if(o.s===s||(s==='radio'&&o.s==='common'&&false))for(const c of o.c){const F=c[0]&&byName(c[0]);if(F)set.add(F)}
   const bgs=new Set(SCREENS.map(x=>x[2]));return [...set].filter(F=>!bgs.has(F.lc)&&!/common_indi_(?!line)/.test(F.lc)&&F.sec!=='COMMON'||/common_pull_|indi_line/.test(F.lc))}
 function tintScreen(s,files,sty,h){const g=S.gen||(S.gen=defGen()),T=new Set([...sty,...genTargets()]),odd=[];
@@ -3261,7 +3263,10 @@ function tintScreen(s,files,sty,h){const g=S.gen||(S.gen=defGen()),T=new Set([..
 // Diseños hechos antes de que el color de la pantalla llegara a todo (listas grises, fondo…): si los botones de una pantalla
 // comparten un color de marco y sus listas aún no lo tienen, se aplica al cargar. Devuelve cuántas pantallas ha puesto al día
 const styOf=files=>files.filter(F=>isBtnLike(F)&&kindOf(F)==='btn'&&canStyleOne(F)&&F.w/frames(F)/F.h<=4.6);
-function syncScreenTints(){const g=S.gen;if(!g||!g.per||S.demo)return 0;let n=0;
+function syncScreenTints(){if(S.demo)return 0;let n=0;
+  // barras de arriba teñidas enteras por versiones anteriores: vuelven al tono del estilo
+  for(const F of S.files){const o=S.ops.file[F.path];if(TOPBAR.test(F.lc)&&o&&o.map&&o.map[12]){const q={...o,map:{...o.map}};delete q.map[12];if(!Object.keys(q.map).length)delete q.map;setFileOps(F,q);n++}}
+  const g=S.gen;if(!g||!g.per){if(n){S.ver++;saveState()}return n}
   for(const s of ['radio','media','phone','setting','eco']){const files=scrFiles(s),sty=styOf(files);const hs=new Set(sty.map(F=>(g.per[F.path]||{}).hue).filter(h=>h!=null));
     if(hs.size!==1)continue;const h=[...hs][0];if(typeof h!=='number')continue;if(sty.filter(F=>(g.per[F.path]||{}).hue===h).length<sty.length*.6)continue;
     const lines=files.filter(F=>LISTGREY.test(F.lc)&&!isBtnLike(F));if(!lines.length||lines.every(F=>{const o=S.ops.file[F.path];return o&&o.map&&o.map[12]&&o.map[12].to===h}))continue;
@@ -3435,7 +3440,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-16';
+const VER='2026-10-29-17';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3443,6 +3448,7 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-17',['Barras de arriba (la de la línea fina): ya no se tiñe su fondo gris, que se queda en el tono del estilo; solo la línea fina toma el color']],
   ['2026-10-29-16',['Tus diseños hechos antes de hoy se ponen al día solos al abrir la app o cargarlos: si los botones de una pantalla tienen un color de marco, sus listas, líneas, barras y fondo lo toman también (antes solo pasaba en Multimedia, cuyas líneas eran de color)',
     'Diseños listos: los puntos de las opciones, los iconos de «sonando ahora» y de número de página y demás iconos sueltos de color también toman el color del diseño (en Oro seguían morados)']],
   ['2026-10-29-15',['«Color del marco» de cada pantalla cambia ya todo lo que se ve en ella, no solo los botones: líneas y filas de todas las listas (también las grises), ventanas de lista, cabeceras, flechas grandes, barras largas (Buscar por nombre, resultados, teclado), iconos de «sonando ahora», número de página, estrellas y cabecera de Driving eco… También el resplandor de color del fondo de esa pantalla y las barras largas grises (teclado, Buscar por nombre), y el borde de los botones de Multimedia, para que todo vaya a juego. El negro del fondo, el texto blanco y los iconos de la barra de estado se quedan',

@@ -62,7 +62,9 @@ const ACCENT=/(_dot|list_press|parting_line|list_line|fulldown_\d_l?ine|indi_lin
 // Color del marco de una pantalla: además de sus botones con estilo, todo lo demás que se ve en ella toma el color:
 // barras largas, flechas, iconos de lista, líneas, cabeceras, ventanas emergentes… Las partes de color cambian de tono;
 // en listas y ventanas también los grises y blancos. Los fondos de pantalla, el texto blanco y los iconos de estado no se tocan.
-const LISTGREY=/(list_line|list_press|list\d?_bg|list_btn|folder_name\d?_bg|_dot|parting_line|fulldown_\d_l?ine|indi_l?ine|scrollnumber_bg|search_type_bg)\w*\.bmp$/;
+// las barras de arriba (indi_line, fulldown_line) no: sus grises son el tono del estilo y solo cambia la línea fina de color
+const LISTGREY=/(list_line|list_press|list\d?_bg|list_btn|folder_name\d?_bg|_dot|parting_line|scrollnumber_bg|search_type_bg)\w*\.bmp$/;
+const TOPBAR=/(fulldown_\d_l?ine|indi_l?ine)\.bmp$/;
 function screenPieces(s,files){const set=new Set(files);if(VW.st===2)for(const o of VW.data)if(o.s===s||(s==='radio'&&o.s==='common'&&false))for(const c of o.c){const F=c[0]&&byName(c[0]);if(F)set.add(F)}
   const bgs=new Set(SCREENS.map(x=>x[2]));return [...set].filter(F=>!bgs.has(F.lc)&&!/common_indi_(?!line)/.test(F.lc)&&F.sec!=='COMMON'||/common_pull_|indi_line/.test(F.lc))}
 function tintScreen(s,files,sty,h){const g=S.gen||(S.gen=defGen()),T=new Set([...sty,...genTargets()]),odd=[];
@@ -78,7 +80,10 @@ function tintScreen(s,files,sty,h){const g=S.gen||(S.gen=defGen()),T=new Set([..
 // Diseños hechos antes de que el color de la pantalla llegara a todo (listas grises, fondo…): si los botones de una pantalla
 // comparten un color de marco y sus listas aún no lo tienen, se aplica al cargar. Devuelve cuántas pantallas ha puesto al día
 const styOf=files=>files.filter(F=>isBtnLike(F)&&kindOf(F)==='btn'&&canStyleOne(F)&&F.w/frames(F)/F.h<=4.6);
-function syncScreenTints(){const g=S.gen;if(!g||!g.per||S.demo)return 0;let n=0;
+function syncScreenTints(){if(S.demo)return 0;let n=0;
+  // barras de arriba teñidas enteras por versiones anteriores: vuelven al tono del estilo
+  for(const F of S.files){const o=S.ops.file[F.path];if(TOPBAR.test(F.lc)&&o&&o.map&&o.map[12]){const q={...o,map:{...o.map}};delete q.map[12];if(!Object.keys(q.map).length)delete q.map;setFileOps(F,q);n++}}
+  const g=S.gen;if(!g||!g.per){if(n){S.ver++;saveState()}return n}
   for(const s of ['radio','media','phone','setting','eco']){const files=scrFiles(s),sty=styOf(files);const hs=new Set(sty.map(F=>(g.per[F.path]||{}).hue).filter(h=>h!=null));
     if(hs.size!==1)continue;const h=[...hs][0];if(typeof h!=='number')continue;if(sty.filter(F=>(g.per[F.path]||{}).hue===h).length<sty.length*.6)continue;
     const lines=files.filter(F=>LISTGREY.test(F.lc)&&!isBtnLike(F));if(!lines.length||lines.every(F=>{const o=S.ops.file[F.path];return o&&o.map&&o.map[12]&&o.map[12].to===h}))continue;
