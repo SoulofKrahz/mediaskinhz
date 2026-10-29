@@ -59,10 +59,26 @@ function vwBar(s){const el=$('#sc-vw');if(!el)return;
   el.onclick=e=>{const b=e.target.closest('[data-b],[data-w]');if(!b)return;const k=(S.vw||(S.vw={}))[s]||(S.vw[s]={});
     if(b.dataset.b!=null){k.band=b.dataset.b;delete k.v}else{k.v=b.dataset.w}vwBar(s);schedule()}}
 const ACCENT=/(_dot|list_press|parting_line|list_line|fulldown_\d_l?ine|indi_line|scrollnumber_bg|progress_bar\w*)\.bmp$/;
+// Color del marco de una pantalla: además de sus botones con estilo, todo lo demás que se ve en ella toma el color:
+// barras largas, flechas, iconos de lista, líneas, cabeceras, ventanas emergentes… Las partes de color cambian de tono;
+// en listas y ventanas también los grises y blancos. Los fondos de pantalla, el texto blanco y los iconos de estado no se tocan.
+const LISTGREY=/(list_line|list_press|list\d?_bg|list_btn|folder_name\d?_bg|_dot|parting_line|fulldown_\d_l?ine|indi_l?ine|scrollnumber_bg|search_type_bg)\w*\.bmp$/;
+function screenPieces(s,files){const set=new Set(files);if(VW.st===2)for(const o of VW.data)if(o.s===s||(s==='radio'&&o.s==='common'&&false))for(const c of o.c){const F=c[0]&&byName(c[0]);if(F)set.add(F)}
+  const bgs=new Set(SCREENS.map(x=>x[2]));return [...set].filter(F=>!bgs.has(F.lc)&&!/common_indi_(?!line)/.test(F.lc)&&F.sec!=='COMMON'||/common_pull_|indi_line/.test(F.lc))}
+function tintScreen(s,files,sty,h){const g=S.gen||(S.gen=defGen()),T=new Set([...sty,...genTargets()]),odd=[];
+  for(const F of screenPieces(s,files)){if(T.has(F)||(F.rep&&F.rep.by!=='gen'&&F.rep.by!=='btn'&&F.rep.by!=='preset'))continue;
+    if(isBtnLike(F)&&frames(F)>=2&&canStyleOne(F)&&F.w/frames(F)/F.h<=4.6){const q=g.per[F.path]||(g.per[F.path]={});if(h==null)delete q.hue;else q.hue=h;odd.push(F);continue}
+    const st=stats(F);let col=0,tot=0;for(const f of st.fam.values()){tot+=f.n;if(f.k<12)col+=f.n}const grey=LISTGREY.test(F.lc)||(isBtnLike(F)&&frames(F)>=2&&F.w/frames(F)/F.h>4.6&&!noStyle(F));if(!grey&&col<tot*.03)continue;
+    const o={...defOps(),...(S.ops.file[F.path]||{})};o.map={...(o.map||{})};
+    if(h==null||h==='white'){o.tA=0;o.tG=false;delete o.map[12]}else{o.tH=h;o.tA=100;o.tG=false;if(grey)o.map[12]={to:h,ts:.85,tl:.62};else delete o.map[12]}
+    if(!Object.keys(o.map).length)delete o.map;setFileOps(F,o)}
+  // el resplandor de color del fondo de la pantalla, del mismo color (el negro no cambia; para teñirlo está «Color del negro del fondo»)
+  const B=byName(SCRBG.get(s==='common'?'radio':s));if(B&&!B.rep&&s!=='common'){const o={...defOps(),...(S.ops.file[B.path]||{})};if(h==null||h==='white')o.tA=0;else{o.tH=h;o.tA=100;o.tG=false}setFileOps(B,o)}
+  if(odd.length)applyButtons(odd)}
 function scrScreen(v,r){
   const s=r.s,secs=scrSecs(s),files=scrFiles(s),pscr=s==='common'?'radio':s,bg=byName(SCRBG.get(pscr)),hb=s==='common'?null:scrHomeBtn(s);
   setTitle(scrName(s),`${files.length+(bg?1:0)} imágenes de esta pantalla`);
-  const btns=files.filter(isBtnLike),rest=files.filter(F=>!isBtnLike(F)),sty=btns.filter(F=>kindOf(F)==='btn'&&canStyle(F));
+  const btns=files.filter(isBtnLike),rest=files.filter(F=>!isBtnLike(F)),sty=btns.filter(F=>kindOf(F)==='btn'&&canStyleOne(F)&&F.w/frames(F)/F.h<=4.6);
   const g=S.gen||(S.gen=defGen()),looks=new Set(sty.map(F=>(g.per[F.path]||{}).look||'orig')),curLook=looks.size===1?[...looks][0]:null;
   const same=k=>{const vs=new Set(sty.map(F=>{const h=(g.per[F.path]||{})[k];return h==null?'none':h}));return vs.size===1?[...vs][0]:''};
   v.innerHTML=`<div class="two">
@@ -116,7 +132,7 @@ function scrScreen(v,r){
   // colores de marco e icono para todos los botones de la pantalla a la vez
   const allCol=async(key,h)=>{before();for(const G of sty){const q=g.per[G.path]||(g.per[G.path]={});if(h==null)delete q[key];else q[key]=h}
     // el color del marco también tiñe los detalles de la pantalla: los puntos de las opciones, la barra de la fila elegida en las listas, las líneas separadoras…
-    if(key==='hue')for(const G of files.filter(F=>ACCENT.test(F.lc))){const o={...defOps(),...(S.ops.file[G.path]||{})};o.map={...(o.map||{})};if(h==null||h==='white'){o.tA=0;o.tG=false;delete o.map[12]}else{o.tH=h;o.tA=100;o.tG=false;o.map[12]={to:h,ts:.85,tl:.62}}if(!Object.keys(o.map).length)delete o.map;setFileOps(G,o)}
+    if(key==='hue')tintScreen(s,files,sty,h);
     toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(sty);render(true);toast(key==='hue'?`Color cambiado en ${sty.length} botones y los detalles de la pantalla`:`Color cambiado en ${sty.length} botones`,{label:'Deshacer',fn:undo})};
   for(const [id,key] of [['#sc-fc','hue'],['#sc-icc','ihue']]){const sw=$(id+' .swg');if(!sw)continue;
     sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;const h=b.dataset.h;allCol(key,h==='none'?null:h==='white'?'white':+h)};
