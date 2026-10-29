@@ -89,10 +89,10 @@ function scrScreen(v,r){
       c.onpointerdown=e=>{const V=vwCur(s);if(!V)return;down=vwHit(V,c,e).i;press=down;schedule()};
       c.onpointermove=e=>{if(e.pointerType!=='mouse')return;const V=vwCur(s);if(!V)return;const h=vwHit(V,c,e);c.style.cursor=h.i>=0?'pointer':'default';if(h.i!==hov){hov=h.i;schedule()}};
       c.onpointerleave=c.onpointercancel=()=>{down=press=hov=-1;schedule()};
-      const sBtns=()=>{const V=vwCur(s);return V?[...new Set(V.c.map(q=>byName(q[0])).filter(F=>F&&isBtnLike(F)&&frames(F)>=2))]:[]},redraw=()=>{mountThumbs(v);schedule()};
+      const sBtns=()=>{const V=vwCur(s);return V?[...new Set(V.c.map(q=>byName(q[0])).filter(F=>F&&(isBtnLike(F)||ACCENT.test(F.lc))))]:[]},redraw=()=>{mountThumbs(v);schedule()};
       const wasLong=longPress(c,e=>{const V=vwCur(s);if(!V)return;const h=vwHit(V,c,e);down=press=-1;schedule();if(h.i>=0&&h.F)styleMenu(h.F,sBtns(),redraw)});
       c.onpointerup=e=>{const V=vwCur(s),i=down;down=press=-1;schedule();if(wasLong())return;if(!V||i<0)return;const h=vwHit(V,c,e);if(h.i!==i)return;
-        if(S.pasteMode&&S.clip&&isBtnLike(h.F)){pasteStyle([h.F]);redraw();return}
+        if(S.pasteMode&&S.clip&&h.F){pasteStyle([h.F]);redraw();return}
         if(isBtnLike(h.F))btnSheet(h.F,redraw);else go({n:'edit',p:h.F.path})}}$('#sc-cmp').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.hcmp=b.dataset.v;$$('#sc-cmp button').forEach(x=>x.setAttribute('aria-pressed',x===b));schedule()}}
   const kb=$('#sc-kit');if(kb)kb.onclick=homeKit;
   const hbb=$('#sc-hb');if(hbb)hbb.onclick=()=>btnSheet(hb,()=>{mountThumbs(v);schedule()});

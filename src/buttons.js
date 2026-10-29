@@ -254,12 +254,15 @@ function mountPresets(el){if(!el)return;const cvs=[...el.querySelectorAll('canva
    Tras copiar se entra en «modo pegar»: cada toque en un botón le pone el estilo copiado, hasta pulsar «Hecho».
    Se copia el aspecto (estilo) y los colores del marco y del icono; el icono no, porque cada botón tiene su función. */
 function styleOf(F){const g=S.gen||{},p=(g.per||{})[F.path]||{},home=genTargets().includes(F);return {look:home?btnLook():(p.look||'orig'),hue:p.hue,ihue:p.ihue,from:pretty(F)}}
-function pasteOne(F){const c=S.clip;if(!c||!isBtnLike(F))return false;const g=S.gen||(S.gen=defGen()),home=genTargets().includes(F),p=g.per[F.path]||(g.per[F.path]={});
+// piezas que no son botones con estilo (barras de las listas, líneas, puntos, iconos sueltos): se les pega el color del marco como tinte
+const pasteAsTint=F=>!isBtnLike(F)||frames(F)<2||!canStyleOne(F)||/list_press|list2_btn|parting_line|_dot\.bmp$/.test(F.lc);
+function tintOne(F){const h=S.clip&&S.clip.hue;const o={...defOps(),...(S.ops.file[F.path]||{})};if(h==null||h==='white'){o.tA=0}else{o.tH=h;o.tA=100;o.tG=false}setFileOps(F,o);return true}
+function pasteOne(F){const c=S.clip;if(!c)return false;if(pasteAsTint(F))return tintOne(F);const g=S.gen||(S.gen=defGen()),home=genTargets().includes(F),p=g.per[F.path]||(g.per[F.path]={});
   if(!home&&frames(F)>=2&&canStyleOne(F))p.look=c.look;
   if(c.hue==null)delete p.hue;else p.hue=c.hue;if(c.ihue==null)delete p.ihue;else p.ihue=c.ihue;return true}
-function pasteStyle(L){const D=L.filter(F=>isBtnLike(F));if(!D.length)return;before();let n=0;for(const F of D)if(pasteOne(F))n++;applyButtons(D);
+function pasteStyle(L){const D=L.filter(Boolean);if(!D.length)return;before();let n=0;for(const F of D)if(pasteOne(F))n++;applyButtons(D.filter(F=>!pasteAsTint(F)));S.ver++;schedule();saveState();
   const homeDiff=D.some(F=>genTargets().includes(F))&&S.clip.look!==btnLook();
-  toast(`Estilo pegado en ${n} ${n===1?'botón':'botones'}${homeDiff?' (en Inicio el estilo es común a los 6: se han pegado los colores)':''}`,{label:'Deshacer',fn:undo})}
+  toast(`Estilo pegado en ${n} ${n===1?'pieza':'piezas'}${homeDiff?' (en Inicio el estilo es común a los 6: se han pegado los colores)':''}`,{label:'Deshacer',fn:undo})}
 function copyStyle(F){S.clip=styleOf(F);pasteBar(true);toast(`Estilo de «${S.clip.from}» copiado: toca los botones donde quieras pegarlo`,{ms:3500})}
 function pasteBar(on){let b=$('#pastebar');if(!on){S.pasteMode=false;if(b)b.remove();return}S.pasteMode=true;
   if(!b){b=document.createElement('div');b.id='pastebar';b.className='pastebar';document.body.appendChild(b)}
@@ -267,15 +270,15 @@ function pasteBar(on){let b=$('#pastebar');if(!on){S.pasteMode=false;if(b)b.remo
   b.innerHTML=`<span class="tx"><b>Pegando el estilo</b><small>De «${esc(S.clip.from)}» · ${esc(nm)}. Toca los botones</small></span><button class="btn sm" id="pb-ok">Hecho</button>`;
   b.querySelector('#pb-ok').onclick=()=>pasteBar(false)}
 // menú al mantener pulsado. L = los botones de la pantalla (para «pegar en toda la pantalla»)
-function styleMenu(F,L,after){if(!isBtnLike(F)){go({n:'edit',p:F.path});return}const c=S.clip,nm=c&&(LOOKS().find(x=>x[0]===c.look)||['',''])[1];
+function styleMenu(F,L,after){const tint=pasteAsTint(F);if(tint&&!S.clip){go({n:'edit',p:F.path});return}const c=S.clip,nm=c&&(LOOKS().find(x=>x[0]===c.look)||['',''])[1];
   openBS(`<h2>${esc(pretty(F))}</h2><div class="list">
-    <button class="li" data-c="copy"><span class="ic">${ic('M8 8h12v12H8zM4 16V4h12')}</span><span class="tx"><b>Copiar estilo</b><small>Aspecto y colores de este botón, para pegarlos en otros</small></span>${CHEV}</button>
-    ${c?`<button class="li" data-c="paste"><span class="ic">${ic('M9 4h6v3H9zM6 6h12v15H6z')}</span><span class="tx"><b>Pegar aquí</b><small>${esc(nm)} de «${esc(c.from)}»</small></span>${CHEV}</button>
+    ${tint?'':`<button class="li" data-c="copy"><span class="ic">${ic('M8 8h12v12H8zM4 16V4h12')}</span><span class="tx"><b>Copiar estilo</b><small>Aspecto y colores de este botón, para pegarlos en otros</small></span>${CHEV}</button>`}
+    ${c?`<button class="li" data-c="paste"><span class="ic">${ic('M9 4h6v3H9zM6 6h12v15H6z')}</span><span class="tx"><b>${tint?'Pegar el color aquí':'Pegar aquí'}</b><small>${tint?'El color del marco de':esc(nm)+' de'} «${esc(c.from)}»</small></span>${CHEV}</button>
     ${L&&L.length>1?`<button class="li" data-c="all"><span class="ic">${ic('M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z')}</span><span class="tx"><b>Pegar en toda la pantalla</b><small>${L.length} botones</small></span>${CHEV}</button>`:''}`:''}
-    <button class="li" data-c="edit"><span class="ic">${ic('M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4')}</span><span class="tx"><b>Editar este botón</b></span>${CHEV}</button></div>
+    <button class="li" data-c="edit"><span class="ic">${ic('M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4')}</span><span class="tx"><b>${tint?'Editar esta pieza':'Editar este botón'}</b></span>${CHEV}</button></div>
     <button class="btn o wide" data-c="0">Cerrar</button>`);
   $('#bs').onclick=e=>{const x=e.target.closest('[data-c]');if(!x)return;const k=x.dataset.c;closeBS();
-    if(k==='copy')copyStyle(F);else if(k==='paste'){pasteStyle([F]);after&&after()}else if(k==='all'){pasteStyle(L);after&&after()}else if(k==='edit')btnSheet(F,after)}}
+    if(k==='copy')copyStyle(F);else if(k==='paste'){pasteStyle([F]);after&&after()}else if(k==='all'){pasteStyle(L);after&&after()}else if(k==='edit'){if(isBtnLike(F))btnSheet(F,after);else go({n:'edit',p:F.path})}}}
 // mantener pulsado sobre un lienzo: llama a fn(e) a los 550 ms si el dedo no se ha movido. Devuelve true en el pointerup si ya se usó la pulsación larga
 function longPress(c,fn){let t=0,x0=0,y0=0,used=false;c.dataset.lp='1';
   c.addEventListener('pointerdown',e=>{used=false;x0=e.clientX;y0=e.clientY;clearTimeout(t);t=setTimeout(()=>{used=true;S.lpT=Date.now();if(navigator.vibrate)try{navigator.vibrate(15)}catch(_){}fn(e)},550)});

@@ -24,6 +24,7 @@ def seg(c, pre, y, texts, kind):  # kind 1: 102 px (izquierda, centro, derecha) 
         c.append(B(f'{pre}/setting_{kind}_{part}_btn.bmp', 364 + i * (w - 1), y, w, 67, t))
 def lst(c, pre, items, extra=None):
     c.append(I(f'{pre}/{pre}_list_line.bmp', 74, 106, 598, 282))
+    c.append([f'{pre}/{pre}_list_press.bmp', 74, 107, 694, 69, 'b', '', [74, 107, 694, 69], W, 1])  # fila elegida (la barra de color de la lista)
     for y, t in zip([107, 177, 247, 317], items): c.append(T(90, y, 560, 70, t))
     c.append(B(f'{pre}/{pre}_scroll_up_btn.bmp', 711, 103, 89, 117)); c.append(B(f'{pre}/{pre}_scroll_down_btn.bmp', 711, 274, 89, 117))
     c.append(I(f'{pre}/{pre}_scrollnumber_bg.bmp', 711, 220, 89, 54, '1/2'))
