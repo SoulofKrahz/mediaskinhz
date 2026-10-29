@@ -238,7 +238,7 @@ function drawState(x,F,w,h,s,H,g,bgc){
     default:x.fillStyle=on?lin(`hsl(${H} 90% 62%)`,`hsl(${H} 85% 46%)`):lin('#16191e','#060708',`hsl(${H} 85% ${dim?20:44}%)`);x.fill();x.lineWidth=2;x.strokeStyle=on?`hsl(${H} 70% 40%)`:`hsl(${H} 55% ${dim?18:32}%)`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=on?`hsl(${H} 70% 20%)`:`hsl(${H} 85% ${dim?32:60}%)`}
   if(thru||brite)x.fill=of;
   if(brite){ic=`hsl(${H} 80% 9%)`;glow=0}
-  const home=S.layout.slots.some(s=>s.p===F.path),isIn=g.isIn||1.15,isz=home?g.is:Math.max(14,Math.min(h*.44*isIn,Math.min(w,h)*.8)),src=grp?'orig':genIconSrc(F,g),p=grp?{}:g.per[F.path]||{},cx=w/2,cy=home?Y+Hh*(g.iy/100):h/2;
+  const home=S.layout.slots.some(s=>s.p===F.path),isIn=g.isIn||1.15,isz=home?g.is:Math.max(14,Math.min(h*.44*isIn,Math.min(w,h)*.8)),src=grp?'orig':(!home&&w/h>4.6&&!(g.per[F.path]||{}).icon)?'none':genIconSrc(F,g),p=grp?{}:g.per[F.path]||{},cx=w/2,cy=home?Y+Hh*(g.iy/100):h/2;
   if(p.ihue!=null&&!on)ic=p.ihue==='white'?(dim?'rgba(255,255,255,.5)':'#ffffff'):`hsl(${p.ihue} 85% ${dim?34:62}%)`;
   // el icono original: en Inicio a la medida elegida; dentro, a su tamaño de siempre (× el tamaño elegido) sin salirse del botón
   if(src==='orig'){const mk=extractIcon(F,grp);if(mk){const k=home?isz/56:Math.min(isIn,W*.8/mk.bw,Hh*.8/mk.bh);drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,mk,X,Y,k*sz/isz,col,gl);return true},cx,cy,isz,ic,glow)}}

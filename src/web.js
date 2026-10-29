@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-13';
+const VER='2026-10-29-14';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,8 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-14',['Los iconos pequeños con estados (los tipos de número de la agenda: casa, oficina, móvil…) y las barras de la fila elegida ya no se convierten en botones con estilo: se quedan como iconos y aceptan solo color. Si ya los tenías con estilo, vuelven a su imagen al cargar',
+    'Barras muy alargadas con texto (p. ej. «Buscar por nombre»): el estilo ya no pone el icono en medio, encima del texto que escribe la radio']],
   ['2026-10-29-13',['Copiar estilo sin barra de «Hecho»: tras copiar, los toques normales siguen abriendo el botón como siempre. Para pegar, mantén pulsado otro botón → Pegar aquí o Pegar en toda la pantalla']],
   ['2026-10-29-12',['Pegar el color en filas y líneas de las listas ya las cambia: eran grises y el tinte solo cambiaba las partes de color. Ahora los grises y blancos toman el color con su mismo brillo (la barra blanca de la fila elegida, el fondo de la ventana de lista del teléfono, las líneas de las listas de Ajustes…); los negros se quedan']],
   ['2026-10-29-11',['Pegar estilo también en las listas y piezas que no son botones (la barra de la fila elegida, líneas, puntos…): se les pega el color del marco. En las listas de Ajustes ya se puede tocar la barra de la fila elegida']],

@@ -15,7 +15,7 @@ function btnTintOps(F,ihue){const o={...defOps(),...(S.ops.file[F.path]||{})};o.
   if(o.bm){for(const k of o.bm)delete o.map[k];delete o.bm}
   if(ihue!=null){const ks=[...stats(F).fam.keys()].filter(k=>k!==13);for(const k of ks)o.map[k]=ihue==='white'?{white:true}:{to:ihue,ts:.82,tl:.56};o.bm=ks}
   if(!Object.keys(o.map).length)delete o.map;setFileOps(F,o)}
-function buildButton(F){const g=S.gen||(S.gen=defGen()),p=g.per[F.path]||{},look=genTargets().includes(F)?btnLook():(p.look||'orig');
+function buildButton(F){const g=S.gen||(S.gen=defGen()),p=g.per[F.path]||{},look=genTargets().includes(F)?btnLook():noStyle(F)?'orig':(p.look||'orig');
   if(look==='orig'){
     const single=frames(F)<2&&!(p.icon&&p.icon!=='orig');btnTintOps(F,single?p.ihue:null);
     const k=p.icon&&p.icon!=='orig'&&p.icon!=='png'?p.icon:((p.ihue!=null||p.rs)&&!single&&extractIcon(F)?'orig':null);
@@ -55,7 +55,7 @@ const LOOKS=()=>[['orig','Original de Renault'],...GSTYLES];
 const isBtnLike=F=>{const k=kindOf(F);return k==='btn'||k==='ico'};
 // Botones con estilo propio fuera de Inicio, y los que pueden llevarlo (se saltan barras muy alargadas)
 const styledOut=()=>S.files.filter(F=>((S.gen&&S.gen.per[F.path])||{}).look&&S.gen.per[F.path].look!=='orig');
-const canStyle=F=>{const fr=frames(F);if(fr<2)return false;const r=F.w/fr/F.h;return r>.6&&r<4.6&&F.h>=40};
+const canStyle=F=>{const fr=frames(F);if(fr<2||noStyle(F))return false;const r=F.w/fr/F.h;return r>.6&&r<4.6&&F.h>=40};
 // Uno a uno se puede dar estilo a cualquier botón con estados (flechas altas, barras de lista…); «usar en todos» se salta esas formas raras
 // Tamaño de los iconos de dentro (todas las pantallas menos Inicio). 1 = como el original
 const ISIN=[[1,'Como el original'],[1.15,'Algo mayor'],[1.35,'Grande'],[1.6,'Muy grande']];
@@ -68,7 +68,9 @@ async function setIsIn(v,L){before();const g=S.gen||(S.gen=defGen());g.isIn=v;if
   // los que ya no tienen nada que redibujar vuelven al original
   for(const F of S.files)if(F.rep&&F.rep.by==='btn'&&!g.per[F.path]){F.rep=null;if(S.icx)delete S.icx[F.path]}
   applyButtons(A);toast(`Iconos ${(ISIN.find(x=>x[0]===v)||['',''])[1].toLowerCase()} en ${A.length} botones`,{label:'Deshacer',fn:undo});return A.length}
-const canStyleOne=F=>frames(F)>=2&&F.h>=24&&F.w/frames(F)>=24;
+// piezas que nunca llevan estilo de botón: iconos pequeños con estados (los tipos de número de la agenda…) y las barras de fila elegida de las listas
+const noStyle=F=>F.w/frames(F)<48||F.h<36||/list_press|list2_btn|parting_line/.test(F.lc);
+const canStyleOne=F=>frames(F)>=2&&!noStyle(F);
 const secBtns=F=>S.files.filter(G=>G.sec===F.sec&&kindOf(G)==='btn'&&canStyle(G)&&!genTargets().includes(G));
 // Al cambiar la forma o el estilo del icono se redibujan todos los botones con estilo
 function restyleAll(){applyButtons([...genTargets(),...styledOut()])}

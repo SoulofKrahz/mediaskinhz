@@ -783,7 +783,7 @@ function saveState(now){if(S.demo)return Promise.resolve();clearTimeout(saveT);c
   const gen=packGen();
   return idb.set('state',{v:2,ops:S.ops,ex:S.ex,frames:S.frames,layout:S.layout,reps,gen,icx:S.icx||{},stby:S.stby||null}).catch(()=>{})};if(now)return run();saveT=setTimeout(run,600)}
 function applyState(st){if(!st)return;S.ops=st.ops||S.ops;S.icx=st.icx||{};S.stby=st.stby||null;if(st.gen)S.gen=st.gen;S.ex=st.ex||{};S.frames=st.frames||{};if(st.layout&&!(st.layout.slots&&st.layout.slots[0]&&st.layout.slots[0].x===75&&st.layout.slots[0].y===134))S.layout=st.layout;
-  for(const [p,r] of Object.entries(st.reps||{})){const F=S.lc.get(p.toLowerCase());if(F&&r.idx&&r.idx.length===F.w*F.h){F.rep={pal:r.pal,idx:r.idx,keyIdx:r.keyIdx,by:r.by||repByGuess(st,F)};if(r.exempt&&S.ex[F.path]===undefined)S.ex[F.path]=true}}migrateLook(st);S.ver++}
+  for(const [p,r] of Object.entries(st.reps||{})){const F=S.lc.get(p.toLowerCase());if(F&&r.idx&&r.idx.length===F.w*F.h){F.rep={pal:r.pal,idx:r.idx,keyIdx:r.keyIdx,by:r.by||repByGuess(st,F)};if(r.exempt&&S.ex[F.path]===undefined)S.ex[F.path]=true}}migrateLook(st);if(S.gen&&S.gen.per)for(const F of S.files){const q=S.gen.per[F.path];if(q&&q.look&&q.look!=='orig'&&noStyle(F)){delete q.look;if(F.rep&&(F.rep.by==='gen'||!F.rep.by))F.rep=null;delete S.ex[F.path];F.cv=null}}S.ver++}
 function remember(){try{localStorage.setItem('skinhz-ui',JSON.stringify({cat:S.cat,grid:S.gridOn,gs:S.gridSize,snap:S.snap,scr:S.scr}))}catch(_){}}
 function recall(){let u={};try{u=JSON.parse(localStorage.getItem('skinhz-ui')||'{}')||{}}catch(_){}
   if(u.cat&&CATL.has(u.cat))S.cat=u.cat;if(typeof u.grid==='boolean')S.gridOn=u.grid;if(u.gs)S.gridSize=u.gs;if(u.snap===false)S.snap=false;if(u.scr&&SCRBG.has(u.scr))S.scr=u.scr}
@@ -1687,7 +1687,7 @@ function drawState(x,F,w,h,s,H,g,bgc){
     default:x.fillStyle=on?lin(`hsl(${H} 90% 62%)`,`hsl(${H} 85% 46%)`):lin('#16191e','#060708',`hsl(${H} 85% ${dim?20:44}%)`);x.fill();x.lineWidth=2;x.strokeStyle=on?`hsl(${H} 70% 40%)`:`hsl(${H} 55% ${dim?18:32}%)`;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=on?`hsl(${H} 70% 20%)`:`hsl(${H} 85% ${dim?32:60}%)`}
   if(thru||brite)x.fill=of;
   if(brite){ic=`hsl(${H} 80% 9%)`;glow=0}
-  const home=S.layout.slots.some(s=>s.p===F.path),isIn=g.isIn||1.15,isz=home?g.is:Math.max(14,Math.min(h*.44*isIn,Math.min(w,h)*.8)),src=grp?'orig':genIconSrc(F,g),p=grp?{}:g.per[F.path]||{},cx=w/2,cy=home?Y+Hh*(g.iy/100):h/2;
+  const home=S.layout.slots.some(s=>s.p===F.path),isIn=g.isIn||1.15,isz=home?g.is:Math.max(14,Math.min(h*.44*isIn,Math.min(w,h)*.8)),src=grp?'orig':(!home&&w/h>4.6&&!(g.per[F.path]||{}).icon)?'none':genIconSrc(F,g),p=grp?{}:g.per[F.path]||{},cx=w/2,cy=home?Y+Hh*(g.iy/100):h/2;
   if(p.ihue!=null&&!on)ic=p.ihue==='white'?(dim?'rgba(255,255,255,.5)':'#ffffff'):`hsl(${p.ihue} 85% ${dim?34:62}%)`;
   // el icono original: en Inicio a la medida elegida; dentro, a su tamaño de siempre (× el tamaño elegido) sin salirse del botón
   if(src==='orig'){const mk=extractIcon(F,grp);if(mk){const k=home?isz/56:Math.min(isIn,W*.8/mk.bw,Hh*.8/mk.bh);drawIcon(x,(c,X,Y,sz,col,gl)=>{drawMask(c,mk,X,Y,k*sz/isz,col,gl);return true},cx,cy,isz,ic,glow)}}
@@ -2906,7 +2906,7 @@ function btnTintOps(F,ihue){const o={...defOps(),...(S.ops.file[F.path]||{})};o.
   if(o.bm){for(const k of o.bm)delete o.map[k];delete o.bm}
   if(ihue!=null){const ks=[...stats(F).fam.keys()].filter(k=>k!==13);for(const k of ks)o.map[k]=ihue==='white'?{white:true}:{to:ihue,ts:.82,tl:.56};o.bm=ks}
   if(!Object.keys(o.map).length)delete o.map;setFileOps(F,o)}
-function buildButton(F){const g=S.gen||(S.gen=defGen()),p=g.per[F.path]||{},look=genTargets().includes(F)?btnLook():(p.look||'orig');
+function buildButton(F){const g=S.gen||(S.gen=defGen()),p=g.per[F.path]||{},look=genTargets().includes(F)?btnLook():noStyle(F)?'orig':(p.look||'orig');
   if(look==='orig'){
     const single=frames(F)<2&&!(p.icon&&p.icon!=='orig');btnTintOps(F,single?p.ihue:null);
     const k=p.icon&&p.icon!=='orig'&&p.icon!=='png'?p.icon:((p.ihue!=null||p.rs)&&!single&&extractIcon(F)?'orig':null);
@@ -2946,7 +2946,7 @@ const LOOKS=()=>[['orig','Original de Renault'],...GSTYLES];
 const isBtnLike=F=>{const k=kindOf(F);return k==='btn'||k==='ico'};
 // Botones con estilo propio fuera de Inicio, y los que pueden llevarlo (se saltan barras muy alargadas)
 const styledOut=()=>S.files.filter(F=>((S.gen&&S.gen.per[F.path])||{}).look&&S.gen.per[F.path].look!=='orig');
-const canStyle=F=>{const fr=frames(F);if(fr<2)return false;const r=F.w/fr/F.h;return r>.6&&r<4.6&&F.h>=40};
+const canStyle=F=>{const fr=frames(F);if(fr<2||noStyle(F))return false;const r=F.w/fr/F.h;return r>.6&&r<4.6&&F.h>=40};
 // Uno a uno se puede dar estilo a cualquier botón con estados (flechas altas, barras de lista…); «usar en todos» se salta esas formas raras
 // Tamaño de los iconos de dentro (todas las pantallas menos Inicio). 1 = como el original
 const ISIN=[[1,'Como el original'],[1.15,'Algo mayor'],[1.35,'Grande'],[1.6,'Muy grande']];
@@ -2959,7 +2959,9 @@ async function setIsIn(v,L){before();const g=S.gen||(S.gen=defGen());g.isIn=v;if
   // los que ya no tienen nada que redibujar vuelven al original
   for(const F of S.files)if(F.rep&&F.rep.by==='btn'&&!g.per[F.path]){F.rep=null;if(S.icx)delete S.icx[F.path]}
   applyButtons(A);toast(`Iconos ${(ISIN.find(x=>x[0]===v)||['',''])[1].toLowerCase()} en ${A.length} botones`,{label:'Deshacer',fn:undo});return A.length}
-const canStyleOne=F=>frames(F)>=2&&F.h>=24&&F.w/frames(F)>=24;
+// piezas que nunca llevan estilo de botón: iconos pequeños con estados (los tipos de número de la agenda…) y las barras de fila elegida de las listas
+const noStyle=F=>F.w/frames(F)<48||F.h<36||/list_press|list2_btn|parting_line/.test(F.lc);
+const canStyleOne=F=>frames(F)>=2&&!noStyle(F);
 const secBtns=F=>S.files.filter(G=>G.sec===F.sec&&kindOf(G)==='btn'&&canStyle(G)&&!genTargets().includes(G));
 // Al cambiar la forma o el estilo del icono se redibujan todos los botones con estilo
 function restyleAll(){applyButtons([...genTargets(),...styledOut()])}
@@ -3407,7 +3409,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-13';
+const VER='2026-10-29-14';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3415,6 +3417,8 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-14',['Los iconos pequeños con estados (los tipos de número de la agenda: casa, oficina, móvil…) y las barras de la fila elegida ya no se convierten en botones con estilo: se quedan como iconos y aceptan solo color. Si ya los tenías con estilo, vuelven a su imagen al cargar',
+    'Barras muy alargadas con texto (p. ej. «Buscar por nombre»): el estilo ya no pone el icono en medio, encima del texto que escribe la radio']],
   ['2026-10-29-13',['Copiar estilo sin barra de «Hecho»: tras copiar, los toques normales siguen abriendo el botón como siempre. Para pegar, mantén pulsado otro botón → Pegar aquí o Pegar en toda la pantalla']],
   ['2026-10-29-12',['Pegar el color en filas y líneas de las listas ya las cambia: eran grises y el tinte solo cambiaba las partes de color. Ahora los grises y blancos toman el color con su mismo brillo (la barra blanca de la fila elegida, el fondo de la ventana de lista del teléfono, las líneas de las listas de Ajustes…); los negros se quedan']],
   ['2026-10-29-11',['Pegar estilo también en las listas y piezas que no son botones (la barra de la fila elegida, líneas, puntos…): se les pega el color del marco. En las listas de Ajustes ya se puede tocar la barra de la fila elegida']],
