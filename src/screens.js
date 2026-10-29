@@ -48,9 +48,14 @@ function vwBar(s){const el=$('#sc-vw');if(!el)return;
     const rt=el.querySelector('[data-rt]');if(rt)rt.onclick=()=>{loadVistas().then(()=>{vwBar(s);schedule()});vwBar(s)};return}
   const L=vwList(s),cur=vwCur(s);if(!cur){el.innerHTML='';return}
   const bands=[...new Set(L.map(o=>o.band))].filter(Boolean),b0=vwBand(s),inB=L.filter(o=>o.band===b0||!o.band);
+  // la fila de vistas no vuelve al principio al cambiar de vista: se guarda dónde estaba y se asegura que la elegida se ve
+  const mem=(S.vwSc||(S.vwSc={}))[s]||(S.vwSc[s]={b:0,v:0}),ob=el.querySelector('.vwb'),ov=el.querySelector('.vwv');if(ob)mem.b=ob.scrollLeft;if(ov)mem.v=ov.scrollLeft;
   el.innerHTML=`${bands.length>1?`<div class="chips scroll vwb" role="group" aria-label="Fuente">${bands.map(b=>`<button class="chip" data-b="${esc(b)}" aria-pressed="${b===b0}">${esc(b)}</button>`).join('')}</div>`:''}
     <div class="chips scroll vwv" role="group" aria-label="Vista">${inB.map(o=>`<button class="chip" data-w="${esc(o.v)}" aria-pressed="${o===cur}">${esc(o.v)}</button>`).join('')}</div>
     ${cur.aprox?'<p class="hint" style="padding:0">Vista dibujada a partir de fotos de la radio: las posiciones son aproximadas.</p>':''}`;
+  for(const [cls,key] of [['.vwb','b'],['.vwv','v']]){const row=el.querySelector(cls);if(!row)continue;row.scrollLeft=mem[key];
+    const on=row.querySelector('[aria-pressed="true"]');if(on){const l=on.offsetLeft-row.offsetLeft,r=l+on.offsetWidth;if(l<row.scrollLeft||r>row.scrollLeft+row.clientWidth)row.scrollLeft=Math.max(0,l-(row.clientWidth-on.offsetWidth)/2)}
+    mem[key]=row.scrollLeft;row.addEventListener('scroll',()=>{mem[key]=row.scrollLeft},{passive:true})}
   el.onclick=e=>{const b=e.target.closest('[data-b],[data-w]');if(!b)return;const k=(S.vw||(S.vw={}))[s]||(S.vw[s]={});
     if(b.dataset.b!=null){k.band=b.dataset.b;delete k.v}else{k.v=b.dataset.w}vwBar(s);schedule()}}
 const ACCENT=/(_dot|list_press|parting_line|list_line|fulldown_\d_l?ine|indi_line|scrollnumber_bg|progress_bar\w*)\.bmp$/;
