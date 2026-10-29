@@ -73,14 +73,14 @@ function borderColor(F){if(F.bdc)return F.bdc;const fw=F.w/frames(F),rs=[],gs=[]
   // las pantallas del MediaNav son oscuras: un borde claro o de color es parte del botón, no del fondo
   F.bdc=(r*.3+G*.59+B*.11)<60?`rgb(${r},${G},${B})`:'#000';return F.bdc}
 const THRU=new Set(['hud','hudb','hudf','outline','neon','halo','grid','ring','corner','gborder','wave','circuit','duo','notch','scan','led','double','beam','dots','slash','minimal']);
-function vwPos(F){if(typeof VW==='undefined'||!VW.data)return null;if(F.vpv===VW.data)return F.vp;let r=null;for(const o of VW.data){for(const c of o.c||[])if(c[0]===F.lc){r={x:c[1],y:c[2],s:o.s==='common'?'radio':o.s};break}if(r)break}F.vp=r;F.vpv=VW.data;return r}
+function vwPos(F){const kp=KNOWNPOS[F.lc];if(kp)return {x:kp[0],y:kp[1],s:'home'};if(typeof VW==='undefined'||!VW.data)return null;if(F.vpv===VW.data)return F.vp;let r=null;for(const o of VW.data){for(const c of o.c||[])if(c[0]===F.lc){r={x:c[1],y:c[2],w:c[3],h:c[4],s:o.s==='common'?'radio':o.s};break}if(r)break}F.vp=r;F.vpv=VW.data;return r}
 const presetBgOn=()=>[...SCRBG.values()].some(n=>{const B=byName(n);return B&&B.rep&&B.rep.by==='preset'});
 function cornerBase(F){const s=S.layout.slots.find(s=>s.p===F.path),bg=byName('common/home_bg.bmp'),fw=F.w/frames(F),c=document.createElement('canvas');c.width=fw;c.height=F.h;const x=c.getContext('2d');
   // fuera de Inicio: el color del borde original, teñido con el color de toda la radio (si lo hay) para que no quede un marco de otro color
   // con un fondo de diseño listo, las esquinas de dentro son transparentes (amarillo clave, como ya hacen muchos originales) para que no salgan cajas negras
   // con un fondo de diseño listo: si se sabe dónde va el botón (vistas del programa), debajo va ese trozo del fondo; si no, transparente
-  if(!s&&presetBgOn()){const p=vwPos(F),B=p&&byName(SCRBG.get(p.s));if(B){x.drawImage(renderCanvas(B,false),p.x,p.y,fw,F.h,0,0,fw,F.h);c.full=true}return c}
-  if(!s){if(!F.keyCount&&!presetBgOn()){let col=borderColor(F);const o=S.ops.global;if(o&&o.tA){const m=col.match(/\d+/g);if(m){const [r,g,b]=applyOps(m.slice(0,3).map(Number),{...o,tG:true});col=`rgb(${r},${g},${b})`}}x.fillStyle=col;x.fillRect(0,0,fw,F.h)}return c}x.fillStyle='#000';x.fillRect(0,0,fw,F.h);
+  if(!s&&presetBgOn()){const p=vwPos(F),B=p&&byName(SCRBG.get(p.s));if(B){x.drawImage(renderCanvas(B,false),p.x,p.y,fw,F.h,0,0,fw,F.h);c.full=true;return c}if(F.keyCount)return c}
+  if(!s){if(!F.keyCount){let col=borderColor(F);const o=S.ops.global;if(o&&o.tA){const m=col.match(/\d+/g);if(m){const [r,g,b]=applyOps(m.slice(0,3).map(Number),{...o,tG:true});col=`rgb(${r},${g},${b})`}}x.fillStyle=col;x.fillRect(0,0,fw,F.h)}return c}x.fillStyle='#000';x.fillRect(0,0,fw,F.h);
   if(s&&bg)x.drawImage(renderCanvas(bg,false),s.x,s.y,fw,F.h,0,0,fw,F.h);return c}
 function rrect(x,X,Y,W,H,r){r=Math.max(0,Math.min(r,W/2,H/2));x.beginPath();x.moveTo(X+r,Y);x.lineTo(X+W-r,Y);x.arcTo(X+W,Y,X+W,Y+r,r);x.lineTo(X+W,Y+H-r);x.arcTo(X+W,Y+H,X+W-r,Y+H,r);x.lineTo(X+r,Y+H);x.arcTo(X,Y+H,X,Y+H-r,r);x.lineTo(X,Y+r);x.arcTo(X,Y,X+r,Y,r);x.closePath()}
 const gRad=(g,h)=>g.shape==='rect'?0:g.shape==='pill'?(h-2*g.inset)/2:g.r;

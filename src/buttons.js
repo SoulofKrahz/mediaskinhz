@@ -23,7 +23,8 @@ function buildButton(F){const g=S.gen||(S.gen=defGen()),p=g.per[F.path]||{},look
     else{if(F.rep&&(F.rep.by==='btn'||F.rep.by==='gen'))F.rep=null;if(S.icx)delete S.icx[F.path];if(S.ex[F.path]===true)delete S.ex[F.path]}
     btnHueOps(F,p.hue)}
   else{btnHueOps(F,null);const c=genTile(F,{...g,style:look}),d=c.getContext('2d').getImageData(0,0,F.w,F.h).data,key=new Uint8Array(F.w*F.h);
-    for(let i=0;i<F.w*F.h;i++)if(d[i*4+3]<128)key[i]=1;const q=quantize(d,F.w,F.h,{key,dither:true});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'gen'};S.ex[F.path]=true;if(S.icx)delete S.icx[F.path]}
+    // solo hay transparencia (amarillo) si el original ya la usaba: la radio no la aplica en todas las imágenes (la luna de Inicio salía amarilla)
+    if(F.keyCount)for(let i=0;i<F.w*F.h;i++)if(d[i*4+3]<128)key[i]=1;const q=quantize(d,F.w,F.h,{key,dither:true});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'gen'};S.ex[F.path]=true;if(S.icx)delete S.icx[F.path]}
   F.cv=null}
 function applyButtons(list){if(!S.gen)return;for(const F of list||genTargets())buildButton(F);S.genCv=null;S.ver++;schedule();saveState()}
 let btnT=0;function applyButtonsSoon(list){clearTimeout(btnT);btnT=setTimeout(()=>applyButtons(list),180)}
@@ -208,7 +209,11 @@ function clearBlack(F){F.rep=null;F.cv=null;const od=renderOrig(F,false).getCont
   const dark=i=>od[i*4+3]>=128&&Math.max(od[i*4],od[i*4+1],od[i*4+2])<34,push=i=>{if(!key[i]&&dark(i)){key[i]=1;st.push(i)}};
   for(let X=0;X<w;X++){push(X);push((h-1)*w+X)}for(let Y=0;Y<h;Y++){push(Y*w);push(Y*w+w-1)}
   while(st.length){const i=st.pop(),X=i%w,Y=(i/w)|0;if(X>0)push(i-1);if(X<w-1)push(i+1);if(Y>0)push(i-w);if(Y<h-1)push(i+w)}
-  for(let i=0;i<w*h;i++)if(d[i*4+3]<128)key[i]=1;const q=quantize(d,w,h,{key,dither:false});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'preset'};S.ex[F.path]=true;delete S.ops.file[F.path];F.cv=null}
+  if(!F.keyCount){// esta imagen no admite transparencia: se calca el trozo de fondo que queda detrás (si se sabe dónde va); si no, se deja como está
+    const p=vwPos(F),B=p&&byName(SCRBG.get(p.s));if(!B){F.cv=null;return}// tiras de varios estados (la hoja de Driving eco lleva 10): cada estado se dibuja en el mismo sitio
+    const fw=p.w&&w%p.w===0?p.w:w,bc=document.createElement('canvas');bc.width=fw;bc.height=h;bc.getContext('2d').drawImage(renderCanvas(B,false),p.x,p.y,fw,h,0,0,fw,h);const bd=bc.getContext('2d').getImageData(0,0,fw,h).data;
+    for(let i=0;i<w*h;i++)if(key[i]){const j=((i/w|0)*fw+(i%w)%fw)*4;d[i*4]=bd[j];d[i*4+1]=bd[j+1];d[i*4+2]=bd[j+2];d[i*4+3]=255;key[i]=0}}
+  else for(let i=0;i<w*h;i++)if(d[i*4+3]<128)key[i]=1;const q=quantize(d,w,h,{key,dither:!F.keyCount});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'preset'};S.ex[F.path]=true;delete S.ops.file[F.path];F.cv=null}
 const PSCR=[['home','Inicio'],['radio','Radio'],['media','Multimedia'],['phone','Teléfono'],['setting','Ajustes'],['eco','Driving eco']];
 function presetSheet(P0){
   const keep=[S.curDesign,S.curDesignName],scrs=PSCR.filter(([k])=>byName(SCRBG.get(k)));let P=null,done=new Set(),scr='home',all={T:[],L:[]};
