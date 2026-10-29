@@ -163,7 +163,7 @@ async function fromFileList(fl){
     if(z&&arr.length===1){list=await readZip(await z.arrayBuffer(),n=>{if(/\.png$/i.test(n)){png++;return false}return /\.bmp$/i.test(n)})}
     else{list=[];for(const f of arr){const p=f._path||f.webkitRelativePath||f.name;if(/\.png$/i.test(p)){png++;continue}if(!/\.bmp$/i.test(p))continue;list.push({path:p,buf:await f.arrayBuffer()})}}
     const bkn=z&&arr.length===1?z.name:((arr[0]&&(arr[0]._path||arr[0].webkitRelativePath)||'').split('/').filter(Boolean)[0]||null);
-    if(await ingest(list,{png,name:bkn})){setBase(null);S.stack=[];S.route={n:'home'};render();toast(`Backup cargado: ${S.files.length} imágenes`)}
+    if(await ingest(list,{png,name:bkn})){if(SET.stIcons!==false)statusIcons(true);setBase(null);S.stack=[];S.route={n:'home'};render();toast(`Backup cargado: ${S.files.length} imágenes`)}
   }catch(err){toast(err.message||'No se pudo leer el backup',{ms:6000})}
 }
 async function walkEntry(en,out){
@@ -204,7 +204,7 @@ function saveState(now){if(S.demo)return Promise.resolve();clearTimeout(saveT);c
   const gen=packGen();
   return idb.set('state',{v:2,ops:S.ops,ex:S.ex,frames:S.frames,layout:S.layout,reps,gen,icx:S.icx||{},stby:S.stby||null}).catch(()=>{})};if(now)return run();saveT=setTimeout(run,600)}
 function applyState(st){if(!st)return;S.ops=st.ops||S.ops;S.icx=st.icx||{};S.stby=st.stby||null;if(st.gen)S.gen=st.gen;S.ex=st.ex||{};S.frames=st.frames||{};if(st.layout&&!(st.layout.slots&&st.layout.slots[0]&&st.layout.slots[0].x===75&&st.layout.slots[0].y===134))S.layout=st.layout;
-  for(const [p,r] of Object.entries(st.reps||{})){const F=S.lc.get(p.toLowerCase());if(F&&r.idx&&r.idx.length===F.w*F.h){F.rep={pal:r.pal,idx:r.idx,keyIdx:r.keyIdx,by:r.by||repByGuess(st,F)};if(r.exempt&&S.ex[F.path]===undefined)S.ex[F.path]=true}}migrateLook(st);if(S.gen&&S.gen.per)for(const F of S.files){const q=S.gen.per[F.path];if(q&&q.look&&q.look!=='orig'&&noStyle(F)){delete q.look;if(F.rep&&(F.rep.by==='gen'||!F.rep.by))F.rep=null;delete S.ex[F.path];F.cv=null}}S.ver++}
+  for(const [p,r] of Object.entries(st.reps||{})){const F=S.lc.get(p.toLowerCase());if(F&&r.idx&&r.idx.length===F.w*F.h){F.rep={pal:r.pal,idx:r.idx,keyIdx:r.keyIdx,by:r.by||repByGuess(st,F)};if(r.exempt&&S.ex[F.path]===undefined)S.ex[F.path]=true}}migrateLook(st);if(typeof SET!=='undefined'&&SET.stIcons!==false&&!S.demo)statusIcons(true);if(S.gen&&S.gen.per)for(const F of S.files){const q=S.gen.per[F.path];if(q&&q.look&&q.look!=='orig'&&noStyle(F)){delete q.look;if(F.rep&&(F.rep.by==='gen'||!F.rep.by))F.rep=null;delete S.ex[F.path];F.cv=null}}S.ver++}
 function remember(){try{localStorage.setItem('skinhz-ui',JSON.stringify({cat:S.cat,grid:S.gridOn,gs:S.gridSize,snap:S.snap,scr:S.scr}))}catch(_){}}
 function recall(){let u={};try{u=JSON.parse(localStorage.getItem('skinhz-ui')||'{}')||{}}catch(_){}
   if(u.cat&&CATL.has(u.cat))S.cat=u.cat;if(typeof u.grid==='boolean')S.gridOn=u.grid;if(u.gs)S.gridSize=u.gs;if(u.snap===false)S.snap=false;if(u.scr&&SCRBG.has(u.scr))S.scr=u.scr}
@@ -794,7 +794,7 @@ function openMenu(){const G=t=>`<p class="lbl" style="margin:12px 6px 4px">${t}<
     else if(m==='designs'){closeBS();S.ttab='mios';go({n:'theme'})}
     else if(m==='save'){closeBS();saveDesign()}
     else if(m==='reset'){const n=updBadge();if(!await confirmBS({title:'Quitar todos los cambios',text:`Las ${n} imágenes cambiadas volverán a ser las originales. Se guardará antes una copia automática y también podrás deshacerlo.`,ok:'Quitar los cambios',danger:true}))return;
-      await addPoint('Antes de quitar todos los cambios','auto');before();S.ops={global:null,sec:{},file:{}};S.ex={};for(const F of S.files)F.rep=null;S.src=new Map();bump();render(true);toast('Cambios quitados',{label:'Deshacer',fn:undo})}
+      await addPoint('Antes de quitar todos los cambios','auto');before();S.ops={global:null,sec:{},file:{}};S.ex={};for(const F of S.files)F.rep=null;S.src=new Map();if(SET.stIcons!==false)statusIcons(true);bump();render(true);toast('Cambios quitados',{label:'Deshacer',fn:undo})}
     else if(m==='close'){if(!await confirmBS({title:'Cerrar el backup',text:'Se borran de este navegador tu backup y el diseño actual. El historial y los puntos de restauración se conservan y volverán a aparecer si cargas el mismo backup. Esto no se puede deshacer.',ok:'Cerrar el backup',danger:true,always:true}))return;
       await addPoint('Al cerrar el backup','auto');try{await idb.del('files');await idb.del('state')}catch(_){}await demo();S.stack=[];S.route={n:'home'};render();toast('Backup cerrado')}}}
 function openLoad(){openBS(`<h2>Cargar tu backup</h2><p>Elige la carpeta <b>M1</b> de tu backup (en Dacia es <b>M0</b>): la que contiene <code>HOME</code>, <code>COMMON</code>, <code>MEDIA</code>… En el móvil usa un <b>ZIP</b> de esa carpeta: el iPhone no deja elegir carpetas.</p>

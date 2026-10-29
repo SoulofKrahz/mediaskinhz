@@ -168,7 +168,7 @@ function presetSet(P){const g=S.gen||(S.gen=defGen()),T=genTargets(),L=presetIns
   // dibujos con su propio recuadro negro (la hoja de Driving eco, la carátula vacía…): el negro que toca el borde pasa a transparente
   // también el recuadro negro de las listas y del «1/2»: sobre un fondo de color quedaban como cajas negras
   // estilos con cuerpo (Oro, Carbono, Biselado…): la línea separadora de la barra de abajo se quita (deja ver el fondo); en los de solo líneas se queda, del color del diseño
-  S.ver++;for(const F of S.files.filter(F=>/softkey|_parting_line\.bmp$/.test(F.lc)&&/parting_line/.test(F.lc))){if(F.rep&&F.rep.by!=='preset')continue;F.rep=null;F.cv=null;if(THRU.has(P.look))continue;hideLine(F)}
+  S.ver++;setSeps(null,sepHidden(P.look));
   S.ver++;for(const F of [...PCLEAR.map(byName),...S.files.filter(F=>/list_line|scrollnumber_bg/.test(F.lc))]){if(F&&(!F.rep||F.rep.by==='preset'))clearBlack(F)}
   return {T,L}}
 /* Fondo nuevo para un diseño listo: negro con el color del diseño (degradado, resplandor abajo y un dibujo suave que sigue al estilo).
@@ -213,6 +213,12 @@ function presetBg(F,P,bk){const scr=[...SCRBG.entries()].find(e=>e[1]===F.lc||by
   const d=c.getContext('2d').getImageData(0,0,800,480).data,q=quantize(d,800,480,{dither:true});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'preset'};S.ex[F.path]=true;delete S.ops.file[F.path];F.cv=null}
 // las estrellas de puntuación de Driving eco se quedan doradas, como unas estrellas de verdad
 const STARS=/eco_scoring_star|_star_img/;
+// Líneas separadoras entre botones (barras de abajo): Automático (se ocultan con los estilos de cuerpo), Ocultar o Mostrar. S.gen.sep
+const SEPOPT=[['auto','Automático'],['hide','Ocultar'],['show','Mostrar']];
+const sepHidden=look=>{const o=(S.gen&&S.gen.sep)||'auto';return o==='hide'||(o==='auto'&&!THRU.has(look))};
+const sepFiles=s=>S.files.filter(F=>/parting_line\.bmp$/.test(F.lc)&&(!s||F.sec===SCRSEC[s]));
+function setSeps(s,hide){for(const F of sepFiles(s)){if(F.rep&&F.rep.by!=='preset')continue;F.rep=null;F.cv=null;if(S.ex[F.path]===true)delete S.ex[F.path];if(hide)hideLine(F)}S.ver++}
+const sepHTML=id=>`<p class="lbl">Líneas entre los botones de abajo</p><div class="chips" id="${id}">${SEPOPT.map(([k,l])=>`<button class="chip" data-v="${k}" aria-pressed="${((S.gen&&S.gen.sep)||'auto')===k}">${l}</button>`).join('')}</div>`;
 function hideLine(F){const p=vwPos(F),B=p&&byName(SCRBG.get(p.s));const c=document.createElement('canvas');c.width=F.w;c.height=F.h;const x=c.getContext('2d');
   const fw=F.w/frames(F);for(let k=0;k<frames(F);k++){if(B)x.drawImage(renderCanvas(B,false),p.x,p.y,fw,F.h,k*fw,0,fw,F.h);else{x.fillStyle='#000';x.fillRect(k*fw,0,fw,F.h)}}
   const d=x.getImageData(0,0,F.w,F.h).data,q=quantize(d,F.w,F.h,{dither:false});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'preset'};S.ex[F.path]=true;delete S.ops.file[F.path];F.cv=null}
@@ -232,9 +238,11 @@ function presetSheet(P0){
   const forScr=s=>{if(s==='home')return all.T;const fs=new Set(scrFiles(s));return all.L.filter(F=>fs.has(F))};
   openBS(`<h2>Diseños listos</h2><p class="note" id="ps-n"></p>${pvBlock('ps-pv')}
     <div class="chips scroll" id="ps-s" style="margin-top:8px">${scrs.map(([k,l])=>`<button class="chip" data-s="${k}" aria-pressed="${k===scr}">${l}</button>`).join('')}</div>
+    ${sepHTML('ps-sep')}
     <div class="hs" id="ps-l" style="margin-top:6px">${PRESETS.map(Q=>`<button class="ocd" data-v="${Q.id}"><canvas width="1" height="1"></canvas><span>${esc(Q.name)}</span></button>`).join('')}</div>
     <div class="row2" style="display:flex;gap:8px;margin-top:10px"><button class="btn o" style="flex:1" id="ps-x">Cancelar</button><button class="btn" style="flex:2" id="ps-ok">Aplicar este diseño</button></div>`);
   const bs=$('#bs'),c=bs.querySelector('#ps-pv'),lst=bs.querySelector('#ps-l');
+  bs.querySelector('#ps-sep').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;(S.gen||(S.gen=defGen())).sep=b.dataset.v;bs.querySelectorAll('#ps-sep .chip').forEach(x=>x.setAttribute('aria-pressed',x===b));if(P){setSeps(null,sepHidden(P.look));draw()}};
   const draw=()=>{drawPreview(c,{scr,view:scr==='home'?null:vwCur(scr)})};
   const build=s=>{const A=forScr(s).filter(F=>!done.has(F));A.forEach(F=>done.add(F));applyButtons(A)};
   const use=Q=>{if(P)restoreSnap();P=Q;done=new Set();all=presetSet(Q);S.ver++;build(scr);draw();
@@ -299,3 +307,16 @@ function longPress(c,fn){let t=0,x0=0,y0=0,used=false;c.dataset.lp='1';
   ['pointerup','pointercancel','pointerleave'].forEach(k=>c.addEventListener(k,()=>clearTimeout(t)));
   c.addEventListener('contextmenu',e=>{e.preventDefault();clearTimeout(t);used=true;fn(e)});
   return ()=>{const u=used;used=false;return u}}
+
+/* ---- Iconos de cobertura y batería de colores (los del usuario): rojo, ámbar y verde según el nivel ----
+   Mismo dibujo que los de Renault; lo blanco de cada estado toma su color. Van por defecto en todos los diseños (Ajustes → Preferencias) */
+const STICONS={'common/common_indi_antenna_icon.bmp':[null,[237,34,4],[255,208,8],[70,250,37],[70,250,37],[70,250,37],[70,250,37]],
+  'common/common_indi_antenna_icon_dark.bmp':[null,[237,34,4],[255,208,8],[70,250,37],[70,250,37],[70,250,37],[70,250,37]],
+  'common/common_indi_battery_icon.bmp':[[246,20,10],[252,211,5],[163,253,70],[163,253,70]],
+  'common/common_indi_battery_icon_dark.bmp':[[246,20,10],[252,211,5],[163,253,70],[163,253,70]]};
+function statusIcons(on){let n=0;for(const [p,cols] of Object.entries(STICONS)){const F=byName(p);if(!F)continue;
+    if(!on){if(F.rep&&F.rep.by==='status'){F.rep=null;delete S.ex[F.path];F.cv=null;n++}continue}
+    if(F.rep)continue;const c=renderOrig(F,false),w=F.w,h=F.h,d=c.getContext('2d').getImageData(0,0,w,h).data,fw=w/cols.length,key=new Uint8Array(w*h);
+    for(let i=0;i<w*h;i++){const r=d[i*4],g=d[i*4+1],b=d[i*4+2];if(r>240&&g>240&&b<30){key[i]=1;continue}const col=cols[Math.min(cols.length-1,((i%w)/fw)|0)];if(col&&Math.min(r,g,b)>200){d[i*4]=col[0];d[i*4+1]=col[1];d[i*4+2]=col[2]}}
+    const q=quantize(d,w,h,{key,dither:false});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'status'};S.ex[F.path]=true;F.cv=null;n++}
+  if(n)S.ver++;return n}

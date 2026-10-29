@@ -1,6 +1,6 @@
 
 /* ============ ajustes, confirmaciones, puntos de restauración e historial ============ */
-const SETDEF={confirm:true,auto:true,xboot:true,xmode:'auto',xhw:2,xorig:true,pv:'m',theme:'auto'};
+const SETDEF={stIcons:true,confirm:true,auto:true,xboot:true,xmode:'auto',xhw:2,xorig:true,pv:'m',theme:'auto'};
 let SET={...SETDEF};
 function loadSet(){try{SET={...SETDEF,...JSON.parse(localStorage.getItem('skinhz-set')||'{}')}}catch(_){SET={...SETDEF}}
   if(S.xmode===undefined)S.xmode=SET.xmode;if(S.xhw===undefined)S.xhw=SET.xhw;applySetUI()}
@@ -121,6 +121,7 @@ async function scrSettings(v){
       ${est&&est.usage?`<p class="note">Espacio usado en este navegador: <b>${fsz(est.usage)}</b>${est.quota?' de '+fsz(est.quota):''}. Las copias automáticas se borran solas a partir de 10; tus diseños, nunca.</p>`:''}</div>
   </div><div class="stack">
     <div class="card"><h3>Seguridad</h3>
+      <label class="swrow" for="s-sti"><span>Cobertura y batería de colores<small>Los iconos de la barra de arriba en rojo, ámbar y verde según el nivel, en todos los diseños</small></span><input class="sw" type="checkbox" id="s-sti"${SET.stIcons!==false?' checked':''}></label>
       <label class="swrow" for="s-cf"><span>Pedir confirmación<small>Antes de cargar otro backup, quitar cambios, sustituir imágenes nuevas o cerrar el backup</small></span><input class="sw" type="checkbox" id="s-cf"${SET.confirm?' checked':''}></label>
       <label class="swrow" for="s-au"><span>Copias automáticas<small>Se guarda una copia del diseño antes de cada cambio grande</small></span><input class="sw" type="checkbox" id="s-au"${SET.auto?' checked':''}></label></div>
     <div class="card"><h3>Exportación por defecto</h3>
@@ -145,6 +146,7 @@ async function scrSettings(v){
   const segOn=(id,f)=>{const el=$(id);el.onclick=e=>{const b=e.target.closest('button[data-v]');if(!b)return;el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));f(b.dataset.v)}};
   segOn('#s-xm',x=>{SET.xmode=x;S.xmode=x;saveSet()});segOn('#s-hw',x=>{SET.xhw=+x;S.xhw=+x;saveSet()});segOn('#s-pv',x=>{SET.pv=x;saveSet()});
   segOn('#s-th',x=>{SET.theme=x;saveSet();try{if(x==='auto'){localStorage.removeItem('skinhz-theme');delete document.documentElement.dataset.theme}else{localStorage.setItem('skinhz-theme',x);document.documentElement.dataset.theme=x}}catch(_){}});
+  $('#s-sti').onchange=e=>{SET.stIcons=e.target.checked;saveSet();if(!S.demo){before();statusIcons(SET.stIcons);bump();saveState()}};
   $('#s-cf').onchange=e=>{SET.confirm=e.target.checked;saveSet()};$('#s-au').onchange=e=>{SET.auto=e.target.checked;saveSet()};$('#s-xo').onchange=e=>{SET.xorig=e.target.checked;saveSet()};
   const sp=$('#s-pt');if(sp)sp.onclick=async()=>{await saveDesign();render(true)};
   const si=$('#s-imp');if(si)si.onclick=pickDesignFile;

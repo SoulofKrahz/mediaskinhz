@@ -102,7 +102,7 @@ function scrScreen(v,r){
       <p class="lbl">Estilo <small>· se aplica al momento; Deshacer lo quita</small></p><div class="hs" id="sc-lk">${LOOKS().map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${curLook===k}"><canvas data-lk="${k}" width="1" height="1"></canvas><span>${l}</span></button>`).join('')}</div>
       <p class="lbl">Color del marco</p><div class="hsw" id="sc-fc">${swatches(same('hue'),{none:'El original',white:true,label:'Color del marco de todos'})}</div>
       <p class="lbl">Color del icono</p><div class="hsw" id="sc-icc">${swatches(same('ihue'),{none:'Como el original',white:true,label:'Color del icono de todos'})}</div>
-      ${isInHTML('sc-isz')}</div>`:''}
+      ${isInHTML('sc-isz')}${sepFiles(s).length?sepHTML('sc-sep'):''}</div>`:''}
     <div class="card"><h3>Color de toda la pantalla</h3><p class="note">Tiñe todas las imágenes de ${esc(scrName(s))} a la vez. Lo que cambies después en una imagen concreta manda sobre esto.</p><div id="sc-tint"></div>
       <button class="btn o sm" id="sc-more">Más colores de esta pantalla</button></div>
     ${bg&&s!=='common'?`<div class="card"><h3>Fondo</h3><div class="list">${fileRow(bg,'Fondo · 800×480')}</div>
@@ -151,6 +151,7 @@ function scrScreen(v,r){
   for(const [id,key] of [['#sc-fc','hue'],['#sc-icc','ihue']]){const sw=$(id+' .swg');if(!sw)continue;
     sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;const h=b.dataset.h;allCol(key,h==='none'?null:h==='white'?'white':+h)};
     sw.querySelector('[data-pick]').onchange=e=>allCol(key,Math.round(hexHsl(e.target.value)[0]))}
+  const sp=$('#sc-sep');if(sp)sp.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;before();const g=S.gen||(S.gen=defGen());g.sep=b.dataset.v;const lk=(sty.map(F=>(g.per[F.path]||{}).look).find(Boolean))||btnLook();setSeps(s,sepHidden(lk));sp.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===b));schedule();saveState();toast(b.dataset.v==='hide'?'Líneas ocultas':b.dataset.v==='show'?'Líneas visibles':'Líneas según el estilo',{label:'Deshacer',fn:undo})};
   const isz=$('#sc-isz');if(isz)isz.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;await setIsIn(+b.dataset.v,btns);render(true)};
   mountThumbs(v);
 }

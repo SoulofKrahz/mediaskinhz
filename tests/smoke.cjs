@@ -141,6 +141,8 @@ async function run(browser, label, viewport, mobile) {
   ok(br > 110, `el estado seleccionado es claro para que se lea el texto negro de la radio (${Math.round(br)})`);
   const cps = await p.evaluate(() => { const T = genTargets(); if (T.length < 2) return true; S.gen.per[T[0].path] = { ...(S.gen.per[T[0].path] || {}), hue: 300, ihue: 'white' }; copyStyle(T[0]); const bar = !document.querySelector('#pastebar'); pasteStyle([T[1]]); const p1 = S.gen.per[T[1].path] || {}; pasteBar(false); undo(); return bar && p1.hue === 300 && p1.ihue === 'white' && !document.querySelector('#pastebar'); });
   ok(cps, 'copiar y pegar estilo pasa el color del marco y del icono de un botón a otro');
+  const sti = await p.evaluate(() => { const F = byName('common/common_indi_battery_icon.bmp'); if (!F) return true; for (const G of S.files) if (G.rep && G.rep.by === 'status') { G.rep = null } const n = statusIcons(true); return n > 0 && F.rep && F.rep.by === 'status'; });
+  ok(sti, 'los iconos de cobertura y batería de colores se ponen por defecto');
   ok(sty.n >= 47 && !sty.bad.length, `los ${sty.n} estilos de botón se dibujan` + (sty.bad.length ? ': fallan ' + sty.bad.join(', ') : ''));
   // Diálogo para poner nombre (lo usan «Mis diseños»)
   const nm = p.evaluate(() => promptBS({ title: 'Prueba', value: 'Mi diseño' })); await p.waitForTimeout(300);

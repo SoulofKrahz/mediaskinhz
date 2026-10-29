@@ -76,13 +76,16 @@ const NOBRITE=new Set(['metal','frost']);
 // estilos que dibujan su cuerpo con rectángulos (no con el primer relleno): al pulsar se aclara encima para que se lea el texto negro de la radio
 const LIFT=new Set(['split','bevel3d','pixel','frost','soft','carbon']);
 const THRU=new Set(['hud','hudb','hudf','outline','neon','halo','grid','ring','corner','gborder','wave','circuit','duo','notch','scan','led','double','beam','dots','slash','minimal']);
+function bgAvg(B){if(B.avgv===S.ver&&B.avg)return B.avg;const d=renderCanvas(B,false).getContext('2d').getImageData(0,260,800,160).data;let r=0,g=0,b=0,n=0;for(let i=0;i<d.length;i+=16){r+=d[i];g+=d[i+1];b+=d[i+2];n++}B.avg=`rgb(${r/n|0},${g/n|0},${b/n|0})`;B.avgv=S.ver;return B.avg}
 function vwPos(F){const kp=KNOWNPOS[F.lc];if(kp)return {x:kp[0],y:kp[1],s:'home'};if(typeof VW==='undefined'||!VW.data)return null;if(F.vpv===VW.data)return F.vp;let r=null;for(const o of VW.data){for(const c of o.c||[])if(c[0]===F.lc){r={x:c[1],y:c[2],w:c[3],h:c[4],s:o.s==='common'?'radio':o.s};break}if(r)break}F.vp=r;F.vpv=VW.data;return r}
 const presetBgOn=()=>[...SCRBG.values()].some(n=>{const B=byName(n);return B&&B.rep&&B.rep.by==='preset'});
 function cornerBase(F){const s=S.layout.slots.find(s=>s.p===F.path),bg=byName('common/home_bg.bmp'),fw=F.w/frames(F),c=document.createElement('canvas');c.width=fw;c.height=F.h;const x=c.getContext('2d');
   // fuera de Inicio: el color del borde original, teñido con el color de toda la radio (si lo hay) para que no quede un marco de otro color
   // con un fondo de diseño listo, las esquinas de dentro son transparentes (amarillo clave, como ya hacen muchos originales) para que no salgan cajas negras
   // con un fondo de diseño listo: si se sabe dónde va el botón (vistas del programa), debajo va ese trozo del fondo; si no, transparente
-  if(!s&&presetBgOn()){const p=vwPos(F),B=p&&byName(SCRBG.get(p.s));if(B){x.drawImage(renderCanvas(B,false),p.x,p.y,fw,F.h,0,0,fw,F.h);c.full=true;return c}if(F.keyCount)return c}
+  if(!s&&presetBgOn()){const p=vwPos(F),B=p&&byName(SCRBG.get(p.s));if(B){x.drawImage(renderCanvas(B,false),p.x,p.y,fw,F.h,0,0,fw,F.h);c.full=true;return c}if(F.keyCount)return c;
+    // sin posición conocida (teclados alternativos, botones de otras versiones…): el color medio del fondo de su pantalla, nunca negro
+    const sc=SECSCR[F.sec]||'home',B2=byName(SCRBG.get(sc))||byName(SCRBG.get('home'));if(B2){x.fillStyle=bgAvg(B2);x.fillRect(0,0,fw,F.h);c.full=true}return c}
   if(!s){if(!F.keyCount){let col=borderColor(F);const ph=((S.gen&&S.gen.per[F.path])||{}).hue,o=typeof ph==='number'?{...defOps(),tH:ph,tA:100}:S.ops.global;if(o&&o.tA){const m=col.match(/\d+/g);if(m){const [r,g,b]=applyOps(m.slice(0,3).map(Number),{...o,tG:true});col=`rgb(${r},${g},${b})`}}x.fillStyle=col;x.fillRect(0,0,fw,F.h)}return c}x.fillStyle='#000';x.fillRect(0,0,fw,F.h);
   if(s&&bg)x.drawImage(renderCanvas(bg,false),s.x,s.y,fw,F.h,0,0,fw,F.h);return c}
 function rrect(x,X,Y,W,H,r){r=Math.max(0,Math.min(r,W/2,H/2));x.beginPath();x.moveTo(X+r,Y);x.lineTo(X+W-r,Y);x.arcTo(X+W,Y,X+W,Y+r,r);x.lineTo(X+W,Y+H-r);x.arcTo(X+W,Y+H,X+W-r,Y+H,r);x.lineTo(X+r,Y+H);x.arcTo(X,Y+H,X,Y+H-r,r);x.lineTo(X,Y+r);x.arcTo(X,Y,X+r,Y,r);x.closePath()}

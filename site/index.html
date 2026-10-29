@@ -742,7 +742,7 @@ async function fromFileList(fl){
     if(z&&arr.length===1){list=await readZip(await z.arrayBuffer(),n=>{if(/\.png$/i.test(n)){png++;return false}return /\.bmp$/i.test(n)})}
     else{list=[];for(const f of arr){const p=f._path||f.webkitRelativePath||f.name;if(/\.png$/i.test(p)){png++;continue}if(!/\.bmp$/i.test(p))continue;list.push({path:p,buf:await f.arrayBuffer()})}}
     const bkn=z&&arr.length===1?z.name:((arr[0]&&(arr[0]._path||arr[0].webkitRelativePath)||'').split('/').filter(Boolean)[0]||null);
-    if(await ingest(list,{png,name:bkn})){setBase(null);S.stack=[];S.route={n:'home'};render();toast(`Backup cargado: ${S.files.length} imágenes`)}
+    if(await ingest(list,{png,name:bkn})){if(SET.stIcons!==false)statusIcons(true);setBase(null);S.stack=[];S.route={n:'home'};render();toast(`Backup cargado: ${S.files.length} imágenes`)}
   }catch(err){toast(err.message||'No se pudo leer el backup',{ms:6000})}
 }
 async function walkEntry(en,out){
@@ -783,7 +783,7 @@ function saveState(now){if(S.demo)return Promise.resolve();clearTimeout(saveT);c
   const gen=packGen();
   return idb.set('state',{v:2,ops:S.ops,ex:S.ex,frames:S.frames,layout:S.layout,reps,gen,icx:S.icx||{},stby:S.stby||null}).catch(()=>{})};if(now)return run();saveT=setTimeout(run,600)}
 function applyState(st){if(!st)return;S.ops=st.ops||S.ops;S.icx=st.icx||{};S.stby=st.stby||null;if(st.gen)S.gen=st.gen;S.ex=st.ex||{};S.frames=st.frames||{};if(st.layout&&!(st.layout.slots&&st.layout.slots[0]&&st.layout.slots[0].x===75&&st.layout.slots[0].y===134))S.layout=st.layout;
-  for(const [p,r] of Object.entries(st.reps||{})){const F=S.lc.get(p.toLowerCase());if(F&&r.idx&&r.idx.length===F.w*F.h){F.rep={pal:r.pal,idx:r.idx,keyIdx:r.keyIdx,by:r.by||repByGuess(st,F)};if(r.exempt&&S.ex[F.path]===undefined)S.ex[F.path]=true}}migrateLook(st);if(S.gen&&S.gen.per)for(const F of S.files){const q=S.gen.per[F.path];if(q&&q.look&&q.look!=='orig'&&noStyle(F)){delete q.look;if(F.rep&&(F.rep.by==='gen'||!F.rep.by))F.rep=null;delete S.ex[F.path];F.cv=null}}S.ver++}
+  for(const [p,r] of Object.entries(st.reps||{})){const F=S.lc.get(p.toLowerCase());if(F&&r.idx&&r.idx.length===F.w*F.h){F.rep={pal:r.pal,idx:r.idx,keyIdx:r.keyIdx,by:r.by||repByGuess(st,F)};if(r.exempt&&S.ex[F.path]===undefined)S.ex[F.path]=true}}migrateLook(st);if(typeof SET!=='undefined'&&SET.stIcons!==false&&!S.demo)statusIcons(true);if(S.gen&&S.gen.per)for(const F of S.files){const q=S.gen.per[F.path];if(q&&q.look&&q.look!=='orig'&&noStyle(F)){delete q.look;if(F.rep&&(F.rep.by==='gen'||!F.rep.by))F.rep=null;delete S.ex[F.path];F.cv=null}}S.ver++}
 function remember(){try{localStorage.setItem('skinhz-ui',JSON.stringify({cat:S.cat,grid:S.gridOn,gs:S.gridSize,snap:S.snap,scr:S.scr}))}catch(_){}}
 function recall(){let u={};try{u=JSON.parse(localStorage.getItem('skinhz-ui')||'{}')||{}}catch(_){}
   if(u.cat&&CATL.has(u.cat))S.cat=u.cat;if(typeof u.grid==='boolean')S.gridOn=u.grid;if(u.gs)S.gridSize=u.gs;if(u.snap===false)S.snap=false;if(u.scr&&SCRBG.has(u.scr))S.scr=u.scr}
@@ -1373,7 +1373,7 @@ function openMenu(){const G=t=>`<p class="lbl" style="margin:12px 6px 4px">${t}<
     else if(m==='designs'){closeBS();S.ttab='mios';go({n:'theme'})}
     else if(m==='save'){closeBS();saveDesign()}
     else if(m==='reset'){const n=updBadge();if(!await confirmBS({title:'Quitar todos los cambios',text:`Las ${n} imágenes cambiadas volverán a ser las originales. Se guardará antes una copia automática y también podrás deshacerlo.`,ok:'Quitar los cambios',danger:true}))return;
-      await addPoint('Antes de quitar todos los cambios','auto');before();S.ops={global:null,sec:{},file:{}};S.ex={};for(const F of S.files)F.rep=null;S.src=new Map();bump();render(true);toast('Cambios quitados',{label:'Deshacer',fn:undo})}
+      await addPoint('Antes de quitar todos los cambios','auto');before();S.ops={global:null,sec:{},file:{}};S.ex={};for(const F of S.files)F.rep=null;S.src=new Map();if(SET.stIcons!==false)statusIcons(true);bump();render(true);toast('Cambios quitados',{label:'Deshacer',fn:undo})}
     else if(m==='close'){if(!await confirmBS({title:'Cerrar el backup',text:'Se borran de este navegador tu backup y el diseño actual. El historial y los puntos de restauración se conservan y volverán a aparecer si cargas el mismo backup. Esto no se puede deshacer.',ok:'Cerrar el backup',danger:true,always:true}))return;
       await addPoint('Al cerrar el backup','auto');try{await idb.del('files');await idb.del('state')}catch(_){}await demo();S.stack=[];S.route={n:'home'};render();toast('Backup cerrado')}}}
 function openLoad(){openBS(`<h2>Cargar tu backup</h2><p>Elige la carpeta <b>M1</b> de tu backup (en Dacia es <b>M0</b>): la que contiene <code>HOME</code>, <code>COMMON</code>, <code>MEDIA</code>… En el móvil usa un <b>ZIP</b> de esa carpeta: el iPhone no deja elegir carpetas.</p>
@@ -1525,13 +1525,16 @@ const NOBRITE=new Set(['metal','frost']);
 // estilos que dibujan su cuerpo con rectángulos (no con el primer relleno): al pulsar se aclara encima para que se lea el texto negro de la radio
 const LIFT=new Set(['split','bevel3d','pixel','frost','soft','carbon']);
 const THRU=new Set(['hud','hudb','hudf','outline','neon','halo','grid','ring','corner','gborder','wave','circuit','duo','notch','scan','led','double','beam','dots','slash','minimal']);
+function bgAvg(B){if(B.avgv===S.ver&&B.avg)return B.avg;const d=renderCanvas(B,false).getContext('2d').getImageData(0,260,800,160).data;let r=0,g=0,b=0,n=0;for(let i=0;i<d.length;i+=16){r+=d[i];g+=d[i+1];b+=d[i+2];n++}B.avg=`rgb(${r/n|0},${g/n|0},${b/n|0})`;B.avgv=S.ver;return B.avg}
 function vwPos(F){const kp=KNOWNPOS[F.lc];if(kp)return {x:kp[0],y:kp[1],s:'home'};if(typeof VW==='undefined'||!VW.data)return null;if(F.vpv===VW.data)return F.vp;let r=null;for(const o of VW.data){for(const c of o.c||[])if(c[0]===F.lc){r={x:c[1],y:c[2],w:c[3],h:c[4],s:o.s==='common'?'radio':o.s};break}if(r)break}F.vp=r;F.vpv=VW.data;return r}
 const presetBgOn=()=>[...SCRBG.values()].some(n=>{const B=byName(n);return B&&B.rep&&B.rep.by==='preset'});
 function cornerBase(F){const s=S.layout.slots.find(s=>s.p===F.path),bg=byName('common/home_bg.bmp'),fw=F.w/frames(F),c=document.createElement('canvas');c.width=fw;c.height=F.h;const x=c.getContext('2d');
   // fuera de Inicio: el color del borde original, teñido con el color de toda la radio (si lo hay) para que no quede un marco de otro color
   // con un fondo de diseño listo, las esquinas de dentro son transparentes (amarillo clave, como ya hacen muchos originales) para que no salgan cajas negras
   // con un fondo de diseño listo: si se sabe dónde va el botón (vistas del programa), debajo va ese trozo del fondo; si no, transparente
-  if(!s&&presetBgOn()){const p=vwPos(F),B=p&&byName(SCRBG.get(p.s));if(B){x.drawImage(renderCanvas(B,false),p.x,p.y,fw,F.h,0,0,fw,F.h);c.full=true;return c}if(F.keyCount)return c}
+  if(!s&&presetBgOn()){const p=vwPos(F),B=p&&byName(SCRBG.get(p.s));if(B){x.drawImage(renderCanvas(B,false),p.x,p.y,fw,F.h,0,0,fw,F.h);c.full=true;return c}if(F.keyCount)return c;
+    // sin posición conocida (teclados alternativos, botones de otras versiones…): el color medio del fondo de su pantalla, nunca negro
+    const sc=SECSCR[F.sec]||'home',B2=byName(SCRBG.get(sc))||byName(SCRBG.get('home'));if(B2){x.fillStyle=bgAvg(B2);x.fillRect(0,0,fw,F.h);c.full=true}return c}
   if(!s){if(!F.keyCount){let col=borderColor(F);const ph=((S.gen&&S.gen.per[F.path])||{}).hue,o=typeof ph==='number'?{...defOps(),tH:ph,tA:100}:S.ops.global;if(o&&o.tA){const m=col.match(/\d+/g);if(m){const [r,g,b]=applyOps(m.slice(0,3).map(Number),{...o,tG:true});col=`rgb(${r},${g},${b})`}}x.fillStyle=col;x.fillRect(0,0,fw,F.h)}return c}x.fillStyle='#000';x.fillRect(0,0,fw,F.h);
   if(s&&bg)x.drawImage(renderCanvas(bg,false),s.x,s.y,fw,F.h,0,0,fw,F.h);return c}
 function rrect(x,X,Y,W,H,r){r=Math.max(0,Math.min(r,W/2,H/2));x.beginPath();x.moveTo(X+r,Y);x.lineTo(X+W-r,Y);x.arcTo(X+W,Y,X+W,Y+r,r);x.lineTo(X+W,Y+H-r);x.arcTo(X+W,Y+H,X+W-r,Y+H,r);x.lineTo(X+r,Y+H);x.arcTo(X,Y+H,X,Y+H-r,r);x.lineTo(X,Y+r);x.arcTo(X,Y,X+r,Y,r);x.closePath()}
@@ -1831,7 +1834,7 @@ async function makeKit(){
 }
 
 /* ============ ajustes, confirmaciones, puntos de restauración e historial ============ */
-const SETDEF={confirm:true,auto:true,xboot:true,xmode:'auto',xhw:2,xorig:true,pv:'m',theme:'auto'};
+const SETDEF={stIcons:true,confirm:true,auto:true,xboot:true,xmode:'auto',xhw:2,xorig:true,pv:'m',theme:'auto'};
 let SET={...SETDEF};
 function loadSet(){try{SET={...SETDEF,...JSON.parse(localStorage.getItem('skinhz-set')||'{}')}}catch(_){SET={...SETDEF}}
   if(S.xmode===undefined)S.xmode=SET.xmode;if(S.xhw===undefined)S.xhw=SET.xhw;applySetUI()}
@@ -1952,6 +1955,7 @@ async function scrSettings(v){
       ${est&&est.usage?`<p class="note">Espacio usado en este navegador: <b>${fsz(est.usage)}</b>${est.quota?' de '+fsz(est.quota):''}. Las copias automáticas se borran solas a partir de 10; tus diseños, nunca.</p>`:''}</div>
   </div><div class="stack">
     <div class="card"><h3>Seguridad</h3>
+      <label class="swrow" for="s-sti"><span>Cobertura y batería de colores<small>Los iconos de la barra de arriba en rojo, ámbar y verde según el nivel, en todos los diseños</small></span><input class="sw" type="checkbox" id="s-sti"${SET.stIcons!==false?' checked':''}></label>
       <label class="swrow" for="s-cf"><span>Pedir confirmación<small>Antes de cargar otro backup, quitar cambios, sustituir imágenes nuevas o cerrar el backup</small></span><input class="sw" type="checkbox" id="s-cf"${SET.confirm?' checked':''}></label>
       <label class="swrow" for="s-au"><span>Copias automáticas<small>Se guarda una copia del diseño antes de cada cambio grande</small></span><input class="sw" type="checkbox" id="s-au"${SET.auto?' checked':''}></label></div>
     <div class="card"><h3>Exportación por defecto</h3>
@@ -1976,6 +1980,7 @@ async function scrSettings(v){
   const segOn=(id,f)=>{const el=$(id);el.onclick=e=>{const b=e.target.closest('button[data-v]');if(!b)return;el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));f(b.dataset.v)}};
   segOn('#s-xm',x=>{SET.xmode=x;S.xmode=x;saveSet()});segOn('#s-hw',x=>{SET.xhw=+x;S.xhw=+x;saveSet()});segOn('#s-pv',x=>{SET.pv=x;saveSet()});
   segOn('#s-th',x=>{SET.theme=x;saveSet();try{if(x==='auto'){localStorage.removeItem('skinhz-theme');delete document.documentElement.dataset.theme}else{localStorage.setItem('skinhz-theme',x);document.documentElement.dataset.theme=x}}catch(_){}});
+  $('#s-sti').onchange=e=>{SET.stIcons=e.target.checked;saveSet();if(!S.demo){before();statusIcons(SET.stIcons);bump();saveState()}};
   $('#s-cf').onchange=e=>{SET.confirm=e.target.checked;saveSet()};$('#s-au').onchange=e=>{SET.auto=e.target.checked;saveSet()};$('#s-xo').onchange=e=>{SET.xorig=e.target.checked;saveSet()};
   const sp=$('#s-pt');if(sp)sp.onclick=async()=>{await saveDesign();render(true)};
   const si=$('#s-imp');if(si)si.onclick=pickDesignFile;
@@ -3062,7 +3067,7 @@ function presetSet(P){const g=S.gen||(S.gen=defGen()),T=genTargets(),L=presetIns
   // dibujos con su propio recuadro negro (la hoja de Driving eco, la carátula vacía…): el negro que toca el borde pasa a transparente
   // también el recuadro negro de las listas y del «1/2»: sobre un fondo de color quedaban como cajas negras
   // estilos con cuerpo (Oro, Carbono, Biselado…): la línea separadora de la barra de abajo se quita (deja ver el fondo); en los de solo líneas se queda, del color del diseño
-  S.ver++;for(const F of S.files.filter(F=>/softkey|_parting_line\.bmp$/.test(F.lc)&&/parting_line/.test(F.lc))){if(F.rep&&F.rep.by!=='preset')continue;F.rep=null;F.cv=null;if(THRU.has(P.look))continue;hideLine(F)}
+  S.ver++;setSeps(null,sepHidden(P.look));
   S.ver++;for(const F of [...PCLEAR.map(byName),...S.files.filter(F=>/list_line|scrollnumber_bg/.test(F.lc))]){if(F&&(!F.rep||F.rep.by==='preset'))clearBlack(F)}
   return {T,L}}
 /* Fondo nuevo para un diseño listo: negro con el color del diseño (degradado, resplandor abajo y un dibujo suave que sigue al estilo).
@@ -3107,6 +3112,12 @@ function presetBg(F,P,bk){const scr=[...SCRBG.entries()].find(e=>e[1]===F.lc||by
   const d=c.getContext('2d').getImageData(0,0,800,480).data,q=quantize(d,800,480,{dither:true});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'preset'};S.ex[F.path]=true;delete S.ops.file[F.path];F.cv=null}
 // las estrellas de puntuación de Driving eco se quedan doradas, como unas estrellas de verdad
 const STARS=/eco_scoring_star|_star_img/;
+// Líneas separadoras entre botones (barras de abajo): Automático (se ocultan con los estilos de cuerpo), Ocultar o Mostrar. S.gen.sep
+const SEPOPT=[['auto','Automático'],['hide','Ocultar'],['show','Mostrar']];
+const sepHidden=look=>{const o=(S.gen&&S.gen.sep)||'auto';return o==='hide'||(o==='auto'&&!THRU.has(look))};
+const sepFiles=s=>S.files.filter(F=>/parting_line\.bmp$/.test(F.lc)&&(!s||F.sec===SCRSEC[s]));
+function setSeps(s,hide){for(const F of sepFiles(s)){if(F.rep&&F.rep.by!=='preset')continue;F.rep=null;F.cv=null;if(S.ex[F.path]===true)delete S.ex[F.path];if(hide)hideLine(F)}S.ver++}
+const sepHTML=id=>`<p class="lbl">Líneas entre los botones de abajo</p><div class="chips" id="${id}">${SEPOPT.map(([k,l])=>`<button class="chip" data-v="${k}" aria-pressed="${((S.gen&&S.gen.sep)||'auto')===k}">${l}</button>`).join('')}</div>`;
 function hideLine(F){const p=vwPos(F),B=p&&byName(SCRBG.get(p.s));const c=document.createElement('canvas');c.width=F.w;c.height=F.h;const x=c.getContext('2d');
   const fw=F.w/frames(F);for(let k=0;k<frames(F);k++){if(B)x.drawImage(renderCanvas(B,false),p.x,p.y,fw,F.h,k*fw,0,fw,F.h);else{x.fillStyle='#000';x.fillRect(k*fw,0,fw,F.h)}}
   const d=x.getImageData(0,0,F.w,F.h).data,q=quantize(d,F.w,F.h,{dither:false});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'preset'};S.ex[F.path]=true;delete S.ops.file[F.path];F.cv=null}
@@ -3126,9 +3137,11 @@ function presetSheet(P0){
   const forScr=s=>{if(s==='home')return all.T;const fs=new Set(scrFiles(s));return all.L.filter(F=>fs.has(F))};
   openBS(`<h2>Diseños listos</h2><p class="note" id="ps-n"></p>${pvBlock('ps-pv')}
     <div class="chips scroll" id="ps-s" style="margin-top:8px">${scrs.map(([k,l])=>`<button class="chip" data-s="${k}" aria-pressed="${k===scr}">${l}</button>`).join('')}</div>
+    ${sepHTML('ps-sep')}
     <div class="hs" id="ps-l" style="margin-top:6px">${PRESETS.map(Q=>`<button class="ocd" data-v="${Q.id}"><canvas width="1" height="1"></canvas><span>${esc(Q.name)}</span></button>`).join('')}</div>
     <div class="row2" style="display:flex;gap:8px;margin-top:10px"><button class="btn o" style="flex:1" id="ps-x">Cancelar</button><button class="btn" style="flex:2" id="ps-ok">Aplicar este diseño</button></div>`);
   const bs=$('#bs'),c=bs.querySelector('#ps-pv'),lst=bs.querySelector('#ps-l');
+  bs.querySelector('#ps-sep').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;(S.gen||(S.gen=defGen())).sep=b.dataset.v;bs.querySelectorAll('#ps-sep .chip').forEach(x=>x.setAttribute('aria-pressed',x===b));if(P){setSeps(null,sepHidden(P.look));draw()}};
   const draw=()=>{drawPreview(c,{scr,view:scr==='home'?null:vwCur(scr)})};
   const build=s=>{const A=forScr(s).filter(F=>!done.has(F));A.forEach(F=>done.add(F));applyButtons(A)};
   const use=Q=>{if(P)restoreSnap();P=Q;done=new Set();all=presetSet(Q);S.ver++;build(scr);draw();
@@ -3193,6 +3206,19 @@ function longPress(c,fn){let t=0,x0=0,y0=0,used=false;c.dataset.lp='1';
   ['pointerup','pointercancel','pointerleave'].forEach(k=>c.addEventListener(k,()=>clearTimeout(t)));
   c.addEventListener('contextmenu',e=>{e.preventDefault();clearTimeout(t);used=true;fn(e)});
   return ()=>{const u=used;used=false;return u}}
+
+/* ---- Iconos de cobertura y batería de colores (los del usuario): rojo, ámbar y verde según el nivel ----
+   Mismo dibujo que los de Renault; lo blanco de cada estado toma su color. Van por defecto en todos los diseños (Ajustes → Preferencias) */
+const STICONS={'common/common_indi_antenna_icon.bmp':[null,[237,34,4],[255,208,8],[70,250,37],[70,250,37],[70,250,37],[70,250,37]],
+  'common/common_indi_antenna_icon_dark.bmp':[null,[237,34,4],[255,208,8],[70,250,37],[70,250,37],[70,250,37],[70,250,37]],
+  'common/common_indi_battery_icon.bmp':[[246,20,10],[252,211,5],[163,253,70],[163,253,70]],
+  'common/common_indi_battery_icon_dark.bmp':[[246,20,10],[252,211,5],[163,253,70],[163,253,70]]};
+function statusIcons(on){let n=0;for(const [p,cols] of Object.entries(STICONS)){const F=byName(p);if(!F)continue;
+    if(!on){if(F.rep&&F.rep.by==='status'){F.rep=null;delete S.ex[F.path];F.cv=null;n++}continue}
+    if(F.rep)continue;const c=renderOrig(F,false),w=F.w,h=F.h,d=c.getContext('2d').getImageData(0,0,w,h).data,fw=w/cols.length,key=new Uint8Array(w*h);
+    for(let i=0;i<w*h;i++){const r=d[i*4],g=d[i*4+1],b=d[i*4+2];if(r>240&&g>240&&b<30){key[i]=1;continue}const col=cols[Math.min(cols.length-1,((i%w)/fw)|0)];if(col&&Math.min(r,g,b)>200){d[i*4]=col[0];d[i*4+1]=col[1];d[i*4+2]=col[2]}}
+    const q=quantize(d,w,h,{key,dither:false});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'status'};S.ex[F.path]=true;F.cv=null;n++}
+  if(n)S.ver++;return n}
 
 /* ============ ventana de cada pantalla de la radio ============
    Como solo se toca la skin, cada pantalla (Radio, Multimedia, Teléfono, Driving eco, Ajustes) es un conjunto cerrado de imágenes:
@@ -3297,7 +3323,7 @@ function scrScreen(v,r){
       <p class="lbl">Estilo <small>· se aplica al momento; Deshacer lo quita</small></p><div class="hs" id="sc-lk">${LOOKS().map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${curLook===k}"><canvas data-lk="${k}" width="1" height="1"></canvas><span>${l}</span></button>`).join('')}</div>
       <p class="lbl">Color del marco</p><div class="hsw" id="sc-fc">${swatches(same('hue'),{none:'El original',white:true,label:'Color del marco de todos'})}</div>
       <p class="lbl">Color del icono</p><div class="hsw" id="sc-icc">${swatches(same('ihue'),{none:'Como el original',white:true,label:'Color del icono de todos'})}</div>
-      ${isInHTML('sc-isz')}</div>`:''}
+      ${isInHTML('sc-isz')}${sepFiles(s).length?sepHTML('sc-sep'):''}</div>`:''}
     <div class="card"><h3>Color de toda la pantalla</h3><p class="note">Tiñe todas las imágenes de ${esc(scrName(s))} a la vez. Lo que cambies después en una imagen concreta manda sobre esto.</p><div id="sc-tint"></div>
       <button class="btn o sm" id="sc-more">Más colores de esta pantalla</button></div>
     ${bg&&s!=='common'?`<div class="card"><h3>Fondo</h3><div class="list">${fileRow(bg,'Fondo · 800×480')}</div>
@@ -3346,6 +3372,7 @@ function scrScreen(v,r){
   for(const [id,key] of [['#sc-fc','hue'],['#sc-icc','ihue']]){const sw=$(id+' .swg');if(!sw)continue;
     sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;const h=b.dataset.h;allCol(key,h==='none'?null:h==='white'?'white':+h)};
     sw.querySelector('[data-pick]').onchange=e=>allCol(key,Math.round(hexHsl(e.target.value)[0]))}
+  const sp=$('#sc-sep');if(sp)sp.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;before();const g=S.gen||(S.gen=defGen());g.sep=b.dataset.v;const lk=(sty.map(F=>(g.per[F.path]||{}).look).find(Boolean))||btnLook();setSeps(s,sepHidden(lk));sp.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===b));schedule();saveState();toast(b.dataset.v==='hide'?'Líneas ocultas':b.dataset.v==='show'?'Líneas visibles':'Líneas según el estilo',{label:'Deshacer',fn:undo})};
   const isz=$('#sc-isz');if(isz)isz.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;await setIsIn(+b.dataset.v,btns);render(true)};
   mountThumbs(v);
 }
@@ -3452,7 +3479,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-21';
+const VER='2026-10-29-22';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3460,6 +3487,9 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-22',['Tus iconos de cobertura y batería de colores (rojo, ámbar y verde según el nivel) van por defecto en todos los diseños y estilos. Se quitan en Ajustes → Preferencias',
+    'Líneas entre los botones de abajo: Automático (se ocultan con los estilos de cuerpo), Ocultar o Mostrar. En los diseños listos y en «Botones de esta pantalla»',
+    'Sin esquinas negras en los botones de los que no se sabe la posición (teclado alternativo, flechas de dirección, hora, sonido…): toman el color del fondo de su pantalla. Era lo que se veía en Cápsula rosa']],
   ['2026-10-29-21',['Revisión uno a uno de los 47 estilos, en sus 4 estados y sobre fondo de color: esquinas y separadores sin cajas ni restos',
     'Aluminio (Metal): en reposo ya no es casi blanco (el texto blanco de la radio no se leía); pulsado y elegido, claros',
     'Dos tonos, Botón 3D, Píxel, Esmerilado, Suave y Carbono: pulsado y elegido claros para que se lea el texto negro de la radio. Cristal también']],
