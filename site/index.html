@@ -1704,7 +1704,8 @@ function drawState(x,F,w,h,s,H,g,bgc){
 function genHue(F,g){const p=g.per[F.path]||{};if(p.hue!=null)return p.hue;return g.color==='orig'?origHue(F):g.hue}
 function genTile(F,g){const fr=frames(F),fw=F.w/fr,h=F.h,c=document.createElement('canvas');c.width=F.w;c.height=h;const x=c.getContext('2d');const H=genHue(F,g),bgc=cornerBase(F);
   for(let s=0;s<fr;s++){x.save();x.translate(s*fw,0);x.beginPath();x.rect(0,0,fw,h);x.clip();drawState(x,F,fw,h,s,H,g,bgc);x.restore()}
-  if(g.corners==='key'){const m=document.createElement('canvas');m.width=F.w;m.height=h;const mx=m.getContext('2d');mx.fillStyle='#fff';const r=gRad(g,h);
+  // la radio solo dibuja transparente (amarillo) en las imágenes que ya lo usaban: en las demás, esquinas y margen llevan el fondo de detrás
+  if(g.corners==='key'&&F.keyCount){const m=document.createElement('canvas');m.width=F.w;m.height=h;const mx=m.getContext('2d');mx.fillStyle='#fff';const r=gRad(g,h);
     for(let s=0;s<fr;s++){rrect(mx,s*fw+g.inset,g.inset,fw-2*g.inset,h-2*g.inset,r);mx.fill()}
     const md=mx.getImageData(0,0,F.w,h).data,im=x.getImageData(0,0,F.w,h);for(let i=0;i<F.w*h;i++)if(md[i*4+3]<128)im.data[i*4+3]=0;x.putImageData(im,0,0)}
   return c}
@@ -1714,7 +1715,7 @@ function applyGen(){const fs=genTargets();if(!fs.length)return;before();S.gen.lo
 
 const GSHAPES=[['rect','Rectángulo'],['round','Redondeado'],['pill','Píldora']];
 function miniTile(F,g,state){const fr=frames(F),fw=F.w/fr,c=document.createElement('canvas');c.width=fw;c.height=F.h;const x=c.getContext('2d');drawState(x,F,fw,F.h,Math.min(state||0,fr-1),genHue(F,g),g,cornerBase(F));
-  if(g.corners==='key'){const r=gRad(g,F.h),m=document.createElement('canvas');m.width=fw;m.height=F.h;const mx=m.getContext('2d');rrect(mx,g.inset,g.inset,fw-2*g.inset,F.h-2*g.inset,r);mx.fill();x.globalCompositeOperation='destination-in';x.drawImage(m,0,0);x.globalCompositeOperation='source-over'}
+  if(g.corners==='key'&&F.keyCount){const r=gRad(g,F.h),m=document.createElement('canvas');m.width=fw;m.height=F.h;const mx=m.getContext('2d');rrect(mx,g.inset,g.inset,fw-2*g.inset,F.h-2*g.inset,r);mx.fill();x.globalCompositeOperation='destination-in';x.drawImage(m,0,0);x.globalCompositeOperation='source-over'}
   const lb=LABELS[F.name.toLowerCase()];if(lb&&fw===210&&F.h===137){x.font='600 21px Tahoma,Inter,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillStyle=state%2===1?'#000':'#fff';x.fillText(lb,105,105.5,176)}return c}
 function putMini(cv,src){const x=cv.getContext('2d');cv.width=src.width;cv.height=src.height;x.drawImage(src,0,0)}
 function genSum(g){return {style:(GSTYLES.find(s=>s[0]===g.style)||GSTYLES[0])[1],shape:(GSHAPES.find(s=>s[0]===g.shape)||GSHAPES[1])[1]+(g.shape==='round'?` ${g.r} px`:'')+` · margen ${g.inset} px · esquinas ${g.corners==='key'?'transparentes':'del fondo'}`,
@@ -1730,8 +1731,7 @@ function scrGen(v){
   const shapeBody=`${own?`<p class="warnbox">El estilo «${esc((LOOKS().find(x=>x[0]===btnLook())||['',''])[1])}» tiene su propia forma: la forma y el redondeo no le cambian. El margen sí.</p>`:''}<div class="ocg">${GSHAPES.map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${g.shape===k}"><canvas data-mf="${k}"></canvas><span>${l}</span></button>`).join('')}</div>
     ${g.shape==='round'?`<label class="rg" for="g-r"><span>Redondeo <output>${g.r} px</output></span><input type="range" id="g-r" min="2" max="48" value="${g.r}"></label>`:''}
     <label class="rg" for="g-in"><span>Margen alrededor <output>${g.inset} px</output></span><input type="range" id="g-in" min="0" max="24" value="${g.inset}"></label>
-    <div class="field"><span class="lbl">Esquinas y margen</span><div class="seg" id="g-co"><button data-v="bg" aria-pressed="${g.corners==='bg'}">Color del fondo</button><button data-v="key" aria-pressed="${g.corners==='key'}">Transparentes</button></div>
-    <p class="note">${g.corners==='key'?'Usa el amarillo de transparencia. Los botones originales no lo usan: compruébalo antes con el kit de prueba o podrían salir esquinas amarillas.':'Opción segura: se pintan con el fondo de Inicio que hay detrás de cada botón.'}</p></div>`;
+    <p class="note">Las esquinas y el margen se rellenan con el trozo de fondo que hay detrás de cada botón, así se ven como transparentes. La radio no aplica la transparencia de verdad (amarillo) en estos botones: probado en el coche.</p>`;
   const colorBody=`<div class="seg" id="g-cm"><button data-v="orig" aria-pressed="${g.color==='orig'}">El de cada botón</button><button data-v="one" aria-pressed="${g.color==='one'}">Uno para todos</button></div>
     ${g.color==='one'?swatches(g.hue,{label:'Color de los botones'}):'<p class="note">Cada botón conserva su color original. Puedes cambiar el de uno solo tocándolo en la pantalla.</p>'}`;
   const iconBody=`<p class="note">Cómo se dibujan <b>todos</b> los iconos. Qué icono lleva cada botón se elige en la pestaña <b>Botones</b>.</p>
@@ -3489,7 +3489,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-24';
+const VER='2026-10-29-25';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3497,6 +3497,7 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-25',['Esquinas de los botones de Inicio: ya no salen negras con «Transparentes». La radio no dibuja transparentes esos botones (lo vimos con la luna), así que esquinas y margen llevan siempre el fondo de detrás, que se ve igual que transparente. Se quita la opción']],
   ['2026-10-29-24',['Estilo de los botones más rápido y sin congelarse: las miniaturas se dibujan poco a poco y solo las de la pestaña abierta (antes se redibujaban las 48 de golpe con cada movimiento de un control)',
     'Cambiar la forma, las esquinas o el modo de color actualiza al momento los botones de la vista previa (antes no se aplicaba hasta tocar otra cosa)',
     'Aviso cuando el estilo elegido tiene forma propia (Biselado, Octógono, Muesca, Etiqueta, Cápsula, Píxel) y por eso la forma no cambia']],

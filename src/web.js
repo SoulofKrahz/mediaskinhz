@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-29-24';
+const VER='2026-10-29-25';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,7 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-29-25',['Esquinas de los botones de Inicio: ya no salen negras con «Transparentes». La radio no dibuja transparentes esos botones (lo vimos con la luna), así que esquinas y margen llevan siempre el fondo de detrás, que se ve igual que transparente. Se quita la opción']],
   ['2026-10-29-24',['Estilo de los botones más rápido y sin congelarse: las miniaturas se dibujan poco a poco y solo las de la pestaña abierta (antes se redibujaban las 48 de golpe con cada movimiento de un control)',
     'Cambiar la forma, las esquinas o el modo de color actualiza al momento los botones de la vista previa (antes no se aplicaba hasta tocar otra cosa)',
     'Aviso cuando el estilo elegido tiene forma propia (Biselado, Octógono, Muesca, Etiqueta, Cápsula, Píxel) y por eso la forma no cambia']],
