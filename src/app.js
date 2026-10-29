@@ -145,9 +145,9 @@ async function ingest(list,opts){
     try{files.push(mkFile(rel,segs[i].toUpperCase(),e.buf,parseBMP(e.buf)))}catch(err){errs.push(rel+': '+err.message)}}
   if(!files.length){toast('No encuentro imágenes del MediaNav. Elige la carpeta M1 (la que contiene HOME, COMMON, MEDIA…) o un ZIP de ella.',{ms:7000});return false}
   files.sort((a,b)=>(SECO.get(a.sec)-SECO.get(b.sec))||a.lc.localeCompare(b.lc));
-  Object.assign(S,{files,lc:new Map(files.map(f=>[f.lc,f])),root,demo:!!opts.demo,png,errs,ops:{global:null,sec:{},file:{}},ex:{},frames:{},layout:null,src:new Map(),scope:'global',sel:0,famOpen:null,gen:null,genCv:null});
+  Object.assign(S,{files,lc:new Map(files.map(f=>[f.lc,f])),root,demo:!!opts.demo,png,errs,bkName:opts.name||null,bkT:opts.t||Date.now(),ops:{global:null,sec:{},file:{}},ex:{},frames:{},layout:null,src:new Map(),scope:'global',sel:0,famOpen:null,gen:null,genCv:null});
   H.length=0;S.ver++;defaultLayout();
-  if(!opts.demo&&!opts.restore){try{await idb.set('files',{list:list.filter(e=>/\.bmp$/i.test(e.path)),png});await idb.del('state')}catch(_){}}
+  if(!opts.demo&&!opts.restore){try{await idb.set('files',{list:list.filter(e=>/\.bmp$/i.test(e.path)),png,name:opts.name||null,t:Date.now()});await idb.del('state')}catch(_){}}
   return true;
 }
 async function fromFileList(fl){
@@ -162,7 +162,8 @@ async function fromFileList(fl){
   try{let list,png=0;
     if(z&&arr.length===1){list=await readZip(await z.arrayBuffer(),n=>{if(/\.png$/i.test(n)){png++;return false}return /\.bmp$/i.test(n)})}
     else{list=[];for(const f of arr){const p=f._path||f.webkitRelativePath||f.name;if(/\.png$/i.test(p)){png++;continue}if(!/\.bmp$/i.test(p))continue;list.push({path:p,buf:await f.arrayBuffer()})}}
-    if(await ingest(list,{png})){setBase(null);S.stack=[];S.route={n:'home'};render();toast(`Backup cargado: ${S.files.length} imágenes`)}
+    const bkn=z&&arr.length===1?z.name:((arr[0]&&(arr[0]._path||arr[0].webkitRelativePath)||'').split('/').filter(Boolean)[0]||null);
+    if(await ingest(list,{png,name:bkn})){setBase(null);S.stack=[];S.route={n:'home'};render();toast(`Backup cargado: ${S.files.length} imágenes`)}
   }catch(err){toast(err.message||'No se pudo leer el backup',{ms:6000})}
 }
 async function walkEntry(en,out){
@@ -637,28 +638,51 @@ function check(F){
 }
 let exTok=0;
 const byHand=F=>!!F.rep||!empty(S.ops.file[F.path]);
+const bkLabel=()=>S.demo?'imágenes de ejemplo':`«${S.bkName||S.root}» · ${S.files.length} imágenes${S.bkT?' · cargado el '+new Date(S.bkT).toLocaleDateString('es-ES'):''}`;
 function scrExport(v){
-  setTitle('Exportar',`<span class="lw">Mediaskin<em>hz</em></span> · ZIP para el USB`);
+  setTitle('Exportar',`<span class="lw">Mediaskin<em>hz</em></span> · ${esc(bkLabel())}`);
   const fs=S.files.filter(changed),tok=++exTok;
-  if(!fs.length){v.innerHTML=`<div class="stack" style="max-width:640px;margin:0 auto"><div class="card"><h2>Todavía no hay cambios</h2><p>Cuando cambies un color o una imagen, aquí verás la lista de archivos, comprobados uno a uno, y el botón para descargar el ZIP.</p><button class="btn wide" data-go="theme">Elegir un tema</button><button class="btn o wide" data-go="home">Ir a la pantalla</button></div></div>`;return}
+  if(!fs.length){v.innerHTML=`<div class="stack" style="max-width:640px;margin:0 auto"><div class="card"><h2>Todavía no hay cambios</h2><p>Cuando cambies un color o una imagen, aquí verás la lista de archivos, comprobados uno a uno, y el botón para descargar el ZIP.</p><button class="btn wide" data-go="theme">Elegir un diseño</button>${S.demo?'':'<button class="btn o wide" id="x-sel0">Preparar el USB completo (copias de seguridad y diseños listos)</button>'}</div></div>`;{const b=$('#x-sel0');if(b)b.onclick=selectorSheet}return}
   if(!S.xoff)S.xoff=new Set();const paths=new Set(fs.map(F=>F.path));for(const p of [...S.xoff])if(!paths.has(p))S.xoff.delete(p);
   const nHand=fs.filter(byHand).length,nTheme=fs.length-nHand;
-  v.innerHTML=`<div class="two"><div class="stack">
-    ${S.demo?'<p class="warnbox">Estás con las imágenes de ejemplo: este ZIP sirve para probar, no para el coche.</p>':''}
-    <div class="card"><p class="eyebrow">Qué se exporta</p><p class="big-n" id="x-cnt">0</p><p id="x-cntl"></p>
+  const xt=S.xtab||(S.xtab=S.demo?'uno':'usb');
+  v.innerHTML=`<div class="stack xwrap">
+    ${S.demo?'<p class="warnbox">Estás con las imágenes de ejemplo: lo que exportes sirve para probar, no para el coche.</p>':''}
+    <div class="seg gtabs" id="x-tabs" role="tablist">${[['usb','USB completo'],['uno','Solo este diseño'],['arch',`Archivos <small id="x-tn">${fs.length}</small>`]].map(([k,l])=>`<button data-t="${k}" aria-pressed="${xt===k}">${l}</button>`).join('')}</div>
+    <div class="two">
+    <div class="stack" data-xp="usb"${xt==='usb'?'':' hidden'}>
+      <div class="card"><p class="eyebrow">Recomendado</p><h2 style="margin:2px 0 6px">Tu USB con menú</h2>
+        <p class="note">Un solo USB para todo. Al arrancar la radio con él sale un menú que manejas con el dedo:</p>
+        <ul class="xfeat">
+          <li><b>Diseños</b><span>Los que elijas (hasta 8) y «Original de Renault». Antes de instalar guarda una copia y, si algo falla, deja la radio como estaba.</span></li>
+          <li><b>Copias de seguridad</b><span>Hacer copia de las imágenes (rápida) o de todo System, y restaurar la última.</span></li>
+          <li><b>Herramientas</b><span>Informe del sistema, Total Commander y prueba de aspecto del menú.</span></li>
+          <li><b>Reiniciar o volver a la radio</b><span>Sin cambiar nada.</span></li></ul>
+        ${S.demo?'':`<button class="btn wide" id="x-sel">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}Preparar el USB completo</button>`}</div>
+      <div class="card" id="x-kitc2"><h3>Contenido de tu USB</h3><div id="x-kit"></div></div>
+    </div>
+    <div class="stack" data-xp="usb"${xt==='usb'?'':' hidden'}><div class="card"><h3>Cómo se usa</h3><ol class="steps">
+      <li>Pulsa «Preparar el USB completo», elige los diseños y descarga el ZIP.</li>
+      <li>Descomprímelo en la raíz del USB (acepta sobrescribir). Si guardaste el contenido de tu USB, vale un USB vacío en FAT32.</li>
+      <li>Arranca la radio con el USB. A los 25 s sale el menú.</li>
+      <li>Para instalar: Diseños → el que quieras. Al terminar, <b>primero ACEPTAR</b> y, cuando la pantalla se apague, saca el USB.</li>
+      <li>Cancelar en el menú abre Total Commander, como siempre.</li></ol>
+      <p class="note">Las copias quedan en el USB, en <code>Mediaskinhz\\copias</code>. La de imágenes se puede cargar aquí como backup (su carpeta <code>${esc(S.root)}</code>). El informe queda en <code>Mediaskinhz\\informe.txt</code>.</p></div></div>
+    <div class="stack" data-xp="uno"${xt==='uno'?'':' hidden'}>
+      <div class="card"><p class="eyebrow">Qué se exporta</p><p class="big-n" id="x-cnt">0</p><p id="x-cntl"></p>
       <div class="chips" id="x-q"><button class="chip" data-q="all">Todas <small>${fs.length}</small></button>${nHand&&nTheme?`<button class="chip" data-q="hand">Solo editadas a mano <small>${nHand}</small></button>`:''}<button class="chip" data-q="none">Ninguna</button></div>
-      <p class="note">${nHand} ${nHand===1?'editada':'editadas'} a mano (color propio o imagen nueva)${nTheme?` · ${nTheme} cambiadas por un tema de toda la radio o de una sección`:''}. El ZIP solo lleva las marcadas, cada una en su carpeta.</p>
-      <details class="isd" id="x-oth"${S.xmode!=='auto'?' open':''}><summary><span>${S.xmode==='auto'?'Instalación automática con tu USB':S.xmode==='lgu'?'Como actualización oficial':'A mano con Total Commander'}<small>${S.xmode==='auto'?'Recomendada · toca para ver otros modos':'Toca para cambiar el modo'}</small></span></summary><div class="isb"><div class="field"><div class="seg seg3" id="x-mode"><button data-m="tc" aria-pressed="${S.xmode!=='lgu'&&S.xmode!=='auto'}">Total Commander</button><button data-m="auto" aria-pressed="${S.xmode==='auto'}">Automático</button><button data-m="lgu" aria-pressed="${S.xmode==='lgu'}">Actualización</button></div>
-        <div class="chips" id="x-hw" ${S.xmode!=='lgu'?'hidden':''}><button class="chip" data-h="2" aria-pressed="${S.xhw!==1}">MediaNav Evolution</button><button class="chip" data-h="1" aria-pressed="${S.xhw===1}">MediaNav 1.ª generación</button></div>
-        <p class="note" id="x-mnote"></p></div></div></details>
       <p class="warnbox" id="x-part" hidden>Las imágenes que no exportes se quedarán como están en el coche, aunque aquí las veas cambiadas.</p>
       <div class="chk" id="x-chk"><span>Comprobando los archivos… <b id="x-n">0</b> de ${fs.length}</span></div>
-      <label class="swrow" for="x-boot" id="x-bootrow"${S.xmode==='auto'?'':' hidden'}><span>Que se instale solo al arrancar<small>Para tu USB con ULC2_recovery: al arrancar pregunta si instalar (con el dedo, sin Total Commander). Si dices que no, abre Total Commander como siempre</small></span><input class="sw" type="checkbox" id="x-boot"${SET.xboot!==false?' checked':''}></label>
-      <div id="x-kit"${S.xmode==='auto'?'':' hidden'}></div>
-      <label class="swrow" for="x-orig"><span>Incluir los originales<small>Carpeta ORIGINALES con solo estos archivos, para deshacer</small></span><input class="sw" type="checkbox" id="x-orig"${SET.xorig?' checked':''}></label>
-      <button class="btn wide" id="x-go" disabled>Descargar ZIP</button>${S.demo?'':`<button class="btn o wide" id="x-sel" style="margin-top:8px">${ic('M4 6h16M4 12h16M4 18h10')}Preparar el USB completo</button><p class="note" style="margin-top:4px">Menú al arrancar: varios diseños para elegir, copia de seguridad y restauración de la radio, e informe del sistema.</p>`}</div>
-    <div class="card"><h3>Archivos</h3><div class="fl" id="x-list"><p class="note">Comprobando…</p></div></div></div>
-    <div class="stack"><div class="card"><h3>Cómo instalarlo</h3><div id="x-steps"></div></div></div></div>`;
+      <label class="swrow" for="x-boot" id="x-bootrow"${S.xmode==='auto'?'':' hidden'}><span>Que se instale solo al arrancar<small>Al arrancar pregunta si instalar (con el dedo). Si dices que no, abre Total Commander como siempre</small></span><input class="sw" type="checkbox" id="x-boot"${SET.xboot!==false?' checked':''}></label>
+      <label class="swrow" for="x-orig"><span>Incluir los originales<small>Para deshacer</small></span><input class="sw" type="checkbox" id="x-orig"${SET.xorig?' checked':''}></label>
+      <button class="btn wide" id="x-go" disabled>Descargar ZIP</button>
+      <details class="isd" id="x-oth"${S.xmode!=='auto'?' open':''}><summary><span>${S.xmode==='auto'?'Instalación automática con tu USB':S.xmode==='lgu'?'Como actualización oficial':'A mano con Total Commander'}<small>${S.xmode==='auto'?'Toca para ver otros modos':'Toca para cambiar el modo'}</small></span></summary><div class="isb"><div class="field"><div class="seg seg3" id="x-mode"><button data-m="tc" aria-pressed="${S.xmode!=='lgu'&&S.xmode!=='auto'}">Total Commander</button><button data-m="auto" aria-pressed="${S.xmode==='auto'}">Automático</button><button data-m="lgu" aria-pressed="${S.xmode==='lgu'}">Actualización</button></div>
+        <div class="chips" id="x-hw" ${S.xmode!=='lgu'?'hidden':''}><button class="chip" data-h="2" aria-pressed="${S.xhw!==1}">MediaNav Evolution</button><button class="chip" data-h="1" aria-pressed="${S.xhw===1}">MediaNav 1.ª generación</button></div>
+        <p class="note" id="x-mnote"></p></div></div></details></div></div>
+    <div class="stack" data-xp="uno"${xt==='uno'?'':' hidden'}><div class="card"><h3>Cómo instalarlo</h3><div id="x-steps"></div></div></div>
+    <div class="stack" data-xp="arch"${xt==='arch'?'':' hidden'} style="grid-column:1/-1"><div class="card"><h3>Archivos cambiados</h3><p class="note">Marca o desmarca los que se exportan en «Solo este diseño». El USB completo siempre lleva todos.</p><div class="fl" id="x-list"><p class="note">Comprobando…</p></div></div></div>
+    </div></div>`;
+  $('#x-tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;S.xtab=b.dataset.t;$$('#x-tabs button').forEach(x=>x.setAttribute('aria-pressed',x===b));$$('[data-xp]',v).forEach(el=>el.hidden=el.dataset.xp!==S.xtab);scrollTo(0,0)};
   {const xs=$('#x-sel');if(xs)xs.onclick=selectorSheet}
   const R0=esc(S.root);
   const stepsHTML=()=>S.xmode==='auto'&&SET.xboot!==false?`<ol class="steps">
@@ -755,7 +779,7 @@ function closeBS(){const b=$('#bs');if(b.hidden)return;b.hidden=true;$('#scrim')
 function openMenu(){const G=t=>`<p class="lbl" style="margin:12px 6px 4px">${t}</p>`;
   openBS(`${S.demo?'':`${G('Tu diseño')}<button class="mi" data-m="save">${ic('M5 3h11l3 3v15H5zM8 3v6h8V3M8 21v-7h8v7')}<span>Guardar el diseño<small>Con un nombre, para volver a él cuando quieras</small></span></button>
     <button class="mi" data-m="designs">${ic('M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z')}<span>Mis diseños<small>Cargar, importar, llevar a la radio</small></span></button>`}
-    ${G('Backup')}<button class="mi" data-m="load">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}<span>${S.demo?'Cargar mi backup':'Cargar otro backup'}<small>Carpeta M1 o un ZIP</small></span></button>
+    ${G('Backup')}<button class="mi" data-m="load">${ic('M12 3v12M7 10l5 5 5-5M5 21h14')}<span>${S.demo?'Cargar mi backup':'Cargar otro backup'}<small>${S.demo?'Carpeta M1 o un ZIP':'Ahora: '+esc(bkLabel())}</small></span></button>
     ${updBadge()?`<button class="mi dgr" data-m="reset">${ic('M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14')}<span>Quitar todos los cambios<small>Se puede deshacer</small></span></button>`:''}
     ${S.demo?'':`<button class="mi dgr" data-m="close">${ic('M18 6L6 18M6 6l12 12')}<span>Cerrar el backup<small>Borra tu backup y tus cambios de este navegador</small></span></button>`}
     ${G('Más')}${S.demo?'':`<button class="mi" data-m="kit">${ic('M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3')}<span>Kit de prueba para el coche<small>3 imágenes para resolver dudas en la radio</small></span></button>`}
@@ -807,6 +831,6 @@ function bind(){
   let rz=0;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(S.route.n==='edit'&&S.eview==='img')drawEdit(S.curF)},150)});
 }
 async function boot(){themePref();bind();recall();loadSet();webInit();await myLoad().catch(()=>{});let ok=false;
-  try{const fl=await idb.get('files');if(fl&&fl.list&&fl.list.length&&await ingest(fl.list,{restore:true,png:fl.png})){applyState(await idb.get('state'));await recallBase();ok=true}}catch(_){}
+  try{const fl=await idb.get('files');if(fl&&fl.list&&fl.list.length&&await ingest(fl.list,{restore:true,png:fl.png,name:fl.name,t:fl.t})){applyState(await idb.get('state'));await recallBase();ok=true}}catch(_){}
   if(!ok)await demo();render()}
 boot();

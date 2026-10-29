@@ -391,11 +391,14 @@ function pickUsbKit(after){openBS(`<h2>Guardar el contenido de tu USB</h2><p cla
   const mk=dir=>{const i=document.createElement('input');i.type='file';if(dir){i.webkitdirectory=true;i.multiple=true}else i.accept='.zip,application/zip';
     i.onchange=async()=>{closeBS();toast('Leyendo tu USB…',{ms:30000});if(await saveUsbKit(i.files)&&after)after()};i.click()};
   $('#k-zip').onclick=()=>mk(false);$('#k-dir').onclick=()=>mk(true);$('#k-x').onclick=()=>closeBS()}
-async function kitUI(el){if(!el||S.demo){if(el)el.hidden=true;return}const kit=await usbKit();if(!el.isConnected)return;
-  el.innerHTML=kit?`<label class="swrow" for="x-kitc"><span>Incluir el lanzador completo<small>Para un USB nuevo: ${kit.n} archivos de tu USB (${fsz(kit.size)}) · <a href="#" id="x-kitr">cambiar</a></small></span><input class="sw" type="checkbox" id="x-kitc"${SET.xkit!==false?' checked':''}></label>`
-    :`<div class="li" style="padding:10px 0"><span class="tx"><b>¿USB nuevo?</b><small>Guarda una vez el contenido de tu USB de siempre y cada exportación lo llevará completo, listo para arrancar.</small></span></div><button class="btn o sm" id="x-kits">Guardar el contenido de mi USB</button>`;
+async function kitUI(el){if(!el)return;if(S.demo){el.innerHTML='<p class="note">Carga tu backup para usarlo.</p>';return}const kit=await usbKit();if(!el.isConnected)return;
+  el.innerHTML=kit?`<p class="ok" style="margin:0 0 8px">✓ Guardado: ${kit.n} archivos (${fsz(kit.size)}) · ${new Date(kit.t).toLocaleDateString('es-ES')}</p>
+      <label class="swrow" for="x-kitc"><span>Incluirlo en el USB<small>Lanzador completo (ULC2_recovery, MortScript, Total Commander…): el ZIP vale para un USB vacío</small></span><input class="sw" type="checkbox" id="x-kitc"${SET.xkit!==false?' checked':''}></label>
+      <button class="btn o sm" id="x-kitr">Cambiar por otro</button>`
+    :`<p class="note">Guarda una vez el contenido de tu USB de siempre (el que arranca Total Commander): un ZIP de todo el USB o, en el ordenador, su carpeta. Así el USB completo valdrá también para un USB nuevo y vacío.</p>
+      <p class="note">Se queda solo en este dispositivo; nunca se sube a ningún sitio.</p><button class="btn o wide" id="x-kits">Guardar el contenido de mi USB</button>`;
   const c=el.querySelector('#x-kitc');if(c)c.onchange=e=>{SET.xkit=e.target.checked;saveSet()};
-  const r=el.querySelector('#x-kitr');if(r)r.onclick=e=>{e.preventDefault();pickUsbKit(()=>kitUI(el))};
+  const r=el.querySelector('#x-kitr');if(r)r.onclick=()=>pickUsbKit(()=>kitUI(el));
   const sv=el.querySelector('#x-kits');if(sv)sv.onclick=()=>pickUsbKit(()=>kitUI(el))}
 
 /* ============ USB completo: menú al arrancar ============

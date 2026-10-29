@@ -133,7 +133,7 @@ async function scrSettings(v){
       <div class="field"><span class="lbl">Color de la app</span><div class="acs" id="s-acs" role="radiogroup" aria-label="Color de la app"></div>
         <div class="acr"><span><b id="s-acn">Esmeralda</b><small>Color personalizado: la app ajusta el contraste sola. <span id="s-icn"></span></small></span><input type="color" id="s-acc" class="cpick" aria-label="Color personalizado"></div></div></div>
     <div class="card"><h3>Datos en este navegador</h3>
-      <dl class="facts"><div><dt>Backup</dt><dd>${S.demo?'Ejemplo':esc(S.root)+' · '+S.files.length+' imágenes'}</dd></div><div><dt>Espacio usado</dt><dd>${est&&est.usage?fsz(est.usage):'No disponible'}</dd></div>
+      <dl class="facts"><div><dt>Backup</dt><dd>${esc(bkLabel())}</dd></div><div><dt>Espacio usado</dt><dd>${est&&est.usage?fsz(est.usage):'No disponible'}</dd></div>
       <div><dt>Diseños</dt><dd>${D.length}</dd></div><div><dt>Copias automáticas</dt><dd>${A.length}</dd></div><div><dt>Exportaciones</dt><dd>${X.length}</dd></div></dl>
       ${P.length||X.length?'<button class="btn dg wide" id="s-clr">Borrar historial, diseños y copias</button>':''}
       <p class="note">Nada sale de tu dispositivo. Si borras los datos del sitio en el navegador, se pierden el backup, el historial y los puntos.</p></div>
