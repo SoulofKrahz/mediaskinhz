@@ -52,7 +52,7 @@ class Run:
         if f == 'writefile':
             r = F.real(a[0]); 
             if not os.path.isdir(os.path.dirname(r)): return 0
-            open(r, 'a' if len(a) > 2 and a[2] else 'w', encoding='cp1252').write(a[1].replace('^NL^', '\n')); return 0
+            open(r, 'a' if len(a) > 2 and a[2] else 'w', encoding='cp1252').write(str(a[1]).replace('^NL^', '\n')); return 0
         if f == 'formattime': return ''.join(time.strftime({'d':'%d','m':'%m','Y':'%Y','H':'%H','i':'%M','s':'%S'}[c]) if c in 'dmYHis' else c for c in a[0])
         if f == 'message': F.msgs.append(a[0].replace('^NL^', ' | ')); return 0
         if f == 'question':
@@ -83,6 +83,7 @@ class Run:
         if f in ('freediskspace', 'totaldiskspace', 'freememory', 'totalmemory', 'screenwidth', 'screenheight'): return 123456
         if f in ('systemversion', 'platform', 'getversion'): return 'CE6'
         if f == 'regreadstring': return ''
+        if f in ('setchoiceentryformat', 'setmessagefont'): F.ran.append(f); return 0
         if f == 'bigmessage': F.msgs.append('[grande] ' + a[0].replace('^NL^', ' | ')); return 0
         raise NameError('función desconocida ' + f)
     # expresiones: or > and > not > comparación > + - & \ > átomo
@@ -112,6 +113,8 @@ class Run:
         a = s.atom()
         while s.pk()[1] in ('+', '-', '&', '\\'):
             op = s.nx()[1]; b = s.atom()
+            num = lambda v: int(v) if isinstance(v, str) and v.strip().lstrip('-').isdigit() else v
+            if op in '+-': a, b = num(a), num(b)
             a = a + b if op == '+' else a - b if op == '-' else (str(a) + str(b)) if op == '&' else pj(str(a), str(b))
         return a
     def atom(s):
