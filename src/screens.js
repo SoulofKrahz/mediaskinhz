@@ -68,7 +68,8 @@ const TOPBAR=/(fulldown_\d_l?ine|indi_l?ine)\.bmp$/;
 function screenPieces(s,files){const set=new Set(files);if(VW.st===2)for(const o of VW.data)if(o.s===s||(s==='radio'&&o.s==='common'&&false))for(const c of o.c){const F=c[0]&&byName(c[0]);if(F)set.add(F)}
   const bgs=new Set(SCREENS.map(x=>x[2]));return [...set].filter(F=>!bgs.has(F.lc)&&!/common_indi_(?!line)/.test(F.lc)&&F.sec!=='COMMON'||/common_pull_|indi_line/.test(F.lc))}
 function tintScreen(s,files,sty,h){const g=S.gen||(S.gen=defGen()),T=new Set([...sty,...genTargets()]),odd=[];
-  for(const F of screenPieces(s,files)){if(STARS.test(F.lc)){setFileOps(F,{...defOps(),tH:44,tA:100,tG:false});continue}if(T.has(F)||(F.rep&&F.rep.by&&F.rep.by!=='gen'&&F.rep.by!=='btn'&&F.rep.by!=='preset'))continue;
+  for(const F of screenPieces(s,files)){if(STARS.test(F.lc)){setFileOps(F,{...defOps(),tH:44,tA:100,tG:false});continue}// lo que un diseño listo ya dejó pintado (fondos calcados de listas, carátulas, líneas ocultas…) no se vuelve a teñir encima
+    if(T.has(F)||(F.rep&&F.rep.by&&F.rep.by!=='gen'&&F.rep.by!=='btn'))continue;
     if(isBtnLike(F)&&frames(F)>=2&&canStyleOne(F)&&F.w/frames(F)/F.h<=4.6){const q=g.per[F.path]||(g.per[F.path]={});if(h==null)delete q.hue;else q.hue=h;odd.push(F);continue}
     const st=stats(F);let col=0,tot=0;for(const f of st.fam.values()){tot+=f.n;if(f.k<12)col+=f.n}const grey=LISTGREY.test(F.lc)||(isBtnLike(F)&&frames(F)>=2&&F.w/frames(F)/F.h>4.6&&!noStyle(F));if(!grey&&col<tot*.03)continue;
     const o={...defOps(),...(S.ops.file[F.path]||{})};o.map={...(o.map||{})};
@@ -81,12 +82,14 @@ function tintScreen(s,files,sty,h){const g=S.gen||(S.gen=defGen()),T=new Set([..
 // comparten un color de marco y sus listas aún no lo tienen, se aplica al cargar. Devuelve cuántas pantallas ha puesto al día
 const styOf=files=>files.filter(F=>isBtnLike(F)&&kindOf(F)==='btn'&&canStyleOne(F)&&F.w/frames(F)/F.h<=4.6);
 function syncScreenTints(){if(S.demo)return 0;let n=0;
+  // diseños afectados por el fallo: tinte puesto encima de lo que pintó un diseño listo → se quita
+  for(const F of S.files){if(F.rep&&F.rep.by==='preset'&&S.ops.file[F.path]){delete S.ops.file[F.path];F.cv=null;n++}}
   // barras de arriba teñidas enteras por versiones anteriores: vuelven al tono del estilo
   for(const F of S.files){const o=S.ops.file[F.path];if(TOPBAR.test(F.lc)&&o&&o.map&&o.map[12]){const q={...o,map:{...o.map}};delete q.map[12];if(!Object.keys(q.map).length)delete q.map;setFileOps(F,q);n++}}
   const g=S.gen;if(!g||!g.per){if(n){S.ver++;saveState()}return n}
   for(const s of ['radio','media','phone','setting','eco']){const files=scrFiles(s),sty=styOf(files);const hs=new Set(sty.map(F=>(g.per[F.path]||{}).hue).filter(h=>h!=null));
     if(hs.size!==1)continue;const h=[...hs][0];if(typeof h!=='number')continue;if(sty.filter(F=>(g.per[F.path]||{}).hue===h).length<sty.length*.6)continue;
-    const lines=files.filter(F=>LISTGREY.test(F.lc)&&!isBtnLike(F));if(!lines.length||lines.every(F=>{const o=S.ops.file[F.path];return o&&o.map&&o.map[12]&&o.map[12].to===h}))continue;
+    const lines=files.filter(F=>LISTGREY.test(F.lc)&&!isBtnLike(F)&&!F.rep);if(!lines.length||lines.every(F=>{const o=S.ops.file[F.path];return o&&o.map&&o.map[12]&&o.map[12].to===h}))continue;
     tintScreen(s,files,sty,h);n++}
   if(n){S.ver++;saveState()}return n}
 function scrScreen(v,r){
