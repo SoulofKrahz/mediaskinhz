@@ -140,7 +140,9 @@ let bgSeen=null;
 function bgWatch(){if(!S.gen||!S.files.length)return;const now=new Map();for(const [sc,n] of SCRBG){const B=byName(n);if(!B)continue;const ep=getEP(B);let h=0;for(let i=0;i<ep.length;i++)h=(h*31+ep[i])|0;now.set(sc,{h,rep:B.rep})}
   const old=bgSeen;bgSeen=now;if(!old)return;const ch=[...now].filter(([sc,v])=>{const o=old.get(sc);return !o||o.h!==v.h||o.rep!==v.rep}).map(e=>e[0]);if(!ch.length)return;
   const T=genTargets();if(ch.includes('home')&&btnLook()!=='orig'){for(const F of T)buildButton(F);S.genCv=null;S.ver++;schedule()}
-  rebuildLater(styledOut().filter(F=>{if(T.includes(F))return false;const p=vwPos(F);return !p||ch.includes(p.s)}))}
+  rebuildLater(styledOut().filter(F=>{if(T.includes(F))return false;const P=vwPosAll(F);return !P.length||P.some(p=>ch.includes(p.s))}))}
+// rehace por detrás los botones de dentro (diseños guardados con esquinas de antes)
+const restyleInner=()=>{if(S.gen)rebuildLater(styledOut().filter(F=>!genTargets().includes(F)))};
 
 /* ============ carga y guardado ============ */
 async function ingest(list,opts){bgSeen=null;
@@ -842,6 +844,6 @@ function bind(){
   let rz=0;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(S.route.n==='edit'&&S.eview==='img')drawEdit(S.curF)},150)});
 }
 async function boot(){themePref();bind();recall();loadSet();webInit();await myLoad().catch(()=>{});let ok=false;
-  try{const fl=await idb.get('files');if(fl&&fl.list&&fl.list.length&&await ingest(fl.list,{restore:true,png:fl.png,name:fl.name,t:fl.t})){applyState(await idb.get('state'));loadVistas().then(()=>{if(syncScreenTints()){bump();toast('Diseño puesto al día: el color de cada pantalla llega ya a sus listas y fondos')}}).catch(()=>{});await recallBase();ok=true}}catch(_){}
+  try{const fl=await idb.get('files');if(fl&&fl.list&&fl.list.length&&await ingest(fl.list,{restore:true,png:fl.png,name:fl.name,t:fl.t})){applyState(await idb.get('state'));loadVistas().then(()=>{let ok=false;try{ok=localStorage.getItem('msz-corner2')==='1';localStorage.setItem('msz-corner2','1')}catch(_){}if(!ok)restyleInner();if(syncScreenTints()){bump();toast('Diseño puesto al día: el color de cada pantalla llega ya a sus listas y fondos')}}).catch(()=>{});await recallBase();ok=true}}catch(_){}
   if(!ok)await demo();render()}
 boot();

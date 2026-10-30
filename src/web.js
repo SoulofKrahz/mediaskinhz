@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-30-5';
+const VER='2026-10-30-6';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,7 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-30-6',['Cajas alrededor de los botones de dentro (Ajustes, Multimedia, barras de abajo…) con formas redondeadas: las esquinas se rellenaban con un color sacado del botón original, que no coincidía con tu fondo teñido. Ahora llevan el trozo de fondo real que tienen detrás (mezclado si la misma tecla va en varios sitios), con o sin diseño listo. Los diseños que ya tenías se arreglan solos al abrir la app']],
   ['2026-10-30-5',['Al cambiar un fondo (color, imagen o diseño listo), las esquinas y el margen de los botones con estilo se ponen al día solos: antes se quedaban con el trozo del fondo viejo hasta volver a elegir la forma. Los de Inicio, al momento; los de dentro, por detrás']],
   ['2026-10-30-4',['Estilo de los botones de Inicio mucho más rápido: cambiar el acabado o el fondo de los iconos tardaba unos 3,5 s por toque con un diseño listo puesto (rehacía también los ~250 botones de dentro de golpe). Ahora los 6 de Inicio se ven al momento (≈0,2 s) y los de dentro se ponen al día por detrás sin bloquear. Forma, redondeo y margen también llegan ya a los botones de dentro']],
   ['2026-10-30-3',['«Usar este estilo en todo el diseño» ya solo cambia el tipo de botón: cada pantalla conserva su color (Radio azul, Multimedia rosa…) y Inicio el suyo']],
