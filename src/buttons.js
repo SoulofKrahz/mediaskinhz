@@ -134,20 +134,18 @@ function btnSheet(F,after,el){
    Botones de Inicio y de dentro (estilo, color del marco y del icono) + color de toda la radio (fondos, barra de arriba, listas, barras…) + tono del negro de los fondos.
    Se ve antes de aplicarlo: una hoja con la vista previa de cada pantalla. look = estilo · hue = color · ihue = color del icono (null = el del estilo) · bk = tono de los fondos (null = el mismo color) */
 const PRESETS=[
-  ['neon-az','Neón azul','neon',210,null,215],['futuro-cian','Futurista cian','hud',185,null,195],['bisel-lima','Biselado lima','chamfer',75,null,null],
-  ['carbono-rojo','Carbono rojo','carbon',0,null,null],['aurora','Aurora morada','aurora',275,null,270],['ahumado','Cristal ahumado','smoke',200,null,205],
-  ['duo','Neón dúo','duo',190,null,200],['halo-verde','Halo verde','halo',140,null,150],['anillo-turq','Anillo turquesa','ring',176,null,180],
-  ['octo-violeta','Octógono violeta','hex',266,null,262],['boton3d','Botón 3D azul','bevel3d',215,null,218],['circuito','Circuito verde','circuit',150,null,155],
-  ['onda-azul','Onda azul','wave',215,'white',220],['arcoiris','Borde degradado','gborder',200,'white',250],['ocaso','Ocaso naranja','sunset',30,'white',25],
-  ['capsula-rosa','Cápsula rosa','capsule',330,'white',330],['esquinas-oro','Esquinas doradas','corner',44,null,40],['muesca-roja','Muesca roja','notch',355,null,350],
-  ['dos-tonos','Dos tonos índigo','split',236,'white',240],['relieve','Relieve acero','emboss',205,null,210],
+  ['mancha','Mancha de pintura','brush',328,'white',328,'paint'],['mancha-cian','Pintura cian','brush',188,'white',190,'paint'],['mancha-lima','Pintura lima','brush',88,'white',90,'paint'],
+  ['graffiti','Grafiti','spray',95,null,95,'graffiti'],['graffiti-naranja','Grafiti naranja','spray',24,null,24,'graffiti'],['graffiti-rosa','Grafiti rosa','spray',318,null,318,'graffiti'],
   ['synth','Synthwave','duo',300,null,300,'synth'],['tron','Tron','hudf',190,null,190,'tron'],['cyber','Cyberpunk','chamfer',52,null,52,'cyber'],
   ['matrix','Matrix','neon',135,null,135,'matrix'],['ambiente','Luz ambiente','halo',30,null,28,'ambient'],['deportivo','Deportivo rojo','side',0,'white',0,'racing'],
-  ['oled','Negro puro','outline',210,'white',210,'oled'],
   ['rs','R.S. amarillo','carbon',50,'white',48,'racing'],['alpine','Alpine azul','brushed',222,null,222,'racing'],
   ['cabina','Cabina digital','tab',356,'white',0,'oled'],['ejecutivo','Ejecutivo ámbar','side',30,'white',28,'ambient'],
-  ['electrico','Eléctrico minimal','flat',205,'white',205,'oled'],
-  ['aluminio','Aluminio','alu',210,null,210,'metal'],['titanio','Titanio azul','brushed',212,null,212,'metal'],['oro','Oro','brushed',42,null,40,'gold'],['bronce','Bronce','brushed',24,null,24,'gold']
+  ['electrico','Eléctrico minimal','flat',205,'white',205,'oled'],['oled','Negro puro','outline',210,'white',210,'oled'],
+  ['aluminio','Aluminio','alu',210,null,210,'metal'],['titanio','Titanio azul','brushed',212,null,212,'metal'],['oro','Oro','brushed',42,null,40,'gold'],['bronce','Bronce','brushed',24,null,24,'gold'],
+  ['neon-az','Neón azul','neon',210,null,215],['futuro-cian','Futurista cian','hud',185,null,195],['bisel-lima','Biselado lima','chamfer',75,null,null],
+  ['carbono-rojo','Carbono rojo','carbon',0,null,null],['aurora','Aurora morada','aurora',275,null,270],['ahumado','Cristal ahumado','smoke',200,null,205],
+  ['circuito','Circuito verde','circuit',150,null,155],['ocaso','Ocaso naranja','sunset',30,'white',25],
+  ['capsula-rosa','Cápsula rosa','capsule',330,'white',330],['esquinas-oro','Esquinas doradas','corner',44,null,40]
 ].map(([id,name,look,hue,ihue,bk,bg])=>({id,name,look,hue,ihue,bk,bg,gs:look==='alu'?-92:0}));
 // también las formas raras (las flechas altas de presintonías, Multimedia y Driving eco); solo se quedan fuera las barras larguísimas de las listas
 const presetInside=()=>{const T=genTargets();return S.files.filter(F=>{if(kindOf(F)!=='btn'||T.includes(F)||!canStyleOne(F))return false;const r=F.w/frames(F)/F.h;return r>.18&&r<9&&F.h>=44&&F.w/frames(F)>=36&&!/list_press|list2_btn/.test(F.lc)})};
@@ -176,7 +174,7 @@ function presetSet(P){const g=S.gen||(S.gen=defGen()),T=genTargets(),L=presetIns
   return {T,L}}
 /* Fondo nuevo para un diseño listo: negro con el color del diseño (degradado, resplandor abajo y un dibujo suave que sigue al estilo).
    Sustituye al fondo de Renault (sus rayas grises teñidas quedaban sucias). Se deshace como todo lo demás */
-const BGPAT={grid:'grid',circuit:'grid',pixel:'grid',hud:'grid',hudb:'grid',hudf:'grid',scan:'lines',led:'dots',dots:'dots',wave:'wave',sunset:'wave',aurora:'wave',capsule:'wave',neon:'lines',halo:'rings',ring:'rings',corner:'grid',notch:'lines',chamfer:'diag',slash:'diag',stripes:'diag',tab:'lines',split:'lines'};
+const BGPAT={brush:'soft',spray:'soft',grid:'grid',circuit:'grid',pixel:'grid',hud:'grid',hudb:'grid',hudf:'grid',scan:'lines',led:'dots',dots:'dots',wave:'wave',sunset:'wave',aurora:'wave',capsule:'wave',neon:'lines',halo:'rings',ring:'rings',corner:'grid',notch:'lines',chamfer:'diag',slash:'diag',stripes:'diag',tab:'lines',split:'lines'};
 function presetBgCanvas(P,bk,scr){const c=document.createElement('canvas');c.width=800;c.height=480;const x=c.getContext('2d'),h=bk;
   if(P.bg==='metal'||P.bg==='gold'){const sat=P.bg==='gold'?38:P.look==='alu'?3:10;let gr=x.createLinearGradient(0,0,0,480);gr.addColorStop(0,`hsl(${h} ${sat}% 9%)`);gr.addColorStop(.5,`hsl(${h} ${sat}% 15%)`);gr.addColorStop(1,`hsl(${h} ${sat}% 10%)`);x.fillStyle=gr;x.fillRect(0,0,800,480);
     let sd=97;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;for(let i=0;i<900;i++){x.fillStyle=`rgba(${rnd()<.5?'255,255,255':'0,0,0'},${.02+rnd()*.05})`;x.fillRect(0,78+rnd()*402,800,1)}
@@ -198,10 +196,40 @@ function presetBgCanvas(P,bk,scr){const c=document.createElement('canvas');c.wid
     rg(400,470,380,`hsla(${h},100%,50%,.14)`);return c}
   if(P.bg==='racing'){vg('#0b0c0e','#121417');x.fillStyle=`hsla(${h},85%,48%,.45)`;x.save();x.transform(1,0,-.35,1,0,0);x.fillRect(880,78,30,402);x.fillRect(922,78,10,402);x.restore();
     let sd=7;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;x.fillStyle='rgba(255,255,255,.025)';for(let i=0;i<2500;i++)x.fillRect(rnd()*800,78+rnd()*402,2,2);rg(200,480,380,`hsla(${h},85%,48%,.12)`);return c}
+  const grain=(n,a)=>{let sd=4441;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;for(let i=0;i<n;i++){x.fillStyle=rnd()<.5?`rgba(255,255,255,${a*rnd()})`:`rgba(0,0,0,${a*1.6*rnd()})`;x.fillRect(rnd()*800,rnd()*480,1.5,1.5)}};
+  const vign=(k)=>{const v=x.createRadialGradient(400,250,140,400,250,560);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,`rgba(0,0,0,${k})`);x.fillStyle=v;x.fillRect(0,0,800,480)};
+  if(P.bg==='paint'){// manchas de pintura: salpicones grandes en los bordes, el centro se queda tranquilo para que se lean textos y botones
+    vg('#0b0b0e','#121116');grain(9000,.05);let sd=P.hue*7+13;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
+    const splat=(cx,cy,R,hh,l)=>{const col=`hsl(${hh} 85% ${l}%)`,pts=[],N=34;for(let i=0;i<N;i++){const t=i/N*Math.PI*2;let rr=R*(.78+rnd()*.3);pts.push([cx+Math.cos(t)*rr,cy+Math.sin(t)*rr])}
+      x.save();x.fillStyle=col;x.beginPath();x.moveTo((pts[0][0]+pts[N-1][0])/2,(pts[0][1]+pts[N-1][1])/2);for(let i=0;i<N;i++){const [px,py]=pts[i],[qx,qy]=pts[(i+1)%N];x.quadraticCurveTo(px,py,(px+qx)/2,(py+qy)/2)}x.fill();
+      // brazos y gotas que salen disparadas
+      for(let i=0;i<16;i++){const t=rnd()*Math.PI*2,L=R*(1.05+rnd()*.75),wd=R*(.05+rnd()*.07),ex=cx+Math.cos(t)*L,ey=cy+Math.sin(t)*L,nx=-Math.sin(t)*wd,ny=Math.cos(t)*wd;
+        x.beginPath();x.moveTo(cx+Math.cos(t)*R*.6+nx,cy+Math.sin(t)*R*.6+ny);x.quadraticCurveTo(ex+nx*.3,ey+ny*.3,ex,ey);x.quadraticCurveTo(ex-nx*.3,ey-ny*.3,cx+Math.cos(t)*R*.6-nx,cy+Math.sin(t)*R*.6-ny);x.fill();
+        x.beginPath();x.arc(ex+Math.cos(t)*wd*1.6,ey+Math.sin(t)*wd*1.6,wd*.9,0,7);x.fill()}
+      for(let i=0;i<26;i++){const t=rnd()*Math.PI*2,L=R*(1.3+rnd()*1.1);x.beginPath();x.arc(cx+Math.cos(t)*L,cy+Math.sin(t)*L,1+rnd()*R*.045,0,7);x.fill()}
+      // brillo húmedo
+      const hl=x.createRadialGradient(cx-R*.35,cy-R*.4,0,cx-R*.35,cy-R*.4,R*.9);hl.addColorStop(0,`hsla(${hh},90%,${l+22}%,.55)`);hl.addColorStop(1,`hsla(${hh},90%,${l}%,0)`);x.globalCompositeOperation='source-atop';x.fillStyle=hl;x.fillRect(cx-R*2,cy-R*2,R*4,R*4);x.restore()};
+    const hm=scr==='home',L0=hm?38:30;if(hm){splat(-10,150,150,h,L0);splat(800,455,175,(h+40)%360,L0-2);splat(690,96,52,(h+180)%360,L0+4);splat(120,470,62,(h+40)%360,L0+2)}
+    else{splat(-75,130,115,h,L0);splat(845,500,135,(h+40)%360,L0-2);splat(-20,500,55,(h+180)%360,L0+2)}// dentro, más pequeñas y en las esquinas: debajo van listas y textos
+    const ve=x.createRadialGradient(400,270,60,400,270,330);ve.addColorStop(0,`rgba(8,8,10,${scr==='home'?.72:.82})`);ve.addColorStop(1,'rgba(8,8,10,0)');x.fillStyle=ve;x.fillRect(0,0,800,480);vign(.35);
+    x.fillStyle=`hsla(${h},85%,55%,.35)`;x.fillRect(0,477,800,3);return c}
+  if(P.bg==='graffiti'){// pared de ladrillo oscura con nubes de espray, dos trazos de rotulador gordo y chorretones
+    vg('#0e0e11','#141318');let sd=P.hue*11+5;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
+    for(let row=0,y=0;y<480;row++,y+=30)for(let X0=row%2?-40:0;X0<800;X0+=80){const l=8+rnd()*7;x.fillStyle=`hsl(${h} 6% ${l}%)`;x.fillRect(X0+2,y+2,76,26);x.fillStyle='rgba(255,255,255,.035)';x.fillRect(X0+2,y+2,76,1.5)}
+    grain(12000,.06);
+    const cloud=(cx,cy,R,hh,a)=>{const g=x.createRadialGradient(cx,cy,0,cx,cy,R);g.addColorStop(0,`hsla(${hh},95%,52%,${a})`);g.addColorStop(.6,`hsla(${hh},95%,50%,${a*.45})`);g.addColorStop(1,`hsla(${hh},95%,50%,0)`);x.fillStyle=g;x.fillRect(cx-R,cy-R,R*2,R*2);
+      x.fillStyle=`hsla(${hh},95%,60%,.55)`;for(let i=0;i<R*3;i++){const t=rnd()*Math.PI*2,d=R*(.55+rnd()*.6);x.fillRect(cx+Math.cos(t)*d,cy+Math.sin(t)*d,1.3,1.3)}};
+    cloud(70,120,190,h,.42);cloud(760,430,230,(h+35)%360,.38);cloud(720,110,120,(h+190)%360,.22);
+    const tag=(pts,hh,wd)=>{const path=()=>{x.beginPath();x.moveTo(...pts[0]);for(let i=1;i<pts.length;i+=3)x.bezierCurveTo(...pts[i],...pts[i+1],...pts[i+2])};x.save();x.lineCap='round';x.lineJoin='round';
+      path();x.strokeStyle='rgba(0,0,0,.6)';x.lineWidth=wd+6;x.stroke();path();x.strokeStyle=`hsl(${hh} 95% 50%)`;x.lineWidth=wd;x.stroke();path();x.strokeStyle=`hsla(${hh},100%,80%,.55)`;x.lineWidth=wd*.22;x.translate(-wd*.18,-wd*.18);x.stroke();x.restore();
+      x.fillStyle=`hsl(${hh} 95% 50%)`;for(let i=0;i<4;i++){const k=3*Math.floor(rnd()*((pts.length-1)/3)),[px,py]=pts[k],L=10+rnd()*40;x.fillRect(px-1,py,2.2,L);x.beginPath();x.arc(px+.1,py+L,2.4,0,7);x.fill()}};
+    if(scr==='home'){tag([[-20,455],[140,380],[230,470],[330,430]],h,12);tag([[560,120],[620,60],[700,150],[820,95]],(h+35)%360,10)}// dentro, sin trazos: pasarían por debajo de barras y textos
+    const ve=x.createRadialGradient(400,270,60,400,270,340);ve.addColorStop(0,'rgba(10,10,12,.7)');ve.addColorStop(1,'rgba(10,10,12,0)');x.fillStyle=ve;x.fillRect(0,0,800,480);vign(.4);
+    x.fillStyle=`hsla(${h},95%,55%,.4)`;x.fillRect(0,477,800,3);return c}
   if(P.bg==='oled'){x.fillStyle='#000';x.fillRect(0,0,800,480);x.fillStyle=`hsla(${h},20%,60%,.18)`;x.fillRect(0,477,800,1);return c}
-  let gr=x.createLinearGradient(0,0,0,480);gr.addColorStop(0,`hsl(${h} 45% 5%)`);gr.addColorStop(.55,`hsl(${h} 55% 8%)`);gr.addColorStop(1,`hsl(${h} 65% 13%)`);x.fillStyle=gr;x.fillRect(0,0,800,480);
+  let gr=x.createLinearGradient(0,0,0,480);gr.addColorStop(0,`hsl(${h} 30% 5%)`);gr.addColorStop(.55,`hsl(${h} 38% 7%)`);gr.addColorStop(1,`hsl(${h} 48% 11%)`);x.fillStyle=gr;x.fillRect(0,0,800,480);
   const glow=(cx,cy,r,a)=>{const g=x.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,`hsla(${h},90%,50%,${a})`);g.addColorStop(1,`hsla(${h},90%,50%,0)`);x.fillStyle=g;x.fillRect(0,0,800,480)};
-  glow(400,560,460,.42);glow(400,300,420,scr==='home'?.12:.07);glow(0,80,260,.08);glow(800,80,260,.08);
+  glow(400,600,520,.34);glow(400,300,420,scr==='home'?.09:.05);glow(0,80,260,.06);glow(800,80,260,.06);
   const pat=BGPAT[P.look]||'soft';x.save();x.strokeStyle=`hsla(${h},90%,60%,.07)`;x.fillStyle=`hsla(${h},90%,60%,.09)`;x.lineWidth=1;x.beginPath();
   if(pat==='grid'){for(let i=0;i<=800;i+=40){x.moveTo(i+.5,78);x.lineTo(i+.5,480)}for(let j=78;j<=480;j+=40){x.moveTo(0,j+.5);x.lineTo(800,j+.5)}x.stroke()}
   else if(pat==='lines'){for(let j=80;j<480;j+=6){x.moveTo(0,j+.5);x.lineTo(800,j+.5)}x.globalAlpha=.6;x.stroke()}
@@ -209,7 +237,7 @@ function presetBgCanvas(P,bk,scr){const c=document.createElement('canvas');c.wid
   else if(pat==='diag'){for(let i=-480;i<800;i+=22){x.moveTo(i,480);x.lineTo(i+480,0)}x.stroke()}
   else if(pat==='rings'){for(let r=60;r<700;r+=46){x.moveTo(400+r,420);x.arc(400,420,r,0,7)}x.stroke()}
   else if(pat==='wave'){x.lineWidth=2;for(let k=0;k<5;k++){x.moveTo(0,380+k*16);for(let i=0;i<=800;i+=10)x.lineTo(i,380+k*16+Math.sin(i/130+k*.8)*14)}x.strokeStyle=`hsla(${h},90%,60%,.12)`;x.stroke()}
-  x.restore();
+  x.restore();grain(7000,.045);vign(.5);
   // brillo fino bajo la barra de arriba y en el borde de abajo
   x.fillStyle=`hsla(${h},90%,60%,.25)`;x.fillRect(0,477,800,3);return c}
 function presetBg(F,P,bk){const scr=[...SCRBG.entries()].find(e=>e[1]===F.lc||byName(e[1])===F);const c=presetBgCanvas(P,bk,scr?scr[0]:'');
