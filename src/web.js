@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-30-2';
+const VER='2026-10-30-3';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,7 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-30-3',['«Usar este estilo en todo el diseño» ya solo cambia el tipo de botón: cada pantalla conserva su color (Radio azul, Multimedia rosa…) y Inicio el suyo']],
   ['2026-10-30-2',['Mantén pulsado un botón → «Usar en todo el diseño»: su estilo y colores pasan a los botones de todas las pantallas de una vez (Inicio incluido). Si ya tenías un estilo copiado, también sale «Pegar en todo el diseño». Se deshace con un toque']],
   ['2026-10-30-1',['Diseños listos nuevos: Mancha de pintura (rosa, cian y lima) y Grafiti (verde, naranja y rosa), con fondos propios: salpicones de pintura y pared de ladrillo con espray. Dentro de las pantallas las manchas se quedan en las esquinas para que se lean listas y textos','Dos estilos de botón nuevos: Pincelada (trazo de pincel con cerdas) y Grafiti (contorno de espray con chorretones)','Fuera los diseños que se repetían o quedaban pobres (Neón dúo, Octógono, Botón 3D, Onda, Borde degradado, Muesca, Dos tonos, Relieve, Halo y Anillo). Los temáticos van primero','Fondo de los diseños sencillos más sobrio: menos saturado, con grano fino y viñeta, en vez del degradado chillón']],
   ['2026-10-29-26',['Listas con manchas de color (R.S. en Radio → Lista y otros): el color de pantalla se volvía a aplicar encima del fondo que el diseño listo ya había calcado en la lista. Ya no, y los diseños afectados se arreglan solos al abrir la app']],
