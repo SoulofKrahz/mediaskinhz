@@ -712,10 +712,17 @@ function updUndo(){$('#ab-undo').disabled=!H.length}
 function bump(){S.ver++;schedule()}
 let rafT=0,slowT=0;
 function schedule(){if(!rafT)rafT=requestAnimationFrame(()=>{rafT=0;for(const p of S.pvs)if(p.c.isConnected)drawPreview(p.c,p.o());pump();S.live&&S.live()});
-  clearTimeout(slowT);slowT=setTimeout(()=>{updBadge();S.slow&&S.slow();saveState()},320)}
+  clearTimeout(slowT);slowT=setTimeout(()=>{bgWatch();updBadge();S.slow&&S.slow();saveState()},320)}
+/* Los botones con estilo llevan en esquinas y margen el trozo de fondo que tienen detrás. Si cambia un fondo de pantalla (color, imagen, diseño listo…),
+   se rehacen los botones que van encima: los de Inicio al momento y los de dentro por detrás */
+let bgSeen=null;
+function bgWatch(){if(!S.gen||!S.files.length)return;const now=new Map();for(const [sc,n] of SCRBG){const B=byName(n);if(!B)continue;const ep=getEP(B);let h=0;for(let i=0;i<ep.length;i++)h=(h*31+ep[i])|0;now.set(sc,{h,rep:B.rep})}
+  const old=bgSeen;bgSeen=now;if(!old)return;const ch=[...now].filter(([sc,v])=>{const o=old.get(sc);return !o||o.h!==v.h||o.rep!==v.rep}).map(e=>e[0]);if(!ch.length)return;
+  const T=genTargets();if(ch.includes('home')&&btnLook()!=='orig'){for(const F of T)buildButton(F);S.genCv=null;S.ver++;schedule()}
+  rebuildLater(styledOut().filter(F=>{if(T.includes(F))return false;const p=vwPos(F);return !p||ch.includes(p.s)}))}
 
 /* ============ carga y guardado ============ */
-async function ingest(list,opts){
+async function ingest(list,opts){bgSeen=null;
   opts=opts||{};const KNOWN=new Set(SECS.map(s=>s[0])),files=[],errs=[];let root=null,png=opts.png||0;
   for(const e of list){const segs=e.path.replace(/\\/g,'/').split('/').filter(Boolean);if(!segs.length)continue;
     const fn=segs[segs.length-1],ext=fn.split('.').pop().toLowerCase();if(ext==='png'){png++;continue}if(ext!=='bmp')continue;
@@ -3559,7 +3566,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-30-4';
+const VER='2026-10-30-5';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3567,6 +3574,7 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-30-5',['Al cambiar un fondo (color, imagen o diseño listo), las esquinas y el margen de los botones con estilo se ponen al día solos: antes se quedaban con el trozo del fondo viejo hasta volver a elegir la forma. Los de Inicio, al momento; los de dentro, por detrás']],
   ['2026-10-30-4',['Estilo de los botones de Inicio mucho más rápido: cambiar el acabado o el fondo de los iconos tardaba unos 3,5 s por toque con un diseño listo puesto (rehacía también los ~250 botones de dentro de golpe). Ahora los 6 de Inicio se ven al momento (≈0,2 s) y los de dentro se ponen al día por detrás sin bloquear. Forma, redondeo y margen también llegan ya a los botones de dentro']],
   ['2026-10-30-3',['«Usar este estilo en todo el diseño» ya solo cambia el tipo de botón: cada pantalla conserva su color (Radio azul, Multimedia rosa…) y Inicio el suyo']],
   ['2026-10-30-2',['Mantén pulsado un botón → «Usar en todo el diseño»: su estilo y colores pasan a los botones de todas las pantallas de una vez (Inicio incluido). Si ya tenías un estilo copiado, también sale «Pegar en todo el diseño». Se deshace con un toque']],

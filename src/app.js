@@ -133,10 +133,17 @@ function updUndo(){$('#ab-undo').disabled=!H.length}
 function bump(){S.ver++;schedule()}
 let rafT=0,slowT=0;
 function schedule(){if(!rafT)rafT=requestAnimationFrame(()=>{rafT=0;for(const p of S.pvs)if(p.c.isConnected)drawPreview(p.c,p.o());pump();S.live&&S.live()});
-  clearTimeout(slowT);slowT=setTimeout(()=>{updBadge();S.slow&&S.slow();saveState()},320)}
+  clearTimeout(slowT);slowT=setTimeout(()=>{bgWatch();updBadge();S.slow&&S.slow();saveState()},320)}
+/* Los botones con estilo llevan en esquinas y margen el trozo de fondo que tienen detrás. Si cambia un fondo de pantalla (color, imagen, diseño listo…),
+   se rehacen los botones que van encima: los de Inicio al momento y los de dentro por detrás */
+let bgSeen=null;
+function bgWatch(){if(!S.gen||!S.files.length)return;const now=new Map();for(const [sc,n] of SCRBG){const B=byName(n);if(!B)continue;const ep=getEP(B);let h=0;for(let i=0;i<ep.length;i++)h=(h*31+ep[i])|0;now.set(sc,{h,rep:B.rep})}
+  const old=bgSeen;bgSeen=now;if(!old)return;const ch=[...now].filter(([sc,v])=>{const o=old.get(sc);return !o||o.h!==v.h||o.rep!==v.rep}).map(e=>e[0]);if(!ch.length)return;
+  const T=genTargets();if(ch.includes('home')&&btnLook()!=='orig'){for(const F of T)buildButton(F);S.genCv=null;S.ver++;schedule()}
+  rebuildLater(styledOut().filter(F=>{if(T.includes(F))return false;const p=vwPos(F);return !p||ch.includes(p.s)}))}
 
 /* ============ carga y guardado ============ */
-async function ingest(list,opts){
+async function ingest(list,opts){bgSeen=null;
   opts=opts||{};const KNOWN=new Set(SECS.map(s=>s[0])),files=[],errs=[];let root=null,png=opts.png||0;
   for(const e of list){const segs=e.path.replace(/\\/g,'/').split('/').filter(Boolean);if(!segs.length)continue;
     const fn=segs[segs.length-1],ext=fn.split('.').pop().toLowerCase();if(ext==='png'){png++;continue}if(ext!=='bmp')continue;
