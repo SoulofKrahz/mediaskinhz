@@ -64,7 +64,7 @@ async function overwriteDesign(id){const p=await getPoint(id);if(!p)return false
   Object.assign(p,{st:packState(),n:S.files.filter(changed).length,t:Date.now(),sig:sig(),thumb:designThumb()});
   try{await putPoint(p)}catch(_){noSpace();return false}
   S.curDesign=id;S.curDesignName=p.label;setBase(id,p.label);toast(`«${p.label}» actualizado`,{label:'Ver',fn:()=>go({n:'settings'})});return true}
-async function saveDesign(){if(S.demo){toast('Carga tu backup para guardar diseños');return}const n=S.files.filter(changed).length;if(!n){toast('Todavía no hay cambios que guardar');return}
+async function saveDesign(){if(typeof flushRebuild==='function')flushRebuild();if(S.demo){toast('Carga tu backup para guardar diseños');return}const n=S.files.filter(changed).length;if(!n){toast('Todavía no hay cambios que guardar');return}
   if(S.base){const p=(await listPoints()).find(x=>x.id===S.base.id&&x.kind==='manual');
     if(!p)setBase(null);else{if(S.curDesign===p.id){toast(`«${p.label}» ya está guardado: no hay cambios nuevos`);return}
       const a=await askSave(p.label,n);if(!a)return;if(a==='over'){await overwriteDesign(p.id);return}}}
@@ -208,7 +208,7 @@ function settingsTabs(v){if(S.focus==='s-des')S.stab='des';const cur=S.stab||(S.
    Para llevar un diseño de un aparato a otro (p. ej. del PC al móvil). Es un ZIP con diseno.json (colores, estilos, iconos, distribución,
    tus iconos usados) y reps/*.bin (las imágenes sustituidas, en índices de color). Cada exportación para la radio lleva el suyo dentro. */
 const slugN=s=>String(s||'diseno').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40)||'diseno';
-async function designFile(p){const st=p.st,ents=[],reps={};let i=0;
+async function designFile(p){if(typeof flushRebuild==='function')flushRebuild();const st=p.st,ents=[],reps={};let i=0;
   for(const [path,r] of Object.entries(st.reps||{})){if(!r||!r.idx)continue;const k='r'+(i++)+'.bin';reps[path]={pal:Array.from(r.pal),keyIdx:r.keyIdx,by:r.by,f:k};ents.push({name:'reps/'+k,data:r.idx instanceof Uint8Array?r.idx:new Uint8Array(r.idx)})}
   const used=new Set([...JSON.stringify([st.gen||{},st.icx||{}]).matchAll(/my:([A-Za-z0-9_-]+)/g)].map(m=>m[1]));
   const my=MY.list.filter(m=>used.has(m.id)).map(({mk,...r})=>r);

@@ -105,7 +105,7 @@ function paint(c,w,h,idx,lut){if(c.width!==w)c.width=w;if(c.height!==h)c.height=
 function renderCanvas(F,showKey){if(F.cv&&F.cvv===S.ver&&F.cvk===!!showKey)return F.cv;
   F.cv=paint(F.cv||document.createElement('canvas'),F.w,F.h,baseOf(F).idx,lutOf(getEP(F),showKey));F.cvv=S.ver;F.cvk=!!showKey;return F.cv}
 function renderOrig(F,showKey){if(F.cvo&&F.cvoK===!!showKey)return F.cvo;F.cvo=paint(F.cvo||document.createElement('canvas'),F.w,F.h,F.idx,lutOf(F.pal,showKey));F.cvoK=!!showKey;return F.cvo}
-function outBytes(F){
+function outBytes(F){if(typeof flushRebuild==='function')flushRebuild();
   const ep=getEP(F);
   if(!F.rep){const u=new Uint8Array(F.buf.slice(0));for(let i=0;i<F.n;i++){u[F.palOff+i*4]=ep[i*3+2];u[F.palOff+i*4+1]=ep[i*3+1];u[F.palOff+i*4+2]=ep[i*3]}return u}
   const pal=new Uint8Array(768);pal.set(ep.subarray(0,768));return new Uint8Array(encodeBMP8(F.w,F.h,F.rep.idx,pal,F));

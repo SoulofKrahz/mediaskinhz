@@ -544,7 +544,7 @@ function quantize(d,w,h,opt){
 const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
 function crc32(u){let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CRC[(c^u[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
 async function streamBytes(u,ts){return new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(ts)).arrayBuffer())}
-async function makeZip(entries){
+async function makeZip(entries){if(typeof flushRebuild==='function')flushRebuild();
   const enc=new TextEncoder(),parts=[],cd=[];let off=0,cds=0;const d=new Date();
   const tm=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1),dt=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
   for(const e of entries){const nm=enc.encode(e.name),crc=crc32(e.data);let comp=null,m=8;
@@ -684,7 +684,7 @@ function paint(c,w,h,idx,lut){if(c.width!==w)c.width=w;if(c.height!==h)c.height=
 function renderCanvas(F,showKey){if(F.cv&&F.cvv===S.ver&&F.cvk===!!showKey)return F.cv;
   F.cv=paint(F.cv||document.createElement('canvas'),F.w,F.h,baseOf(F).idx,lutOf(getEP(F),showKey));F.cvv=S.ver;F.cvk=!!showKey;return F.cv}
 function renderOrig(F,showKey){if(F.cvo&&F.cvoK===!!showKey)return F.cvo;F.cvo=paint(F.cvo||document.createElement('canvas'),F.w,F.h,F.idx,lutOf(F.pal,showKey));F.cvoK=!!showKey;return F.cvo}
-function outBytes(F){
+function outBytes(F){if(typeof flushRebuild==='function')flushRebuild();
   const ep=getEP(F);
   if(!F.rep){const u=new Uint8Array(F.buf.slice(0));for(let i=0;i<F.n;i++){u[F.palOff+i*4]=ep[i*3+2];u[F.palOff+i*4+1]=ep[i*3+1];u[F.palOff+i*4+2]=ep[i*3]}return u}
   const pal=new Uint8Array(768);pal.set(ep.subarray(0,768));return new Uint8Array(encodeBMP8(F.w,F.h,F.rep.idx,pal,F));
@@ -1779,9 +1779,9 @@ function scrGen(v){
     if(S.gtab==='btn')$$('[data-gt]',v).forEach(cv=>jobs.push(()=>{const G=S.lc.get(cv.dataset.gt.toLowerCase());if(G)putMini(cv,miniTile(G,g,0))}));
     const s2=genSum(g);for(const k in s2){const e=$(`[data-sum="${k}"]`,v);if(e)e.textContent=s2[k]}
     const step=()=>{if(tok!==mTok||!v.isConnected)return;const t0=performance.now();while(jobs.length&&performance.now()-t0<12)jobs.shift()();if(jobs.length)requestAnimationFrame(step)};requestAnimationFrame(step)};
-  let mT=0;const upd=()=>{if(btnLook()!=='orig')applyButtonsSoon();clearTimeout(mT);mT=setTimeout(minis,220);saveState()};minis();
+  let mT=0,rT=0;const upd=()=>{if(btnLook()!=='orig')applyButtonsSoon();clearTimeout(rT);rT=setTimeout(()=>rebuildLater(styledOut()),400);clearTimeout(mT);mT=setTimeout(minis,220);saveState()};minis();
   $('#g-tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;S.gtab=b.dataset.t;$$('#g-tabs button').forEach(x=>x.setAttribute('aria-pressed',x===b));$$('[data-pn]',v).forEach(p=>p.hidden=p.dataset.pn!==S.gtab);minis();if(S.gtab==='icons'){const ist=$('#g-ist');if(ist)icStyleDraw(ist)}};
-  $$('.ocg',v).forEach(gr=>gr.onclick=e=>{const b=e.target.closest('.ocd');if(!b)return;if(b.querySelector('[data-ms]')){setLook(b.dataset.v).then(ok=>{if(ok){gr.querySelectorAll('.ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));minis()}})}else{before();g.shape=b.dataset.v;if(btnLook()!=='orig')applyButtons();render(true)}});
+  $$('.ocg',v).forEach(gr=>gr.onclick=e=>{const b=e.target.closest('.ocd');if(!b)return;if(b.querySelector('[data-ms]')){setLook(b.dataset.v).then(ok=>{if(ok){gr.querySelectorAll('.ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));minis()}})}else{before();g.shape=b.dataset.v;if(btnLook()!=='orig')applyButtons();rebuildLater(styledOut());render(true)}});
   const seg=(id,key)=>{const el=$(id);if(el)el.onclick=e=>{const b=e.target.closest('button[data-v]');if(!b)return;before();g[key]=b.dataset.v;if(btnLook()!=='orig')applyButtons();render(true)}};seg('#g-co','corners');seg('#g-cm','color');
   $('#g-st').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;S.gstate=+b.dataset.s;$$('#g-st button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawPreview(c,po())};
   const rng=(id,key,suf)=>{const i=$(id);if(!i)return;paintRange(i);const out=i.closest('.rg').querySelector('output');i.oninput=()=>{g[key]=+i.value;out.textContent=i.value+suf;paintRange(i);upd()}};
@@ -1925,7 +1925,7 @@ async function overwriteDesign(id){const p=await getPoint(id);if(!p)return false
   Object.assign(p,{st:packState(),n:S.files.filter(changed).length,t:Date.now(),sig:sig(),thumb:designThumb()});
   try{await putPoint(p)}catch(_){noSpace();return false}
   S.curDesign=id;S.curDesignName=p.label;setBase(id,p.label);toast(`«${p.label}» actualizado`,{label:'Ver',fn:()=>go({n:'settings'})});return true}
-async function saveDesign(){if(S.demo){toast('Carga tu backup para guardar diseños');return}const n=S.files.filter(changed).length;if(!n){toast('Todavía no hay cambios que guardar');return}
+async function saveDesign(){if(typeof flushRebuild==='function')flushRebuild();if(S.demo){toast('Carga tu backup para guardar diseños');return}const n=S.files.filter(changed).length;if(!n){toast('Todavía no hay cambios que guardar');return}
   if(S.base){const p=(await listPoints()).find(x=>x.id===S.base.id&&x.kind==='manual');
     if(!p)setBase(null);else{if(S.curDesign===p.id){toast(`«${p.label}» ya está guardado: no hay cambios nuevos`);return}
       const a=await askSave(p.label,n);if(!a)return;if(a==='over'){await overwriteDesign(p.id);return}}}
@@ -2069,7 +2069,7 @@ function settingsTabs(v){if(S.focus==='s-des')S.stab='des';const cur=S.stab||(S.
    Para llevar un diseño de un aparato a otro (p. ej. del PC al móvil). Es un ZIP con diseno.json (colores, estilos, iconos, distribución,
    tus iconos usados) y reps/*.bin (las imágenes sustituidas, en índices de color). Cada exportación para la radio lleva el suyo dentro. */
 const slugN=s=>String(s||'diseno').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40)||'diseno';
-async function designFile(p){const st=p.st,ents=[],reps={};let i=0;
+async function designFile(p){if(typeof flushRebuild==='function')flushRebuild();const st=p.st,ents=[],reps={};let i=0;
   for(const [path,r] of Object.entries(st.reps||{})){if(!r||!r.idx)continue;const k='r'+(i++)+'.bin';reps[path]={pal:Array.from(r.pal),keyIdx:r.keyIdx,by:r.by,f:k};ents.push({name:'reps/'+k,data:r.idx instanceof Uint8Array?r.idx:new Uint8Array(r.idx)})}
   const used=new Set([...JSON.stringify([st.gen||{},st.icx||{}]).matchAll(/my:([A-Za-z0-9_-]+)/g)].map(m=>m[1]));
   const my=MY.list.filter(m=>used.has(m.id)).map(({mk,...r})=>r);
@@ -2744,7 +2744,7 @@ function iconPicker(o){
     const b=e.target.closest('[data-k]');if(!b)return;S.icRedraw=null;o.onPick(b.dataset.k)};
   if(IC.st!==2)icLoad();draw()}
 function setIconStyle(v){const patch=typeof v==='object'?v:v==='fill'?{ifill:true}:{ifill:false,iw:+v};before();if(!S.gen)S.gen=defGen();Object.assign(S.gen,patch);
-  if(S.gen)for(const F of [...genTargets(),...styledOut()])buildButton(F);S.genCv=null;for(const p of Object.keys(S.icx||{})){const F=S.lc.get(p.toLowerCase());if(F)icApply(F,S.icx[p],true)}S.ver++;schedule();saveState()}
+  if(S.gen){for(const F of genTargets())buildButton(F);rebuildLater(styledOut())}S.genCv=null;for(const p of Object.keys(S.icx||{})){const F=S.lc.get(p.toLowerCase());if(F)icApply(F,S.icx[p],true)}S.ver++;schedule();saveState()}
 
 /* Poner un icono de la biblioteca en cualquier imagen: se quita el icono viejo rehaciendo el fondo fila a fila
    (con las franjas de los lados, así se conservan degradados y bordes) y se dibuja el nuevo en su sitio, con el color de cada estado. */
@@ -2999,7 +2999,14 @@ const noStyle=F=>F.w/frames(F)<48||F.h<36||/list_press|list2_btn|parting_line/.t
 const canStyleOne=F=>frames(F)>=2&&!noStyle(F);
 const secBtns=F=>S.files.filter(G=>G.sec===F.sec&&kindOf(G)==='btn'&&canStyle(G)&&!genTargets().includes(G));
 // Al cambiar la forma o el estilo del icono se redibujan todos los botones con estilo
-function restyleAll(){applyButtons([...genTargets(),...styledOut()])}
+function restyleAll(){applyButtons(genTargets());rebuildLater(styledOut())}
+/* Reconstruir muchos botones (los de dentro de todas las pantallas, unos 250 tras un diseño listo) tarda segundos.
+   Los 6 de Inicio se hacen al momento (son los de la vista previa) y el resto, por detrás a trozos sin bloquear; si llega otro cambio, se empieza de nuevo.
+   Antes de exportar o guardar un diseño se termina lo pendiente (flushRebuild) */
+let rbQ=[],rbTok=0;
+function rebuildLater(list){const set=new Set(rbQ);for(const F of list)if(!set.has(F)){rbQ.push(F);set.add(F)}if(!rbQ.length)return;const tok=++rbTok;
+  const step=()=>{if(tok!==rbTok)return;const t0=performance.now();while(rbQ.length&&performance.now()-t0<24)buildButton(rbQ.shift());if(rbQ.length)setTimeout(step,20);else{S.genCv=null;S.ver++;schedule();saveState()}};setTimeout(step,120)}
+function flushRebuild(){if(!rbQ.length)return;rbTok++;while(rbQ.length)buildButton(rbQ.shift());S.genCv=null;S.ver++}
 function btnSheet(F,after,el){
   const g=S.gen||(S.gen=defGen()),T=genTargets(),home=T.includes(F),look=home?btnLook():((g.per[F.path]||{}).look||'orig'),list=home&&!el?T:null,idx=list?list.indexOf(F):-1;S.gsel=F.path;const pvH=home&&!el,again=()=>btnSheet(F,after,el);
   const p=()=>g.per[F.path]||(g.per[F.path]={}),ps=g.per[F.path]||{};const cur=ps.icon||'orig',sug=icSuggest2(F).map(n=>'t:'+n);
@@ -3552,7 +3559,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-30-3';
+const VER='2026-10-30-4';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3560,6 +3567,7 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-30-4',['Estilo de los botones de Inicio mucho más rápido: cambiar el acabado o el fondo de los iconos tardaba unos 3,5 s por toque con un diseño listo puesto (rehacía también los ~250 botones de dentro de golpe). Ahora los 6 de Inicio se ven al momento (≈0,2 s) y los de dentro se ponen al día por detrás sin bloquear. Forma, redondeo y margen también llegan ya a los botones de dentro']],
   ['2026-10-30-3',['«Usar este estilo en todo el diseño» ya solo cambia el tipo de botón: cada pantalla conserva su color (Radio azul, Multimedia rosa…) y Inicio el suyo']],
   ['2026-10-30-2',['Mantén pulsado un botón → «Usar en todo el diseño»: su estilo y colores pasan a los botones de todas las pantallas de una vez (Inicio incluido). Si ya tenías un estilo copiado, también sale «Pegar en todo el diseño». Se deshace con un toque']],
   ['2026-10-30-1',['Diseños listos nuevos: Mancha de pintura (rosa, cian y lima) y Grafiti (verde, naranja y rosa), con fondos propios: salpicones de pintura y pared de ladrillo con espray. Dentro de las pantallas las manchas se quedan en las esquinas para que se lean listas y textos','Dos estilos de botón nuevos: Pincelada (trazo de pincel con cerdas) y Grafiti (contorno de espray con chorretones)','Fuera los diseños que se repetían o quedaban pobres (Neón dúo, Octógono, Botón 3D, Onda, Borde degradado, Muesca, Dos tonos, Relieve, Halo y Anillo). Los temáticos van primero','Fondo de los diseños sencillos más sobrio: menos saturado, con grano fino y viñeta, en vez del degradado chillón']],

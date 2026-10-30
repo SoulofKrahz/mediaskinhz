@@ -73,7 +73,14 @@ const noStyle=F=>F.w/frames(F)<48||F.h<36||/list_press|list2_btn|parting_line/.t
 const canStyleOne=F=>frames(F)>=2&&!noStyle(F);
 const secBtns=F=>S.files.filter(G=>G.sec===F.sec&&kindOf(G)==='btn'&&canStyle(G)&&!genTargets().includes(G));
 // Al cambiar la forma o el estilo del icono se redibujan todos los botones con estilo
-function restyleAll(){applyButtons([...genTargets(),...styledOut()])}
+function restyleAll(){applyButtons(genTargets());rebuildLater(styledOut())}
+/* Reconstruir muchos botones (los de dentro de todas las pantallas, unos 250 tras un diseño listo) tarda segundos.
+   Los 6 de Inicio se hacen al momento (son los de la vista previa) y el resto, por detrás a trozos sin bloquear; si llega otro cambio, se empieza de nuevo.
+   Antes de exportar o guardar un diseño se termina lo pendiente (flushRebuild) */
+let rbQ=[],rbTok=0;
+function rebuildLater(list){const set=new Set(rbQ);for(const F of list)if(!set.has(F)){rbQ.push(F);set.add(F)}if(!rbQ.length)return;const tok=++rbTok;
+  const step=()=>{if(tok!==rbTok)return;const t0=performance.now();while(rbQ.length&&performance.now()-t0<24)buildButton(rbQ.shift());if(rbQ.length)setTimeout(step,20);else{S.genCv=null;S.ver++;schedule();saveState()}};setTimeout(step,120)}
+function flushRebuild(){if(!rbQ.length)return;rbTok++;while(rbQ.length)buildButton(rbQ.shift());S.genCv=null;S.ver++}
 function btnSheet(F,after,el){
   const g=S.gen||(S.gen=defGen()),T=genTargets(),home=T.includes(F),look=home?btnLook():((g.per[F.path]||{}).look||'orig'),list=home&&!el?T:null,idx=list?list.indexOf(F):-1;S.gsel=F.path;const pvH=home&&!el,again=()=>btnSheet(F,after,el);
   const p=()=>g.per[F.path]||(g.per[F.path]={}),ps=g.per[F.path]||{};const cur=ps.icon||'orig',sug=icSuggest2(F).map(n=>'t:'+n);

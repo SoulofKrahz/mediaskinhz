@@ -76,7 +76,7 @@ function quantize(d,w,h,opt){
 const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
 function crc32(u){let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CRC[(c^u[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
 async function streamBytes(u,ts){return new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(ts)).arrayBuffer())}
-async function makeZip(entries){
+async function makeZip(entries){if(typeof flushRebuild==='function')flushRebuild();
   const enc=new TextEncoder(),parts=[],cd=[];let off=0,cds=0;const d=new Date();
   const tm=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1),dt=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
   for(const e of entries){const nm=enc.encode(e.name),crc=crc32(e.data);let comp=null,m=8;
