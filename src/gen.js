@@ -63,7 +63,7 @@ function pngMask(bmp){const s=96,c=document.createElement('canvas');c.width=c.he
   for(let i=0;i<s*s;i++){d.data[i*4]=d.data[i*4+1]=d.data[i*4+2]=255}x.putImageData(d,0,0);return {cv:c,bx:0,by:0,bw:s,bh:s}}
 
 /* ============ generador ============ */
-const GSTYLES=[['glow','Brillo inferior'],['flat','Plano'],['outline','Contorno'],['glass','Cristal'],['neon','Neón'],['tile','Mosaico'],['minimal','Mínimo'],['metal','Aluminio'],['carbon','Carbono'],['aurora','Aurora'],['hud','Futurista'],['hudb','Futurista grande'],['hudf','Futurista marco'],['chamfer','Biselado'],['scan','Escáner'],['led','Luces LED'],['double','Doble línea'],['side','Barra lateral'],['beam','Haz central'],['emboss','Relieve'],['halo','Halo'],['sunset','Ocaso'],['grid','Rejilla'],['slash','Diagonal'],['notch','Muesca'],['stripes','Rayas'],['capsule','Cápsula brillante'],['ring','Anillo'],['tab','Pestaña'],['corner','Esquinas'],['pixel','Píxel retro'],['gborder','Borde degradado'],['inset','Hundido'],['dots','Puntos'],['wave','Onda'],['split','Dos tonos'],['circuit','Circuito'],['brushed','Metal de color'],['alu','Aluminio cepillado'],['smoke','Cristal ahumado'],['bevel3d','Botón 3D'],['duo','Neón dúo'],['hex','Octógono'],['ticket','Etiqueta'],['frost','Esmerilado'],['soft','Suave'],['vivid','Degradado vivo'],['brush','Pincelada'],['spray','Grafiti']];
+const GSTYLES=[['glow','Brillo inferior'],['flat','Plano'],['outline','Contorno'],['glass','Cristal'],['neon','Neón'],['tile','Mosaico'],['minimal','Mínimo'],['metal','Aluminio'],['carbon','Carbono'],['aurora','Aurora'],['hud','Futurista'],['hudb','Futurista grande'],['hudf','Futurista marco'],['chamfer','Biselado'],['scan','Escáner'],['led','Luces LED'],['double','Doble línea'],['side','Barra lateral'],['beam','Haz central'],['emboss','Relieve'],['halo','Halo'],['sunset','Ocaso'],['grid','Rejilla'],['slash','Diagonal'],['notch','Muesca'],['stripes','Rayas'],['capsule','Cápsula brillante'],['ring','Anillo'],['tab','Pestaña'],['corner','Esquinas'],['pixel','Píxel retro'],['gborder','Borde degradado'],['inset','Hundido'],['dots','Puntos'],['wave','Onda'],['split','Dos tonos'],['circuit','Circuito'],['brushed','Metal de color'],['alu','Aluminio cepillado'],['smoke','Cristal ahumado'],['bevel3d','Botón 3D'],['duo','Neón dúo'],['hex','Octógono'],['ticket','Etiqueta'],['frost','Esmerilado'],['soft','Suave'],['vivid','Degradado vivo'],['gauge','Instrumentación'],['piano','Negro piano']];
 const defGen=()=>({isIn:1.15,look:'orig',style:'glow',shape:'round',r:14,inset:4,corners:'bg',color:'orig',hue:156,is:56,iy:42,per:{}});
 function origHue(F){if(F.oh!=null)return F.oh;const cnt=new Uint32Array(256);for(let i=0;i<F.idx.length;i++)cnt[F.idx[i]]++;let sx=0,sy=0;
   for(let i=0;i<F.n;i++){if(!cnt[i])continue;const r=F.pal[i*3],g=F.pal[i*3+1],b=F.pal[i*3+2];if(isKey(r,g,b))continue;const C=(Math.max(r,g,b)-Math.min(r,g,b))/255;if(C<.2)continue;const [h]=rgb2hsl(r,g,b),w=cnt[i]*C*C;sx+=Math.cos(h*Math.PI/180)*w;sy+=Math.sin(h*Math.PI/180)*w}
@@ -75,7 +75,7 @@ function borderColor(F){if(F.bdc)return F.bdc;const fw=F.w/frames(F),rs=[],gs=[]
 const NOBRITE=new Set(['metal','frost']);
 // estilos que dibujan su cuerpo con rectángulos (no con el primer relleno): al pulsar se aclara encima para que se lea el texto negro de la radio
 const LIFT=new Set(['split','bevel3d','pixel','frost','soft','carbon']);
-const THRU=new Set(['spray','hud','hudb','hudf','outline','neon','halo','grid','ring','corner','gborder','wave','circuit','duo','notch','scan','led','double','beam','dots','slash','minimal']);
+const THRU=new Set(['hud','hudb','hudf','outline','neon','halo','grid','ring','corner','gborder','wave','circuit','duo','notch','scan','led','double','beam','dots','slash','minimal']);
 function bgAvg(B){if(B.avgv===S.ver&&B.avg)return B.avg;const d=renderCanvas(B,false).getContext('2d').getImageData(0,260,800,160).data;let r=0,g=0,b=0,n=0;for(let i=0;i<d.length;i+=16){r+=d[i];g+=d[i+1];b+=d[i+2];n++}B.avg=`rgb(${r/n|0},${g/n|0},${b/n|0})`;B.avgv=S.ver;return B.avg}
 function vwPos(F){const kp=KNOWNPOS[F.lc];if(kp)return {x:kp[0],y:kp[1],s:'home'};if(typeof VW==='undefined'||!VW.data)return null;if(F.vpv===VW.data)return F.vp;let r=null;for(const o of VW.data){for(const c of o.c||[])if(c[0]===F.lc){r={x:c[1],y:c[2],w:c[3],h:c[4],s:o.s==='common'?'radio':o.s};break}if(r)break}F.vp=r;F.vpv=VW.data;return r}
 // todos los sitios donde va una imagen (la misma tecla puede ir en varias filas o vistas): para el fondo de detrás se mezclan
@@ -240,26 +240,20 @@ function drawState(x,F,w,h,s,H,g,bgc){
     case 'frost':{x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();x.filter='blur(7px)';x.drawImage(bgc,-10,-10,w+20,h+20);x.filter='none';
       x.fillStyle=on?`hsla(${H},85%,55%,.42)`:`rgba(255,255,255,${dim?.05:.13})`;x.fillRect(X,Y,W,Hh);const gl=x.createLinearGradient(0,Y,0,Y+Hh);gl.addColorStop(0,'rgba(255,255,255,.18)');gl.addColorStop(.5,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh);x.restore();
       x.lineWidth=1.5;x.strokeStyle=on?`hsla(${H},90%,75%,.8)`:'rgba(255,255,255,.38)';rrect(x,X+1.5,Y+1.5,W-3,Hh-3,r);x.stroke();ic=dim?'rgba(255,255,255,.45)':'#ffffff';break}
-    case 'brush':{// trazo de pincel: borde irregular, cerdas y unas gotas salpicadas. Siempre el mismo dibujo para el mismo botón
-      let sd=(w*131+h*17+(grp||0)*7)%2147483646+1;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
-      const a=X+2,b=Y+3,c=X+W-2,e=Y+Hh-3,j=Math.max(2,Math.min(7,Hh*.09)),n=Math.max(8,Math.round(W/12)),m=Math.max(4,Math.round(Hh/12)),pt=[];
-      for(let i=0;i<=n;i++)pt.push([a+(c-a)*i/n,b+rnd()*j]);for(let k=1;k<m;k++)pt.push([c-rnd()*j*1.6,b+(e-b)*k/m]);
-      for(let i=n;i>=0;i--)pt.push([a+(c-a)*i/n,e-rnd()*j]);for(let k=m-1;k>0;k--)pt.push([a+rnd()*j*1.6,b+(e-b)*k/m]);
-      const P2=new Path2D();P2.moveTo(pt[0][0],pt[0][1]);for(let i=1;i<pt.length;i++){const [px,py]=pt[i-1],[qx,qy]=pt[i];P2.quadraticCurveTo(px,py,(px+qx)/2,(py+qy)/2)}P2.closePath();
-      x.fillStyle=lin(`hsl(${H} ${dim?25:78}% ${dim?12:36}%)`,`hsl(${H} ${dim?25:82}% ${dim?7:22}%)`);x.fill(P2);
-      x.save();x.clip(P2);for(let i=0;i<Hh*.9;i++){const yy=b+rnd()*(e-b),x0=a+rnd()*W*.4,L=W*(.25+rnd()*.6);x.fillStyle=rnd()<.5?`rgba(255,255,255,${.02+rnd()*.05})`:`rgba(0,0,0,${.04+rnd()*.08})`;x.fillRect(x0,yy,L,1)}
-      const gl=x.createLinearGradient(0,b,0,b+(e-b)*.4);gl.addColorStop(0,'rgba(255,255,255,.16)');gl.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(a,b,W,(e-b)*.4);x.restore();
-      if(!dim){x.fillStyle=`hsl(${H} 80% ${on?70:44}%)`;for(let i=0;i<5;i++){const sx=rnd()<.5?a+rnd()*W*.18:c-rnd()*W*.18,sy=rnd()<.5?b+1+rnd()*3:e-1-rnd()*3;x.beginPath();x.arc(sx,sy,.8+rnd()*1.6,0,7);x.fill()}}
-      ic=dim?'rgba(255,255,255,.5)':'#ffffff';break}
-    case 'spray':{// grafiti: contorno de espray con niebla, motas y chorretones que caen del trazo de arriba
-      let sd=(w*97+h*29+(grp||0)*11)%2147483646+1;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
-      x.fillStyle=on?`hsl(${H} 50% 14%)`:'#060709';x.fill();const c2=`hsl(${H} 95% ${on?72:dim?28:58}%)`,a=X+4,b=Y+4,c=X+W-4,e=Y+Hh-4,rr=Math.max(0,r-3);
-      x.save();x.strokeStyle=`hsla(${H},95%,55%,${dim?.08:.22})`;x.lineWidth=8;rrect(x,a,b,c-a,e-b,rr);x.stroke();x.strokeStyle=c2;x.lineWidth=on?3.4:2.6;x.shadowColor=c2;x.shadowBlur=dim?0:7;x.stroke();x.restore();
-      if(!dim){x.fillStyle=c2;const per=2*(c-a+e-b);for(let i=0;i<per/3;i++){let t=rnd()*per,px,py;if(t<c-a){px=a+t;py=b}else if((t-=c-a)<e-b){px=c;py=b+t}else if((t-=e-b)<c-a){px=c-t;py=e}else{t-=c-a;px=a;py=e-t}
-        const d=(rnd()-.5)*9;px+=py===b||py===e?0:d;py+=py===b||py===e?d:0;x.globalAlpha=.25+rnd()*.5;x.fillRect(px,py,1.2,1.2)}x.globalAlpha=1;
-        x.save();x.fillStyle=c2;x.strokeStyle=c2;x.lineCap='round';const nd=W>140?3:2;for(let i=0;i<nd;i++){const dx=i%2?c-W*(.08+rnd()*.16):a+W*(.08+rnd()*.16),L=Math.min(Hh*.32,6+rnd()*Hh*.28);
-          x.lineWidth=1.6+rnd()*.9;x.beginPath();x.moveTo(dx,b);x.lineTo(dx,b+L);x.stroke();x.beginPath();x.ellipse(dx,b+L+1.2,1.8,2.4,0,0,7);x.fill()}x.restore()}
-      ic=on?'#ffffff':`hsl(${H} 100% ${dim?36:72}%)`;glow=dim?0:on?10:6;break}
+    case 'gauge':{// cuadro de instrumentos: negro, regla de marcas abajo y una aguja de color que la va llenando
+      x.fillStyle=lin('#0c0f13','#030405');x.fill();x.lineWidth=1;x.strokeStyle=`rgba(255,255,255,${dim?.06:.14})`;rrect(x,X+1.5,Y+1.5,W-3,Hh-3,r);x.stroke();
+      x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const by=Y+Math.max(9,Hh*.16),a0=X+Math.max(10,r*.8),a1=X+W-Math.max(10,r*.8),n=Math.max(8,Math.round((a1-a0)/7)),fill=on?1:dim?.2:.62;
+      for(let i=0;i<=n;i++){const px=a0+(a1-a0)*i/n,big=i%5===0,lit=i/n<=fill;x.fillStyle=lit?`hsl(${H} 95% ${on?72:dim?30:58}%)`:'rgba(255,255,255,.22)';x.fillRect(px-.6,by-(big?6:3.5),1.3,big?6:3.5)}
+      const nx=a0+(a1-a0)*fill;x.fillStyle=`hsl(${H} 100% ${on?80:dim?36:64}%)`;x.shadowColor=x.fillStyle;x.shadowBlur=dim?0:8;x.fillRect(nx-1.2,by-8,2.4,11);
+      const rg=x.createLinearGradient(a0,0,nx,0);rg.addColorStop(0,`hsla(${H},95%,55%,0)`);rg.addColorStop(1,`hsla(${H},95%,55%,${dim?.05:.25})`);x.shadowBlur=0;x.fillStyle=rg;x.fillRect(a0,by+1,nx-a0,2);x.restore();
+      ic=on?'#ffffff':dim?'#5c636b':'#eef2f6';glow=0;break}
+    case 'piano':{// negro piano con canto cromado y reflejo en diagonal; el color solo en una línea fina abajo
+      x.fillStyle=lin('#22262c','#07080a','#0e1013');x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();
+      x.fillStyle=`rgba(255,255,255,${dim?.03:.09})`;x.beginPath();x.moveTo(X+W*.18,Y);x.lineTo(X+W*.46,Y);x.lineTo(X+W*.3,Y+Hh);x.lineTo(X+W*.02,Y+Hh);x.closePath();x.fill();
+      const gl=x.createLinearGradient(0,Y,0,Y+Hh*.45);gl.addColorStop(0,'rgba(255,255,255,.16)');gl.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh*.45);
+      x.fillStyle=`hsl(${H} 95% ${on?70:dim?26:56}%)`;x.shadowColor=x.fillStyle;x.shadowBlur=dim?0:6;x.fillRect(X+W*.3,Y+Hh-3.5,W*.4,2);x.restore();
+      const ch=x.createLinearGradient(0,Y,0,Y+Hh);ch.addColorStop(0,'rgba(255,255,255,.75)');ch.addColorStop(.35,'rgba(150,156,165,.35)');ch.addColorStop(.7,'rgba(255,255,255,.25)');ch.addColorStop(1,'rgba(90,95,102,.6)');
+      x.lineWidth=1.6;x.strokeStyle=ch;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=dim?'rgba(255,255,255,.45)':'#ffffff';break}
     case 'soft':{const base=on?`hsl(${H} 45% 20%)`:`hsl(${H} 14% ${dim?8:13}%)`;x.save();x.shadowColor='rgba(0,0,0,.7)';x.shadowBlur=8;x.shadowOffsetX=on?1:3;x.shadowOffsetY=on?1:3;x.fillStyle=base;rrect(x,X+3,Y+3,W-6,Hh-6,r);x.fill();x.restore();
       x.save();rrect(x,X+3,Y+3,W-6,Hh-6,r);x.clip();const sg=x.createLinearGradient(X,Y,X+W,Y+Hh);if(on){sg.addColorStop(0,'rgba(0,0,0,.45)');sg.addColorStop(1,'rgba(255,255,255,.06)')}else{sg.addColorStop(0,'rgba(255,255,255,.09)');sg.addColorStop(1,'rgba(0,0,0,.3)')}x.fillStyle=sg;x.fillRect(X,Y,W,Hh);x.restore();
       if(on){x.lineWidth=2;x.strokeStyle=`hsla(${H},90%,60%,.7)`;rrect(x,X+3.5,Y+3.5,W-7,Hh-7,Math.max(0,r-1));x.stroke()}
@@ -304,7 +298,7 @@ function scrGen(v){
   const ref=()=>S.lc.get(S.gsel.toLowerCase())||fs[0],sm=genSum(g);
   const item=(k,icon,title,sum,body)=>`<div class="acc-i${S.gopen===k?' open':''}" data-k="${k}"><button class="acc-h" aria-expanded="${S.gopen===k}"><span class="ic">${ic(icon)}</span><span class="tx"><b>${title}</b><small data-sum="${k}">${esc(sum)}</small></span>${CHEV}</button>${S.gopen===k?`<div class="acc-b">${body}</div>`:''}</div>`;
   const look=btnLook(),styleBody=`<div class="ocg" id="g-lk">${LOOKS().map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${look===k}"><canvas data-ms="${k}"></canvas><span>${l}</span></button>`).join('')}</div>`;
-  const OWNSHAPE={brush:1,chamfer:1,hex:1,notch:1,ticket:1,capsule:1,pixel:1},own=OWNSHAPE[btnLook()];
+  const OWNSHAPE={chamfer:1,hex:1,notch:1,ticket:1,capsule:1,pixel:1},own=OWNSHAPE[btnLook()];
   const shapeBody=`${own?`<p class="warnbox">El estilo «${esc((LOOKS().find(x=>x[0]===btnLook())||['',''])[1])}» tiene su propia forma: la forma y el redondeo no le cambian. El margen sí.</p>`:''}<div class="ocg">${GSHAPES.map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${g.shape===k}"><canvas data-mf="${k}"></canvas><span>${l}</span></button>`).join('')}</div>
     ${g.shape==='round'?`<label class="rg" for="g-r"><span>Redondeo <output>${g.r} px</output></span><input type="range" id="g-r" min="2" max="48" value="${g.r}"></label>`:''}
     <label class="rg" for="g-in"><span>Margen alrededor <output>${g.inset} px</output></span><input type="range" id="g-in" min="0" max="24" value="${g.inset}"></label>

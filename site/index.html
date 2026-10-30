@@ -1522,7 +1522,7 @@ function pngMask(bmp){const s=96,c=document.createElement('canvas');c.width=c.he
   for(let i=0;i<s*s;i++){d.data[i*4]=d.data[i*4+1]=d.data[i*4+2]=255}x.putImageData(d,0,0);return {cv:c,bx:0,by:0,bw:s,bh:s}}
 
 /* ============ generador ============ */
-const GSTYLES=[['glow','Brillo inferior'],['flat','Plano'],['outline','Contorno'],['glass','Cristal'],['neon','Neón'],['tile','Mosaico'],['minimal','Mínimo'],['metal','Aluminio'],['carbon','Carbono'],['aurora','Aurora'],['hud','Futurista'],['hudb','Futurista grande'],['hudf','Futurista marco'],['chamfer','Biselado'],['scan','Escáner'],['led','Luces LED'],['double','Doble línea'],['side','Barra lateral'],['beam','Haz central'],['emboss','Relieve'],['halo','Halo'],['sunset','Ocaso'],['grid','Rejilla'],['slash','Diagonal'],['notch','Muesca'],['stripes','Rayas'],['capsule','Cápsula brillante'],['ring','Anillo'],['tab','Pestaña'],['corner','Esquinas'],['pixel','Píxel retro'],['gborder','Borde degradado'],['inset','Hundido'],['dots','Puntos'],['wave','Onda'],['split','Dos tonos'],['circuit','Circuito'],['brushed','Metal de color'],['alu','Aluminio cepillado'],['smoke','Cristal ahumado'],['bevel3d','Botón 3D'],['duo','Neón dúo'],['hex','Octógono'],['ticket','Etiqueta'],['frost','Esmerilado'],['soft','Suave'],['vivid','Degradado vivo'],['brush','Pincelada'],['spray','Grafiti']];
+const GSTYLES=[['glow','Brillo inferior'],['flat','Plano'],['outline','Contorno'],['glass','Cristal'],['neon','Neón'],['tile','Mosaico'],['minimal','Mínimo'],['metal','Aluminio'],['carbon','Carbono'],['aurora','Aurora'],['hud','Futurista'],['hudb','Futurista grande'],['hudf','Futurista marco'],['chamfer','Biselado'],['scan','Escáner'],['led','Luces LED'],['double','Doble línea'],['side','Barra lateral'],['beam','Haz central'],['emboss','Relieve'],['halo','Halo'],['sunset','Ocaso'],['grid','Rejilla'],['slash','Diagonal'],['notch','Muesca'],['stripes','Rayas'],['capsule','Cápsula brillante'],['ring','Anillo'],['tab','Pestaña'],['corner','Esquinas'],['pixel','Píxel retro'],['gborder','Borde degradado'],['inset','Hundido'],['dots','Puntos'],['wave','Onda'],['split','Dos tonos'],['circuit','Circuito'],['brushed','Metal de color'],['alu','Aluminio cepillado'],['smoke','Cristal ahumado'],['bevel3d','Botón 3D'],['duo','Neón dúo'],['hex','Octógono'],['ticket','Etiqueta'],['frost','Esmerilado'],['soft','Suave'],['vivid','Degradado vivo'],['gauge','Instrumentación'],['piano','Negro piano']];
 const defGen=()=>({isIn:1.15,look:'orig',style:'glow',shape:'round',r:14,inset:4,corners:'bg',color:'orig',hue:156,is:56,iy:42,per:{}});
 function origHue(F){if(F.oh!=null)return F.oh;const cnt=new Uint32Array(256);for(let i=0;i<F.idx.length;i++)cnt[F.idx[i]]++;let sx=0,sy=0;
   for(let i=0;i<F.n;i++){if(!cnt[i])continue;const r=F.pal[i*3],g=F.pal[i*3+1],b=F.pal[i*3+2];if(isKey(r,g,b))continue;const C=(Math.max(r,g,b)-Math.min(r,g,b))/255;if(C<.2)continue;const [h]=rgb2hsl(r,g,b),w=cnt[i]*C*C;sx+=Math.cos(h*Math.PI/180)*w;sy+=Math.sin(h*Math.PI/180)*w}
@@ -1534,7 +1534,7 @@ function borderColor(F){if(F.bdc)return F.bdc;const fw=F.w/frames(F),rs=[],gs=[]
 const NOBRITE=new Set(['metal','frost']);
 // estilos que dibujan su cuerpo con rectángulos (no con el primer relleno): al pulsar se aclara encima para que se lea el texto negro de la radio
 const LIFT=new Set(['split','bevel3d','pixel','frost','soft','carbon']);
-const THRU=new Set(['spray','hud','hudb','hudf','outline','neon','halo','grid','ring','corner','gborder','wave','circuit','duo','notch','scan','led','double','beam','dots','slash','minimal']);
+const THRU=new Set(['hud','hudb','hudf','outline','neon','halo','grid','ring','corner','gborder','wave','circuit','duo','notch','scan','led','double','beam','dots','slash','minimal']);
 function bgAvg(B){if(B.avgv===S.ver&&B.avg)return B.avg;const d=renderCanvas(B,false).getContext('2d').getImageData(0,260,800,160).data;let r=0,g=0,b=0,n=0;for(let i=0;i<d.length;i+=16){r+=d[i];g+=d[i+1];b+=d[i+2];n++}B.avg=`rgb(${r/n|0},${g/n|0},${b/n|0})`;B.avgv=S.ver;return B.avg}
 function vwPos(F){const kp=KNOWNPOS[F.lc];if(kp)return {x:kp[0],y:kp[1],s:'home'};if(typeof VW==='undefined'||!VW.data)return null;if(F.vpv===VW.data)return F.vp;let r=null;for(const o of VW.data){for(const c of o.c||[])if(c[0]===F.lc){r={x:c[1],y:c[2],w:c[3],h:c[4],s:o.s==='common'?'radio':o.s};break}if(r)break}F.vp=r;F.vpv=VW.data;return r}
 // todos los sitios donde va una imagen (la misma tecla puede ir en varias filas o vistas): para el fondo de detrás se mezclan
@@ -1699,26 +1699,20 @@ function drawState(x,F,w,h,s,H,g,bgc){
     case 'frost':{x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();x.filter='blur(7px)';x.drawImage(bgc,-10,-10,w+20,h+20);x.filter='none';
       x.fillStyle=on?`hsla(${H},85%,55%,.42)`:`rgba(255,255,255,${dim?.05:.13})`;x.fillRect(X,Y,W,Hh);const gl=x.createLinearGradient(0,Y,0,Y+Hh);gl.addColorStop(0,'rgba(255,255,255,.18)');gl.addColorStop(.5,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh);x.restore();
       x.lineWidth=1.5;x.strokeStyle=on?`hsla(${H},90%,75%,.8)`:'rgba(255,255,255,.38)';rrect(x,X+1.5,Y+1.5,W-3,Hh-3,r);x.stroke();ic=dim?'rgba(255,255,255,.45)':'#ffffff';break}
-    case 'brush':{// trazo de pincel: borde irregular, cerdas y unas gotas salpicadas. Siempre el mismo dibujo para el mismo botón
-      let sd=(w*131+h*17+(grp||0)*7)%2147483646+1;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
-      const a=X+2,b=Y+3,c=X+W-2,e=Y+Hh-3,j=Math.max(2,Math.min(7,Hh*.09)),n=Math.max(8,Math.round(W/12)),m=Math.max(4,Math.round(Hh/12)),pt=[];
-      for(let i=0;i<=n;i++)pt.push([a+(c-a)*i/n,b+rnd()*j]);for(let k=1;k<m;k++)pt.push([c-rnd()*j*1.6,b+(e-b)*k/m]);
-      for(let i=n;i>=0;i--)pt.push([a+(c-a)*i/n,e-rnd()*j]);for(let k=m-1;k>0;k--)pt.push([a+rnd()*j*1.6,b+(e-b)*k/m]);
-      const P2=new Path2D();P2.moveTo(pt[0][0],pt[0][1]);for(let i=1;i<pt.length;i++){const [px,py]=pt[i-1],[qx,qy]=pt[i];P2.quadraticCurveTo(px,py,(px+qx)/2,(py+qy)/2)}P2.closePath();
-      x.fillStyle=lin(`hsl(${H} ${dim?25:78}% ${dim?12:36}%)`,`hsl(${H} ${dim?25:82}% ${dim?7:22}%)`);x.fill(P2);
-      x.save();x.clip(P2);for(let i=0;i<Hh*.9;i++){const yy=b+rnd()*(e-b),x0=a+rnd()*W*.4,L=W*(.25+rnd()*.6);x.fillStyle=rnd()<.5?`rgba(255,255,255,${.02+rnd()*.05})`:`rgba(0,0,0,${.04+rnd()*.08})`;x.fillRect(x0,yy,L,1)}
-      const gl=x.createLinearGradient(0,b,0,b+(e-b)*.4);gl.addColorStop(0,'rgba(255,255,255,.16)');gl.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(a,b,W,(e-b)*.4);x.restore();
-      if(!dim){x.fillStyle=`hsl(${H} 80% ${on?70:44}%)`;for(let i=0;i<5;i++){const sx=rnd()<.5?a+rnd()*W*.18:c-rnd()*W*.18,sy=rnd()<.5?b+1+rnd()*3:e-1-rnd()*3;x.beginPath();x.arc(sx,sy,.8+rnd()*1.6,0,7);x.fill()}}
-      ic=dim?'rgba(255,255,255,.5)':'#ffffff';break}
-    case 'spray':{// grafiti: contorno de espray con niebla, motas y chorretones que caen del trazo de arriba
-      let sd=(w*97+h*29+(grp||0)*11)%2147483646+1;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
-      x.fillStyle=on?`hsl(${H} 50% 14%)`:'#060709';x.fill();const c2=`hsl(${H} 95% ${on?72:dim?28:58}%)`,a=X+4,b=Y+4,c=X+W-4,e=Y+Hh-4,rr=Math.max(0,r-3);
-      x.save();x.strokeStyle=`hsla(${H},95%,55%,${dim?.08:.22})`;x.lineWidth=8;rrect(x,a,b,c-a,e-b,rr);x.stroke();x.strokeStyle=c2;x.lineWidth=on?3.4:2.6;x.shadowColor=c2;x.shadowBlur=dim?0:7;x.stroke();x.restore();
-      if(!dim){x.fillStyle=c2;const per=2*(c-a+e-b);for(let i=0;i<per/3;i++){let t=rnd()*per,px,py;if(t<c-a){px=a+t;py=b}else if((t-=c-a)<e-b){px=c;py=b+t}else if((t-=e-b)<c-a){px=c-t;py=e}else{t-=c-a;px=a;py=e-t}
-        const d=(rnd()-.5)*9;px+=py===b||py===e?0:d;py+=py===b||py===e?d:0;x.globalAlpha=.25+rnd()*.5;x.fillRect(px,py,1.2,1.2)}x.globalAlpha=1;
-        x.save();x.fillStyle=c2;x.strokeStyle=c2;x.lineCap='round';const nd=W>140?3:2;for(let i=0;i<nd;i++){const dx=i%2?c-W*(.08+rnd()*.16):a+W*(.08+rnd()*.16),L=Math.min(Hh*.32,6+rnd()*Hh*.28);
-          x.lineWidth=1.6+rnd()*.9;x.beginPath();x.moveTo(dx,b);x.lineTo(dx,b+L);x.stroke();x.beginPath();x.ellipse(dx,b+L+1.2,1.8,2.4,0,0,7);x.fill()}x.restore()}
-      ic=on?'#ffffff':`hsl(${H} 100% ${dim?36:72}%)`;glow=dim?0:on?10:6;break}
+    case 'gauge':{// cuadro de instrumentos: negro, regla de marcas abajo y una aguja de color que la va llenando
+      x.fillStyle=lin('#0c0f13','#030405');x.fill();x.lineWidth=1;x.strokeStyle=`rgba(255,255,255,${dim?.06:.14})`;rrect(x,X+1.5,Y+1.5,W-3,Hh-3,r);x.stroke();
+      x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();const by=Y+Math.max(9,Hh*.16),a0=X+Math.max(10,r*.8),a1=X+W-Math.max(10,r*.8),n=Math.max(8,Math.round((a1-a0)/7)),fill=on?1:dim?.2:.62;
+      for(let i=0;i<=n;i++){const px=a0+(a1-a0)*i/n,big=i%5===0,lit=i/n<=fill;x.fillStyle=lit?`hsl(${H} 95% ${on?72:dim?30:58}%)`:'rgba(255,255,255,.22)';x.fillRect(px-.6,by-(big?6:3.5),1.3,big?6:3.5)}
+      const nx=a0+(a1-a0)*fill;x.fillStyle=`hsl(${H} 100% ${on?80:dim?36:64}%)`;x.shadowColor=x.fillStyle;x.shadowBlur=dim?0:8;x.fillRect(nx-1.2,by-8,2.4,11);
+      const rg=x.createLinearGradient(a0,0,nx,0);rg.addColorStop(0,`hsla(${H},95%,55%,0)`);rg.addColorStop(1,`hsla(${H},95%,55%,${dim?.05:.25})`);x.shadowBlur=0;x.fillStyle=rg;x.fillRect(a0,by+1,nx-a0,2);x.restore();
+      ic=on?'#ffffff':dim?'#5c636b':'#eef2f6';glow=0;break}
+    case 'piano':{// negro piano con canto cromado y reflejo en diagonal; el color solo en una línea fina abajo
+      x.fillStyle=lin('#22262c','#07080a','#0e1013');x.fill();x.save();rrect(x,X+1,Y+1,W-2,Hh-2,r);x.clip();
+      x.fillStyle=`rgba(255,255,255,${dim?.03:.09})`;x.beginPath();x.moveTo(X+W*.18,Y);x.lineTo(X+W*.46,Y);x.lineTo(X+W*.3,Y+Hh);x.lineTo(X+W*.02,Y+Hh);x.closePath();x.fill();
+      const gl=x.createLinearGradient(0,Y,0,Y+Hh*.45);gl.addColorStop(0,'rgba(255,255,255,.16)');gl.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gl;x.fillRect(X,Y,W,Hh*.45);
+      x.fillStyle=`hsl(${H} 95% ${on?70:dim?26:56}%)`;x.shadowColor=x.fillStyle;x.shadowBlur=dim?0:6;x.fillRect(X+W*.3,Y+Hh-3.5,W*.4,2);x.restore();
+      const ch=x.createLinearGradient(0,Y,0,Y+Hh);ch.addColorStop(0,'rgba(255,255,255,.75)');ch.addColorStop(.35,'rgba(150,156,165,.35)');ch.addColorStop(.7,'rgba(255,255,255,.25)');ch.addColorStop(1,'rgba(90,95,102,.6)');
+      x.lineWidth=1.6;x.strokeStyle=ch;rrect(x,X+1,Y+1,W-2,Hh-2,r);x.stroke();ic=dim?'rgba(255,255,255,.45)':'#ffffff';break}
     case 'soft':{const base=on?`hsl(${H} 45% 20%)`:`hsl(${H} 14% ${dim?8:13}%)`;x.save();x.shadowColor='rgba(0,0,0,.7)';x.shadowBlur=8;x.shadowOffsetX=on?1:3;x.shadowOffsetY=on?1:3;x.fillStyle=base;rrect(x,X+3,Y+3,W-6,Hh-6,r);x.fill();x.restore();
       x.save();rrect(x,X+3,Y+3,W-6,Hh-6,r);x.clip();const sg=x.createLinearGradient(X,Y,X+W,Y+Hh);if(on){sg.addColorStop(0,'rgba(0,0,0,.45)');sg.addColorStop(1,'rgba(255,255,255,.06)')}else{sg.addColorStop(0,'rgba(255,255,255,.09)');sg.addColorStop(1,'rgba(0,0,0,.3)')}x.fillStyle=sg;x.fillRect(X,Y,W,Hh);x.restore();
       if(on){x.lineWidth=2;x.strokeStyle=`hsla(${H},90%,60%,.7)`;rrect(x,X+3.5,Y+3.5,W-7,Hh-7,Math.max(0,r-1));x.stroke()}
@@ -1763,7 +1757,7 @@ function scrGen(v){
   const ref=()=>S.lc.get(S.gsel.toLowerCase())||fs[0],sm=genSum(g);
   const item=(k,icon,title,sum,body)=>`<div class="acc-i${S.gopen===k?' open':''}" data-k="${k}"><button class="acc-h" aria-expanded="${S.gopen===k}"><span class="ic">${ic(icon)}</span><span class="tx"><b>${title}</b><small data-sum="${k}">${esc(sum)}</small></span>${CHEV}</button>${S.gopen===k?`<div class="acc-b">${body}</div>`:''}</div>`;
   const look=btnLook(),styleBody=`<div class="ocg" id="g-lk">${LOOKS().map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${look===k}"><canvas data-ms="${k}"></canvas><span>${l}</span></button>`).join('')}</div>`;
-  const OWNSHAPE={brush:1,chamfer:1,hex:1,notch:1,ticket:1,capsule:1,pixel:1},own=OWNSHAPE[btnLook()];
+  const OWNSHAPE={chamfer:1,hex:1,notch:1,ticket:1,capsule:1,pixel:1},own=OWNSHAPE[btnLook()];
   const shapeBody=`${own?`<p class="warnbox">El estilo «${esc((LOOKS().find(x=>x[0]===btnLook())||['',''])[1])}» tiene su propia forma: la forma y el redondeo no le cambian. El margen sí.</p>`:''}<div class="ocg">${GSHAPES.map(([k,l])=>`<button class="ocd" data-v="${k}" aria-pressed="${g.shape===k}"><canvas data-mf="${k}"></canvas><span>${l}</span></button>`).join('')}</div>
     ${g.shape==='round'?`<label class="rg" for="g-r"><span>Redondeo <output>${g.r} px</output></span><input type="range" id="g-r" min="2" max="48" value="${g.r}"></label>`:''}
     <label class="rg" for="g-in"><span>Margen alrededor <output>${g.inset} px</output></span><input type="range" id="g-in" min="0" max="24" value="${g.inset}"></label>
@@ -3083,8 +3077,8 @@ function btnSheet(F,after,el){
    Botones de Inicio y de dentro (estilo, color del marco y del icono) + color de toda la radio (fondos, barra de arriba, listas, barras…) + tono del negro de los fondos.
    Se ve antes de aplicarlo: una hoja con la vista previa de cada pantalla. look = estilo · hue = color · ihue = color del icono (null = el del estilo) · bk = tono de los fondos (null = el mismo color) */
 const PRESETS=[
-  ['mancha','Mancha de pintura','brush',328,'white',328,'paint'],['mancha-cian','Pintura cian','brush',188,'white',190,'paint'],['mancha-lima','Pintura lima','brush',88,'white',90,'paint'],
-  ['graffiti','Grafiti','spray',95,null,95,'graffiti'],['graffiti-naranja','Grafiti naranja','spray',24,null,24,'graffiti'],['graffiti-rosa','Grafiti rosa','spray',318,null,318,'graffiti'],
+  ['cockpit','Cuadro digital','gauge',192,null,195,'cockpit'],['cockpit-amb','Cuadro ámbar','gauge',32,null,30,'cockpit'],
+  ['piano','Negro piano','piano',210,null,210,'piano'],['piano-rojo','Negro piano rojo','piano',0,null,0,'piano'],
   ['synth','Synthwave','duo',300,null,300,'synth'],['tron','Tron','hudf',190,null,190,'tron'],['cyber','Cyberpunk','chamfer',52,null,52,'cyber'],
   ['matrix','Matrix','neon',135,null,135,'matrix'],['ambiente','Luz ambiente','halo',30,null,28,'ambient'],['deportivo','Deportivo rojo','side',0,'white',0,'racing'],
   ['rs','R.S. amarillo','carbon',50,'white',48,'racing'],['alpine','Alpine azul','brushed',222,null,222,'racing'],
@@ -3123,7 +3117,7 @@ function presetSet(P){const g=S.gen||(S.gen=defGen()),T=genTargets(),L=presetIns
   return {T,L}}
 /* Fondo nuevo para un diseño listo: negro con el color del diseño (degradado, resplandor abajo y un dibujo suave que sigue al estilo).
    Sustituye al fondo de Renault (sus rayas grises teñidas quedaban sucias). Se deshace como todo lo demás */
-const BGPAT={brush:'soft',spray:'soft',grid:'grid',circuit:'grid',pixel:'grid',hud:'grid',hudb:'grid',hudf:'grid',scan:'lines',led:'dots',dots:'dots',wave:'wave',sunset:'wave',aurora:'wave',capsule:'wave',neon:'lines',halo:'rings',ring:'rings',corner:'grid',notch:'lines',chamfer:'diag',slash:'diag',stripes:'diag',tab:'lines',split:'lines'};
+const BGPAT={gauge:'soft',piano:'soft',grid:'grid',circuit:'grid',pixel:'grid',hud:'grid',hudb:'grid',hudf:'grid',scan:'lines',led:'dots',dots:'dots',wave:'wave',sunset:'wave',aurora:'wave',capsule:'wave',neon:'lines',halo:'rings',ring:'rings',corner:'grid',notch:'lines',chamfer:'diag',slash:'diag',stripes:'diag',tab:'lines',split:'lines'};
 function presetBgCanvas(P,bk,scr){const c=document.createElement('canvas');c.width=800;c.height=480;const x=c.getContext('2d'),h=bk;
   if(P.bg==='metal'||P.bg==='gold'){const sat=P.bg==='gold'?38:P.look==='alu'?3:10;let gr=x.createLinearGradient(0,0,0,480);gr.addColorStop(0,`hsl(${h} ${sat}% 9%)`);gr.addColorStop(.5,`hsl(${h} ${sat}% 15%)`);gr.addColorStop(1,`hsl(${h} ${sat}% 10%)`);x.fillStyle=gr;x.fillRect(0,0,800,480);
     let sd=97;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;for(let i=0;i<900;i++){x.fillStyle=`rgba(${rnd()<.5?'255,255,255':'0,0,0'},${.02+rnd()*.05})`;x.fillRect(0,78+rnd()*402,800,1)}
@@ -3147,34 +3141,15 @@ function presetBgCanvas(P,bk,scr){const c=document.createElement('canvas');c.wid
     let sd=7;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;x.fillStyle='rgba(255,255,255,.025)';for(let i=0;i<2500;i++)x.fillRect(rnd()*800,78+rnd()*402,2,2);rg(200,480,380,`hsla(${h},85%,48%,.12)`);return c}
   const grain=(n,a)=>{let sd=4441;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;for(let i=0;i<n;i++){x.fillStyle=rnd()<.5?`rgba(255,255,255,${a*rnd()})`:`rgba(0,0,0,${a*1.6*rnd()})`;x.fillRect(rnd()*800,rnd()*480,1.5,1.5)}};
   const vign=(k)=>{const v=x.createRadialGradient(400,250,140,400,250,560);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,`rgba(0,0,0,${k})`);x.fillStyle=v;x.fillRect(0,0,800,480)};
-  if(P.bg==='paint'){// manchas de pintura: salpicones grandes en los bordes, el centro se queda tranquilo para que se lean textos y botones
-    vg('#0b0b0e','#121116');grain(9000,.05);let sd=P.hue*7+13;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
-    const splat=(cx,cy,R,hh,l)=>{const col=`hsl(${hh} 85% ${l}%)`,pts=[],N=34;for(let i=0;i<N;i++){const t=i/N*Math.PI*2;let rr=R*(.78+rnd()*.3);pts.push([cx+Math.cos(t)*rr,cy+Math.sin(t)*rr])}
-      x.save();x.fillStyle=col;x.beginPath();x.moveTo((pts[0][0]+pts[N-1][0])/2,(pts[0][1]+pts[N-1][1])/2);for(let i=0;i<N;i++){const [px,py]=pts[i],[qx,qy]=pts[(i+1)%N];x.quadraticCurveTo(px,py,(px+qx)/2,(py+qy)/2)}x.fill();
-      // brazos y gotas que salen disparadas
-      for(let i=0;i<16;i++){const t=rnd()*Math.PI*2,L=R*(1.05+rnd()*.75),wd=R*(.05+rnd()*.07),ex=cx+Math.cos(t)*L,ey=cy+Math.sin(t)*L,nx=-Math.sin(t)*wd,ny=Math.cos(t)*wd;
-        x.beginPath();x.moveTo(cx+Math.cos(t)*R*.6+nx,cy+Math.sin(t)*R*.6+ny);x.quadraticCurveTo(ex+nx*.3,ey+ny*.3,ex,ey);x.quadraticCurveTo(ex-nx*.3,ey-ny*.3,cx+Math.cos(t)*R*.6-nx,cy+Math.sin(t)*R*.6-ny);x.fill();
-        x.beginPath();x.arc(ex+Math.cos(t)*wd*1.6,ey+Math.sin(t)*wd*1.6,wd*.9,0,7);x.fill()}
-      for(let i=0;i<26;i++){const t=rnd()*Math.PI*2,L=R*(1.3+rnd()*1.1);x.beginPath();x.arc(cx+Math.cos(t)*L,cy+Math.sin(t)*L,1+rnd()*R*.045,0,7);x.fill()}
-      // brillo húmedo
-      const hl=x.createRadialGradient(cx-R*.35,cy-R*.4,0,cx-R*.35,cy-R*.4,R*.9);hl.addColorStop(0,`hsla(${hh},90%,${l+22}%,.55)`);hl.addColorStop(1,`hsla(${hh},90%,${l}%,0)`);x.globalCompositeOperation='source-atop';x.fillStyle=hl;x.fillRect(cx-R*2,cy-R*2,R*4,R*4);x.restore()};
-    const hm=scr==='home',L0=hm?38:30;if(hm){splat(-10,150,150,h,L0);splat(800,455,175,(h+40)%360,L0-2);splat(690,96,52,(h+180)%360,L0+4);splat(120,470,62,(h+40)%360,L0+2)}
-    else{splat(-75,130,115,h,L0);splat(845,500,135,(h+40)%360,L0-2);splat(-20,500,55,(h+180)%360,L0+2)}// dentro, más pequeñas y en las esquinas: debajo van listas y textos
-    const ve=x.createRadialGradient(400,270,60,400,270,330);ve.addColorStop(0,`rgba(8,8,10,${scr==='home'?.72:.82})`);ve.addColorStop(1,'rgba(8,8,10,0)');x.fillStyle=ve;x.fillRect(0,0,800,480);vign(.35);
-    x.fillStyle=`hsla(${h},85%,55%,.35)`;x.fillRect(0,477,800,3);return c}
-  if(P.bg==='graffiti'){// pared de ladrillo oscura con nubes de espray, dos trazos de rotulador gordo y chorretones
-    vg('#0e0e11','#141318');let sd=P.hue*11+5;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
-    for(let row=0,y=0;y<480;row++,y+=30)for(let X0=row%2?-40:0;X0<800;X0+=80){const l=8+rnd()*7;x.fillStyle=`hsl(${h} 6% ${l}%)`;x.fillRect(X0+2,y+2,76,26);x.fillStyle='rgba(255,255,255,.035)';x.fillRect(X0+2,y+2,76,1.5)}
-    grain(12000,.06);
-    const cloud=(cx,cy,R,hh,a)=>{const g=x.createRadialGradient(cx,cy,0,cx,cy,R);g.addColorStop(0,`hsla(${hh},95%,52%,${a})`);g.addColorStop(.6,`hsla(${hh},95%,50%,${a*.45})`);g.addColorStop(1,`hsla(${hh},95%,50%,0)`);x.fillStyle=g;x.fillRect(cx-R,cy-R,R*2,R*2);
-      x.fillStyle=`hsla(${hh},95%,60%,.55)`;for(let i=0;i<R*3;i++){const t=rnd()*Math.PI*2,d=R*(.55+rnd()*.6);x.fillRect(cx+Math.cos(t)*d,cy+Math.sin(t)*d,1.3,1.3)}};
-    cloud(70,120,190,h,.42);cloud(760,430,230,(h+35)%360,.38);cloud(720,110,120,(h+190)%360,.22);
-    const tag=(pts,hh,wd)=>{const path=()=>{x.beginPath();x.moveTo(...pts[0]);for(let i=1;i<pts.length;i+=3)x.bezierCurveTo(...pts[i],...pts[i+1],...pts[i+2])};x.save();x.lineCap='round';x.lineJoin='round';
-      path();x.strokeStyle='rgba(0,0,0,.6)';x.lineWidth=wd+6;x.stroke();path();x.strokeStyle=`hsl(${hh} 95% 50%)`;x.lineWidth=wd;x.stroke();path();x.strokeStyle=`hsla(${hh},100%,80%,.55)`;x.lineWidth=wd*.22;x.translate(-wd*.18,-wd*.18);x.stroke();x.restore();
-      x.fillStyle=`hsl(${hh} 95% 50%)`;for(let i=0;i<4;i++){const k=3*Math.floor(rnd()*((pts.length-1)/3)),[px,py]=pts[k],L=10+rnd()*40;x.fillRect(px-1,py,2.2,L);x.beginPath();x.arc(px+.1,py+L,2.4,0,7);x.fill()}};
-    if(scr==='home'){tag([[-20,455],[140,380],[230,470],[330,430]],h,12);tag([[560,120],[620,60],[700,150],[820,95]],(h+35)%360,10)}// dentro, sin trazos: pasarían por debajo de barras y textos
-    const ve=x.createRadialGradient(400,270,60,400,270,340);ve.addColorStop(0,'rgba(10,10,12,.7)');ve.addColorStop(1,'rgba(10,10,12,0)');x.fillStyle=ve;x.fillRect(0,0,800,480);vign(.4);
-    x.fillStyle=`hsla(${h},95%,55%,.4)`;x.fillRect(0,477,800,3);return c}
+  if(P.bg==='cockpit'){// cuadro digital: negro con dos esferas de marcas a los lados, como el velocímetro y el cuentarrevoluciones
+    vg('#05070a','#080b10');const dial=(cx,cy,R,a0,a1)=>{x.save();x.lineCap='round';for(let i=0;i<=60;i++){const t=a0+(a1-a0)*i/60,big=i%5===0,r0=R-(big?22:12),hot=i>48;
+      x.strokeStyle=hot?`hsla(${(h+180)%360},90%,55%,${big?.6:.35})`:`hsla(${h},85%,60%,${big?.5:.25})`;x.lineWidth=big?3:1.5;x.beginPath();x.moveTo(cx+Math.cos(t)*r0,cy+Math.sin(t)*r0);x.lineTo(cx+Math.cos(t)*R,cy+Math.sin(t)*R);x.stroke()}
+      x.strokeStyle=`hsla(${h},85%,60%,.12)`;x.lineWidth=1;x.beginPath();x.arc(cx,cy,R+6,a0,a1);x.stroke();x.beginPath();x.arc(cx,cy,R*.55,0,7);x.stroke();x.restore()};
+    dial(-40,300,290,-1.15,1.15);dial(840,300,290,Math.PI-1.15,Math.PI+1.15);rg(400,470,420,`hsla(${h},90%,50%,.14)`);
+    const ve=x.createRadialGradient(400,260,80,400,260,330);ve.addColorStop(0,'rgba(5,7,10,.75)');ve.addColorStop(1,'rgba(5,7,10,0)');x.fillStyle=ve;x.fillRect(0,0,800,480);x.fillStyle=`hsla(${h},90%,60%,.4)`;x.fillRect(0,477,800,2);return c}
+  if(P.bg==='piano'){// negro piano: reflejo suave en diagonal y un brillo del color abajo
+    vg('#0b0c0f','#050506');const sh=x.createLinearGradient(0,0,800,480);sh.addColorStop(0,'rgba(255,255,255,0)');sh.addColorStop(.38,'rgba(255,255,255,0)');sh.addColorStop(.46,'rgba(255,255,255,.05)');sh.addColorStop(.5,'rgba(255,255,255,.02)');sh.addColorStop(.6,'rgba(255,255,255,0)');x.fillStyle=sh;x.fillRect(0,0,800,480);
+    rg(400,520,380,`hsla(${h},90%,50%,.16)`);x.fillStyle='rgba(255,255,255,.18)';x.fillRect(0,476,800,1);x.fillStyle=`hsla(${h},90%,60%,.55)`;x.fillRect(250,477,300,2);return c}
   if(P.bg==='oled'){x.fillStyle='#000';x.fillRect(0,0,800,480);x.fillStyle=`hsla(${h},20%,60%,.18)`;x.fillRect(0,477,800,1);return c}
   let gr=x.createLinearGradient(0,0,0,480);gr.addColorStop(0,`hsl(${h} 30% 5%)`);gr.addColorStop(.55,`hsl(${h} 38% 7%)`);gr.addColorStop(1,`hsl(${h} 48% 11%)`);x.fillStyle=gr;x.fillRect(0,0,800,480);
   const glow=(cx,cy,r,a)=>{const g=x.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,`hsla(${h},90%,50%,${a})`);g.addColorStop(1,`hsla(${h},90%,50%,0)`);x.fillStyle=g;x.fillRect(0,0,800,480)};
@@ -3575,7 +3550,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-30-6';
+const VER='2026-10-30-7';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3583,6 +3558,7 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-10-30-7',['Fuera Pintura y Grafiti (diseños y estilos de botón)','Diseños nuevos inspirados en el coche: Cuadro digital (cian y ámbar; botón negro con regla de marcas y aguja de color, fondo con esferas de velocímetro) y Negro piano (azul y rojo; negro brillante con canto cromado, reflejo y línea de color fina)','Estilos de botón nuevos: Instrumentación y Negro piano']],
   ['2026-10-30-6',['Cajas alrededor de los botones de dentro (Ajustes, Multimedia, barras de abajo…) con formas redondeadas: las esquinas se rellenaban con un color sacado del botón original, que no coincidía con tu fondo teñido. Ahora llevan el trozo de fondo real que tienen detrás (mezclado si la misma tecla va en varios sitios), con o sin diseño listo. Los diseños que ya tenías se arreglan solos al abrir la app']],
   ['2026-10-30-5',['Al cambiar un fondo (color, imagen o diseño listo), las esquinas y el margen de los botones con estilo se ponen al día solos: antes se quedaban con el trozo del fondo viejo hasta volver a elegir la forma. Los de Inicio, al momento; los de dentro, por detrás']],
   ['2026-10-30-4',['Estilo de los botones de Inicio mucho más rápido: cambiar el acabado o el fondo de los iconos tardaba unos 3,5 s por toque con un diseño listo puesto (rehacía también los ~250 botones de dentro de golpe). Ahora los 6 de Inicio se ven al momento (≈0,2 s) y los de dentro se ponen al día por detrás sin bloquear. Forma, redondeo y margen también llegan ya a los botones de dentro']],
