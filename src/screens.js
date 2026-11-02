@@ -67,13 +67,17 @@ const LISTGREY=/(list_line|list_press|list\d?_bg|list_btn|folder_name\d?_bg|_dot
 const TOPBAR=/(fulldown_\d_l?ine|indi_l?ine)\.bmp$/;
 function screenPieces(s,files){const set=new Set(files);if(VW.st===2)for(const o of VW.data)if(o.s===s||(s==='radio'&&o.s==='common'&&false))for(const c of o.c){const F=c[0]&&byName(c[0]);if(F)set.add(F)}
   const bgs=new Set(SCREENS.map(x=>x[2]));return [...set].filter(F=>!bgs.has(F.lc)&&!/common_indi_(?!line)/.test(F.lc)&&F.sec!=='COMMON'||/common_pull_|indi_line/.test(F.lc))}
+const BGFILES=()=>new Set([...SCRBG.values()].map(byName).filter(Boolean));
 function tintScreen(s,files,sty,h){const g=S.gen||(S.gen=defGen()),T=new Set([...sty,...genTargets()]),odd=[];
   for(const F of screenPieces(s,files)){if(STARS.test(F.lc)){setFileOps(F,{...defOps(),tH:44,tA:100,tG:false});continue}// lo que un diseño listo ya dejó pintado (fondos calcados de listas, carátulas, líneas ocultas…) no se vuelve a teñir encima
-    if(T.has(F)||(F.rep&&F.rep.by&&F.rep.by!=='gen'&&F.rep.by!=='btn'))continue;
-    if(isBtnLike(F)&&frames(F)>=2&&canStyleOne(F)&&F.w/frames(F)/F.h<=4.6){const q=g.per[F.path]||(g.per[F.path]={});if(h==null)delete q.hue;else q.hue=h;odd.push(F);continue}
-    const st=stats(F);let col=0,tot=0;for(const f of st.fam.values()){tot+=f.n;if(f.k<12)col+=f.n}const grey=LISTGREY.test(F.lc)||(isBtnLike(F)&&frames(F)>=2&&F.w/frames(F)/F.h>4.6&&!noStyle(F));if(!grey&&col<tot*.03)continue;
-    const o={...defOps(),...(S.ops.file[F.path]||{})};o.map={...(o.map||{})};
-    if(h==null||h==='white'){o.tA=0;o.tG=false;delete o.map[12]}else{o.tH=h;o.tA=100;o.tG=false;if(grey)o.map[12]={to:h,ts:.85,tl:.62};else delete o.map[12]}
+    if(T.has(F))continue;
+    // listas, carátulas… que un diseño listo calcó sobre su fondo: se vuelven a calcar con el color de esta pantalla (antes se quedaban con el del diseño)
+    if(F.rep&&F.rep.by==='preset'&&!BGFILES().has(F)){if(h==null||h==='white')continue;F.rep=null;delete S.ex[F.path];const o={...defOps(),...(S.ops.file[F.path]||{})};o.map={...(o.map||{})};o.tH=h;o.tA=100;o.tG=false;o.map[12]={to:h,ts:.85,tl:.62};setFileOps(F,o);clearBlack(F);continue}
+    if(F.rep&&F.rep.by&&F.rep.by!=='gen'&&F.rep.by!=='btn')continue;
+    if(isBtnLike(F)&&frames(F)>=2&&canStyleOne(F)&&(F.w/frames(F)/F.h<=4.6||((g.per[F.path]||{}).look||'orig')!=='orig')){const q=g.per[F.path]||(g.per[F.path]={});if(h==null)delete q.hue;else q.hue=h;odd.push(F);continue}
+    const st=stats(F);let col=0,tot=0;for(const f of st.fam.values()){tot+=f.n;if(f.k<12)col+=f.n}const grey=LISTGREY.test(F.lc)||(isBtnLike(F)&&frames(F)>=2&&F.w/frames(F)/F.h>4.6&&!noStyle(F));const prev=S.ops.file[F.path]||{},had=prev.tA>0;if(!grey&&col<tot*.03&&!had)continue;// lo que ya estaba teñido (por un diseño listo, por ejemplo: líneas de arriba, iconos de las listas) cambia al color nuevo aunque sea casi gris
+    const o={...defOps(),...prev};o.map={...(o.map||{})};
+    if(h==null||h==='white'){o.tA=0;o.tG=false;delete o.map[12]}else{o.tH=h;o.tA=100;o.tG=had&&!grey?!!prev.tG:false;if(o.map[13])o.map[13]={...o.map[13],to:h};if(grey)o.map[12]={to:h,ts:.85,tl:.62};else delete o.map[12]}
     if(!Object.keys(o.map).length)delete o.map;setFileOps(F,o)}
   // el resplandor de color del fondo de la pantalla, del mismo color (el negro no cambia; para teñirlo está «Color del negro del fondo»)
   const B=byName(SCRBG.get(s==='common'?'radio':s));if(B&&!B.rep&&s!=='common'){const o={...defOps(),...(S.ops.file[B.path]||{})};if(h==null||h==='white')o.tA=0;else{o.tH=h;o.tA=100;o.tG=false}setFileOps(B,o)}

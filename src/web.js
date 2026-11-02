@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-10-30-7';
+const VER='2026-11-02-1';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,7 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-11-02-1',['Botones de Teléfono (teclado: espacio, resultados…) que salían azules tras aplicar un diseño listo: arrastraban el tinte de un color de pantalla anterior y se teñían encima del botón nuevo. Ahora un botón con estilo lleva solo sus colores. Los diseños que ya tienes se arreglan solos al abrir la app','Color de pantalla después de un diseño listo: ahora también cambian las listas y carátulas que el diseño había calcado, las líneas de la barra de arriba y los iconos de las listas (antes se quedaban con el color del diseño)']],
   ['2026-10-30-7',['Fuera Pintura y Grafiti (diseños y estilos de botón)','Diseños nuevos inspirados en el coche: Cuadro digital (cian y ámbar; botón negro con regla de marcas y aguja de color, fondo con esferas de velocímetro) y Negro piano (azul y rojo; negro brillante con canto cromado, reflejo y línea de color fina)','Estilos de botón nuevos: Instrumentación y Negro piano']],
   ['2026-10-30-6',['Cajas alrededor de los botones de dentro (Ajustes, Multimedia, barras de abajo…) con formas redondeadas: las esquinas se rellenaban con un color sacado del botón original, que no coincidía con tu fondo teñido. Ahora llevan el trozo de fondo real que tienen detrás (mezclado si la misma tecla va en varios sitios), con o sin diseño listo. Los diseños que ya tenías se arreglan solos al abrir la app']],
   ['2026-10-30-5',['Al cambiar un fondo (color, imagen o diseño listo), las esquinas y el margen de los botones con estilo se ponen al día solos: antes se quedaban con el trozo del fondo viejo hasta volver a elegir la forma. Los de Inicio, al momento; los de dentro, por detrás']],
