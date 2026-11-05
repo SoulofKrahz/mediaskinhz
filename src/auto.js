@@ -321,7 +321,7 @@ function mortSelect(skins,id,when){const L=[],w=x=>L.push(x),n=skins.length;
 function curBytes(){S.ver++;for(const F of S.files)F.cv=null;const rs=withTwins(S.files.filter(changed).map(F=>({F,u:outBytes(F)})));return new Map(rs.map(r=>[r.F.path,r.u]))}
 function blankState(){for(const F of S.files){F.rep=null;F.cv=null}S.src=new Map();S.ops={global:null,sec:{},file:{}};S.ex={};S.frames={};S.icx={};S.stby=null}
 // list: [{name, cur:true} | {name, st} | {name, preset:P}]
-async function selectorZip(list,onp){await loadVistas().catch(()=>{});if(rbQ.length)await rbWait();
+async function selectorZip(list,onp){await loadVistas().catch(()=>{});if(rbQ.length||rbInL)await rbWait();
   const keep=snap(),src0=S.src,kd=[S.curDesign,S.curDesignName],maps=[];
   const back=()=>{Object.assign(S,{ops:structuredClone(keep.ops),ex:{...keep.ex},frames:{...keep.frames},layout:structuredClone(keep.layout),gen:genCopy(keep.gen),icx:structuredClone(keep.icx||{}),stby:keep.stby?{...keep.stby}:null});
     for(const F of S.files){F.rep=null;F.cv=null}for(const [F,r] of keep.reps)F.rep=r;S.src=src0;S.ver++};

@@ -125,10 +125,10 @@ function setFileOps(F,v){if(empty(v))delete S.ops.file[F.path];else S.ops.file[F
 /* ============ deshacer ============ */
 const H=[];
 const genCopy=g=>g?{...g,per:Object.fromEntries(Object.entries(g.per||{}).map(([k,p])=>[k,{...p}]))}:null;
-function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),icx:structuredClone(S.icx||{}),stby:S.stby?{...S.stby}:null,reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep]),pend:typeof rbQ!=='undefined'?rbQ.slice():[]}}
+function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),icx:structuredClone(S.icx||{}),stby:S.stby?{...S.stby}:null,reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep]),pend:typeof rbQ!=='undefined'?[...new Set([...rbQ,...(rbInL||[])])]:[]}}
 function before(){// sin esperar a la cola: la foto apunta qué botones estaban a medio rehacer y Deshacer los termina
   S.curDesign=null;S.curDesignName=null;H.push(snap());if(H.length>80)H.shift();updUndo()}
-function undo(){const s=H.pop();if(!s)return;if(typeof rbQ!=='undefined'){rbQ.length=0;rbTok++;rbMark(false)}Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen,icx:s.icx||{},stby:s.stby||null});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
+function undo(){const s=H.pop();if(!s)return;if(typeof rbQ!=='undefined'){rbQ.length=0;rbTok++;rbHotN=0;clearTimeout(rbInT);rbInL=null;rbMark(false)}Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen,icx:s.icx||{},stby:s.stby||null});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
   S.ver++;if(s.pend&&s.pend.length)rebuildLater(s.pend);render(true);toast('Cambio deshecho');saveState()}
 function updUndo(){$('#ab-undo').disabled=!H.length}
 function bump(){S.ver++;schedule()}
@@ -661,7 +661,7 @@ const bkLabel=()=>S.demo?'imágenes de ejemplo':`«${S.bkName||S.root}» · ${S.
 function scrExport(v){
   setTitle('Exportar',`<span class="lw">Mediaskin<em>hz</em></span> · ${esc(bkLabel())}`);
   // si aún se están rehaciendo botones por detrás (diseño recién aplicado), se terminan aquí sin congelar la pantalla y luego se muestra la lista
-  if(typeof rbQ!=='undefined'&&rbQ.length){++exTok;v.innerHTML=`<div class="stack" style="max-width:640px;margin:0 auto"><div class="card"><h2>Preparando los botones…</h2><p class="note">El diseño se está terminando de dibujar. Quedan <b id="x-rb">${rbQ.length}</b>.</p></div></div>`;
+  if(typeof rbQ!=='undefined'&&(rbQ.length||rbInL)){++exTok;v.innerHTML=`<div class="stack" style="max-width:640px;margin:0 auto"><div class="card"><h2>Preparando los botones…</h2><p class="note">El diseño se está terminando de dibujar. Quedan <b id="x-rb">${rbQ.length}</b>.</p></div></div>`;
     rbWait(n=>{const e=$('#x-rb');if(e)e.textContent=n}).then(()=>{if(S.route.n==='export')render(true)});return}
   const fs=S.files.filter(changed),tok=++exTok;
   if(!fs.length){v.innerHTML=`<div class="stack" style="max-width:640px;margin:0 auto"><div class="card"><h2>Todavía no hay cambios</h2><p>Cuando cambies un color o una imagen, aquí verás la lista de archivos, comprobados uno a uno, y el botón para descargar el ZIP.</p><button class="btn wide" data-go="theme">Elegir un diseño</button>${S.demo?'':'<button class="btn o wide" id="x-sel0">Preparar el USB completo (copias de seguridad y diseños listos)</button>'}</div></div>`;{const b=$('#x-sel0');if(b)b.onclick=selectorSheet}return}

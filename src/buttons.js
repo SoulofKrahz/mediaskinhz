@@ -27,12 +27,12 @@ function buildButton(F){const g=S.gen||(S.gen=defGen()),p=g.per[F.path]||{},look
     if(F.keyCount)for(let i=0;i<F.w*F.h;i++)if(d[i*4+3]<128)key[i]=1;const q=quantize(d,F.w,F.h,{key,dither:true});F.rep={pal:q.pal,idx:q.idx,keyIdx:q.keyIdx,by:'gen'};S.ex[F.path]=true;if(S.icx)delete S.icx[F.path]}
   F.cv=null}
 function applyButtons(list){if(!S.gen)return;for(const F of list||genTargets())buildButton(F);S.genCv=null;S.ver++;schedule();saveState()}
-let btnT=0;function applyButtonsSoon(list){clearTimeout(btnT);btnT=setTimeout(()=>applyButtons(list),180)}
+let btnT=0;function applyButtonsSoon(list){clearTimeout(btnT);btnT=setTimeout(()=>list?applyButtons(list):homeSoon(false),120)}
 // ¿Hay en estos botones una imagen que pusiste tú a mano (no hecha por este motor)?
 const handRep=F=>F.rep&&F.rep.by!=='btn'&&F.rep.by!=='gen';
 async function setLook(v){const fs=genTargets(),mine=fs.filter(handRep);
   if(v!=='orig'&&mine.length&&!await confirmBS({title:'Cambiar el estilo de los botones',text:`${mine.map(F=>esc(pretty(F))).join(', ')} ${mine.length===1?'tiene':'tienen'} una imagen que pusiste tú. El estilo la sustituirá. Podrás deshacerlo.`,ok:'Cambiar el estilo'}))return false;
-  before();btnLook();S.gen.look=v;if(v!=='orig')S.gen.style=v;applyButtons(fs);return true}
+  before();btnLook();S.gen.look=v;if(v!=='orig')S.gen.style=v;if(v==='orig')applyButtons(fs);else homeSoon(false);return true}
 // Para estados guardados antes de este motor
 function migrateLook(st){if(!S.gen||S.gen.look)return;const fs=genTargets(),icx=(st&&st.icx)||{};S.gen.look=fs.some(F=>F.rep&&!icx[F.path])?S.gen.style:'orig';for(const F of fs)if(F.rep&&!icx[F.path]&&S.gen.look!=='orig')F.rep.by='gen'}
 
@@ -87,14 +87,21 @@ function rbRun(delay){const tok=++rbTok;clearTimeout(rbT);const step=()=>{if(tok
     while(rbQ.length&&performance.now()-t0<24){const F=rbQ.shift();buildButton(F);if(rbHotN>0){rbHotN--;hot=true}}
     if(hot){S.genCv=null;S.ver++;schedule()}// lo que se está viendo: se redibuja según sale
     if(rbQ.length)rbT=setTimeout(step,hot?0:20);else{S.genCv=null;S.ver++;schedule();saveState();rbMark(false)}};rbT=setTimeout(step,delay)}
+// los 6 de Inicio (los de la vista previa del editor) delante de todo, sin congelar: se ven aparecer uno a uno.
+// Los de dentro, si se pide, cuando se deja de tocar un rato (así ir probando formas o colores seguidos no rehace 250 botones a cada toque)
+let rbInT=0,rbInL=null;function homeSoon(inner){const T=genTargets();if(!T.length)return;const set=new Set(T);for(let i=rbQ.length-1;i>=0;i--)if(set.has(rbQ[i]))rbQ.splice(i,1);rbQ.unshift(...T);rbHotN=T.length;rbMark(true);rbRun(0);
+  if(inner)innerSoon(styledOut().filter(F=>!set.has(F)))}
+// rehacer los de dentro dentro de un rato (cuenta como pendiente para Deshacer y para exportar)
+function innerSoon(L){rbInL=L;rbMark(true);clearTimeout(rbInT);rbInT=setTimeout(()=>{const X=rbInL;rbInL=null;if(X)rebuildLater(X)},700)}
+function innerNow(){clearTimeout(rbInT);const X=rbInL;rbInL=null;if(X)rebuildLater(X)}
 // los botones de la vista que se está mirando pasan delante en la cola
 function rbHot(names){const a=[],b=[];for(const F of rbQ)(names.has(F.lc)?a:b).push(F);if(!a.length||(rbHotN>=a.length&&rbQ.slice(0,a.length).every(F=>names.has(F.lc))))return;rbQ.length=0;rbQ.push(...a,...b);rbHotN=a.length;rbRun(0)}
 // terminar lo pendiente a trozos, dejando respirar la pantalla (exportar, crear el USB…)
-function rbWait(onp){return new Promise(res=>{rbTok++;rbHotN=0;const step=()=>{const t0=performance.now();while(rbQ.length&&performance.now()-t0<40)buildButton(rbQ.shift());onp&&onp(rbQ.length);
+function rbWait(onp){innerNow();return new Promise(res=>{rbTok++;rbHotN=0;const step=()=>{const t0=performance.now();while(rbQ.length&&performance.now()-t0<40)buildButton(rbQ.shift());onp&&onp(rbQ.length);
   if(rbQ.length)setTimeout(step,0);else{S.genCv=null;S.ver++;rbMark(false);saveState();res()}};step()})}
 // construir una lista grande a trozos (diseños listos del selector del USB)
 async function buildAsync(L,onp){for(let i=0;i<L.length;){const t0=performance.now();while(i<L.length&&performance.now()-t0<40)buildButton(L[i++]);onp&&onp(i,L.length);await new Promise(r=>setTimeout(r,0))}}
-function flushRebuild(){if(!rbQ.length)return;rbTok++;rbHotN=0;while(rbQ.length)buildButton(rbQ.shift());S.genCv=null;S.ver++;rbMark(false)}
+function flushRebuild(){innerNow();if(!rbQ.length)return;rbTok++;rbHotN=0;while(rbQ.length)buildButton(rbQ.shift());S.genCv=null;S.ver++;rbMark(false)}
 function btnSheet(F,after,el){
   const g=S.gen||(S.gen=defGen()),T=genTargets(),home=T.includes(F),look=home?btnLook():((g.per[F.path]||{}).look||'orig'),list=home&&!el?T:null,idx=list?list.indexOf(F):-1;S.gsel=F.path;const pvH=home&&!el,again=()=>btnSheet(F,after,el);
   const p=()=>g.per[F.path]||(g.per[F.path]={}),ps=g.per[F.path]||{};const cur=ps.icon||'orig',sug=icSuggest2(F).map(n=>'t:'+n);
