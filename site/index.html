@@ -531,14 +531,20 @@ function quantize(d,w,h,opt){
   if(!used.length){used.push(0)}
   const cache=new Int16Array(32768).fill(-1);
   const near=(r,g,b)=>{const k=(r>>3)<<10|(g>>3)<<5|(b>>3);let v=cache[k];if(v>=0)return v;let bd=1e9;
-    for(const s of used){const dr=pal[s*3]-r,dg=pal[s*3+1]-g,db=pal[s*3+2]-b,dd=dr*dr*3+dg*dg*4+db*db*2;if(dd<bd){bd=dd;v=s}}cache[k]=v;return v};
+    for(let u=0;u<used.length;u++){const s=used[u],dr=pal[s*3]-r,dg=pal[s*3+1]-g,db=pal[s*3+2]-b,dd=dr*dr*3+dg*dg*4+db*db*2;if(dd<bd){bd=dd;v=s}}cache[k]=v;return v};
   const idx=new Uint8Array(N);
-  if(!opt.dither){for(let i=0;i<N;i++)idx[i]=key&&key[i]?keyIdx:near(d[i*4],d[i*4+1],d[i*4+2])}
-  else{const e=new Float32Array(N*3);for(let i=0;i<N;i++){e[i*3]=d[i*4];e[i*3+1]=d[i*4+1];e[i*3+2]=d[i*4+2]}
-    const add=(x,y,er,eg,eb,f)=>{if(x<0||x>=w||y>=h)return;const j=y*w+x;if(key&&key[j])return;e[j*3]+=er*f;e[j*3+1]+=eg*f;e[j*3+2]+=eb*f};
-    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x;if(key&&key[i]){idx[i]=keyIdx;continue}
-      const r=cl(Math.round(e[i*3]),0,255),g=cl(Math.round(e[i*3+1]),0,255),b=cl(Math.round(e[i*3+2]),0,255),p=near(r,g,b);idx[i]=p;
-      const er=r-pal[p*3],eg=g-pal[p*3+1],eb=b-pal[p*3+2];add(x+1,y,er,eg,eb,7/16);add(x-1,y+1,er,eg,eb,3/16);add(x,y+1,er,eg,eb,5/16);add(x+1,y+1,er,eg,eb,1/16)}}
+  // si cada tono cabe en su propia entrada de la paleta (lo normal en botones dibujados), el tramado no aporta nada visible y cuesta el doble
+  if(!opt.dither||cols.length<=MAX){for(let i=0;i<N;i++)idx[i]=key&&key[i]?keyIdx:near(d[i*4],d[i*4+1],d[i*4+2])}
+  else{// Floyd–Steinberg en línea (sin funciones por píxel: es lo que más pesa al rehacer cientos de botones)
+    const e=new Float32Array(N*3);for(let i=0;i<N;i++){e[i*3]=d[i*4];e[i*3+1]=d[i*4+1];e[i*3+2]=d[i*4+2]}const K=key||new Uint8Array(N);
+    for(let y=0;y<h;y++){const last=y===h-1;for(let x=0;x<w;x++){const i=y*w+x;if(K[i]){idx[i]=keyIdx;continue}
+      let r=e[i*3],g=e[i*3+1],b=e[i*3+2];r=r<0?0:r>255?255:Math.round(r);g=g<0?0:g>255?255:Math.round(g);b=b<0?0:b>255?255:Math.round(b);
+      const k=(r>>3)<<10|(g>>3)<<5|(b>>3);let p=cache[k];if(p<0)p=near(r,g,b);idx[i]=p;
+      const er=r-pal[p*3],eg=g-pal[p*3+1],eb=b-pal[p*3+2];if(!er&&!eg&&!eb)continue;let j;
+      if(x+1<w&&!K[j=i+1]){e[j*3]+=er*.4375;e[j*3+1]+=eg*.4375;e[j*3+2]+=eb*.4375}
+      if(!last){if(x>0&&!K[j=i+w-1]){e[j*3]+=er*.1875;e[j*3+1]+=eg*.1875;e[j*3+2]+=eb*.1875}
+        if(!K[j=i+w]){e[j*3]+=er*.3125;e[j*3+1]+=eg*.3125;e[j*3+2]+=eb*.3125}
+        if(x+1<w&&!K[j=i+w+1]){e[j*3]+=er*.0625;e[j*3+1]+=eg*.0625;e[j*3+2]+=eb*.0625}}}}}
   return {pal,idx,keyIdx};
 }
 const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
@@ -705,8 +711,9 @@ function setFileOps(F,v){if(empty(v))delete S.ops.file[F.path];else S.ops.file[F
 const H=[];
 const genCopy=g=>g?{...g,per:Object.fromEntries(Object.entries(g.per||{}).map(([k,p])=>[k,{...p}]))}:null;
 function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),icx:structuredClone(S.icx||{}),stby:S.stby?{...S.stby}:null,reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep])}}
-function before(){S.curDesign=null;S.curDesignName=null;H.push(snap());if(H.length>80)H.shift();updUndo()}
-function undo(){const s=H.pop();if(!s)return;Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen,icx:s.icx||{},stby:s.stby||null});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
+function before(){if(typeof rbQ!=='undefined'&&rbQ.length)flushRebuild();// la foto para Deshacer tiene que llevar los botones ya al día
+  S.curDesign=null;S.curDesignName=null;H.push(snap());if(H.length>80)H.shift();updUndo()}
+function undo(){const s=H.pop();if(!s)return;if(typeof rbQ!=='undefined'){rbQ.length=0;rbTok++;rbMark(false)}Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen,icx:s.icx||{},stby:s.stby||null});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
   S.ver++;render(true);toast('Cambio deshecho');saveState()}
 function updUndo(){$('#ab-undo').disabled=!H.length}
 function bump(){S.ver++;schedule()}
@@ -716,7 +723,10 @@ function schedule(){if(!rafT)rafT=requestAnimationFrame(()=>{rafT=0;for(const p 
 /* Los botones con estilo llevan en esquinas y margen el trozo de fondo que tienen detrás. Si cambia un fondo de pantalla (color, imagen, diseño listo…),
    se rehacen los botones que van encima: los de Inicio al momento y los de dentro por detrás */
 let bgSeen=null;
-function bgWatch(){if(!S.gen||!S.files.length)return;const now=new Map();for(const [sc,n] of SCRBG){const B=byName(n);if(!B)continue;const ep=getEP(B);let h=0;for(let i=0;i<ep.length;i++)h=(h*31+ep[i])|0;now.set(sc,{h,rep:B.rep})}
+// los iconos de cada botón original se sacan una vez y se guardan; hacerlo en ratos libres tras cargar evita esperar la primera vez que se aplica un estilo
+function warmIcons(){const L=S.files.filter(F=>frames(F)>=2&&F.ico===undefined&&isBtnLike(F));let i=0;const step=()=>{const t0=performance.now();while(i<L.length&&performance.now()-t0<12){try{extractIcon(L[i])}catch(_){}i++}if(i<L.length)setTimeout(step,30)};setTimeout(step,1500)}
+function bgWatch(){if(S.inPreset){bgSeen=null;return}// probando diseños listos: lo que se ve ya se rehace allí; al aplicar, el resto va a la cola
+  if(!S.gen||!S.files.length)return;const now=new Map();for(const [sc,n] of SCRBG){const B=byName(n);if(!B)continue;const ep=getEP(B);let h=0;for(let i=0;i<ep.length;i++)h=(h*31+ep[i])|0;now.set(sc,{h,rep:B.rep})}
   const old=bgSeen;bgSeen=now;if(!old)return;const ch=[...now].filter(([sc,v])=>{const o=old.get(sc);return !o||o.h!==v.h||o.rep!==v.rep}).map(e=>e[0]);if(!ch.length)return;
   const T=genTargets();if(ch.includes('home')&&btnLook()!=='orig'){for(const F of T)buildButton(F);S.genCv=null;S.ver++;schedule()}
   rebuildLater(styledOut().filter(F=>{if(T.includes(F))return false;const P=vwPosAll(F);return !P.length||P.some(p=>ch.includes(p.s))}))}
@@ -751,7 +761,7 @@ async function fromFileList(fl){
     if(z&&arr.length===1){list=await readZip(await z.arrayBuffer(),n=>{if(/\.png$/i.test(n)){png++;return false}return /\.bmp$/i.test(n)})}
     else{list=[];for(const f of arr){const p=f._path||f.webkitRelativePath||f.name;if(/\.png$/i.test(p)){png++;continue}if(!/\.bmp$/i.test(p))continue;list.push({path:p,buf:await f.arrayBuffer()})}}
     const bkn=z&&arr.length===1?z.name:((arr[0]&&(arr[0]._path||arr[0].webkitRelativePath)||'').split('/').filter(Boolean)[0]||null);
-    if(await ingest(list,{png,name:bkn})){if(SET.stIcons!==false)statusIcons(true);setBase(null);S.stack=[];S.route={n:'home'};render();toast(`Backup cargado: ${S.files.length} imágenes`)}
+    if(await ingest(list,{png,name:bkn})){warmIcons();if(SET.stIcons!==false)statusIcons(true);setBase(null);S.stack=[];S.route={n:'home'};render();toast(`Backup cargado: ${S.files.length} imágenes`)}
   }catch(err){toast(err.message||'No se pudo leer el backup',{ms:6000})}
 }
 async function walkEntry(en,out){
@@ -804,6 +814,8 @@ function drawPreview(c,o){
   o=o||{};const x=c.getContext('2d'),scr=o.scr||'home';x.fillStyle='#000';x.fillRect(0,0,800,480);
   const rc=F=>o.orig?renderOrig(F,false):renderCanvas(F,false);
   const bg=byName(SCRBG.get(scr));if(bg)x.drawImage(rc(bg),0,0,bg.w/frames(bg),bg.h,0,0,800,480);
+  // si quedan botones de esta vista por rehacer (diseño recién aplicado), se hacen ya: lo que se ve tiene que estar al día
+  if(o.view&&!o.orig&&typeof rbQ!=='undefined'&&rbQ.length){const nm=new Set(o.view.c.map(c=>c[0])),now=rbQ.filter(F=>nm.has(F.lc));if(now.length){for(let i=rbQ.length-1;i>=0;i--)if(nm.has(rbQ[i].lc))rbQ.splice(i,1);now.forEach(buildButton)}}
   let pvV=null;if(o.view)drawView(x,o.view,rc,o.press,null,o.hov==null?-1:o.hov);
   // editor: si la imagen sale en una vista conocida, se dibuja en su sitio real dentro de esa vista
   const pv=o.place&&typeof vwFor==='function'?vwFor(o.place,scr):null;pvV=pv;if(pv){drawView(x,pv,rc,-1,{lc:o.place.lc,st:o.state||0},-1);o={...o,place:null,vlabel:(pv.band?pv.band+' · ':'')+pv.v}}
@@ -1233,6 +1245,9 @@ const byHand=F=>!!F.rep||!empty(S.ops.file[F.path]);
 const bkLabel=()=>S.demo?'imágenes de ejemplo':`«${S.bkName||S.root}» · ${S.files.length} imágenes${S.bkT?' · cargado el '+new Date(S.bkT).toLocaleDateString('es-ES'):''}`;
 function scrExport(v){
   setTitle('Exportar',`<span class="lw">Mediaskin<em>hz</em></span> · ${esc(bkLabel())}`);
+  // si aún se están rehaciendo botones por detrás (diseño recién aplicado), se terminan aquí sin congelar la pantalla y luego se muestra la lista
+  if(typeof rbQ!=='undefined'&&rbQ.length){++exTok;v.innerHTML=`<div class="stack" style="max-width:640px;margin:0 auto"><div class="card"><h2>Preparando los botones…</h2><p class="note">El diseño se está terminando de dibujar. Quedan <b id="x-rb">${rbQ.length}</b>.</p></div></div>`;
+    rbWait(n=>{const e=$('#x-rb');if(e)e.textContent=n}).then(()=>{if(S.route.n==='export')render(true)});return}
   const fs=S.files.filter(changed),tok=++exTok;
   if(!fs.length){v.innerHTML=`<div class="stack" style="max-width:640px;margin:0 auto"><div class="card"><h2>Todavía no hay cambios</h2><p>Cuando cambies un color o una imagen, aquí verás la lista de archivos, comprobados uno a uno, y el botón para descargar el ZIP.</p><button class="btn wide" data-go="theme">Elegir un diseño</button>${S.demo?'':'<button class="btn o wide" id="x-sel0">Preparar el USB completo (copias de seguridad y diseños listos)</button>'}</div></div>`;{const b=$('#x-sel0');if(b)b.onclick=selectorSheet}return}
   if(!S.xoff)S.xoff=new Set();const paths=new Set(fs.map(F=>F.path));for(const p of [...S.xoff])if(!paths.has(p))S.xoff.delete(p);
@@ -1326,7 +1341,7 @@ function scrExport(v){
     else if(t.dataset.g){for(const F of fs)if(catOf(F)===t.dataset.g){if(t.checked)S.xoff.delete(F.path);else S.xoff.add(F.path)}}upd()});
   const stepChk=()=>{if(tok!==exTok)return;const end=Math.min(fs.length,i+20);for(;i<end;i++)res.push({F:fs[i],...check(fs[i])});const n=$('#x-n');if(n)n.textContent=i;
     if(i<fs.length){setTimeout(stepChk,0);return}
-    done=true;const bad=res.filter(r=>!r.ok);$('#x-chk').innerHTML=bad.length?`<span class="warnbox">${bad.length} ${bad.length===1?'archivo tiene':'archivos tienen'} un aviso. Revísalos en la lista antes de copiarlos.</span>`:`<span class="ok">✓ ${res.length===1?'El archivo tiene':'Los '+res.length+' archivos tienen'} el mismo nombre, tamaño y formato que el original</span>`;
+    done=true;if(!$('#x-chk'))return;const bad=res.filter(r=>!r.ok);$('#x-chk').innerHTML=bad.length?`<span class="warnbox">${bad.length} ${bad.length===1?'archivo tiene':'archivos tienen'} un aviso. Revísalos en la lista antes de copiarlos.</span>`:`<span class="ok">✓ ${res.length===1?'El archivo tiene':'Los '+res.length+' archivos tienen'} el mismo nombre, tamaño y formato que el original</span>`;
     const g=new Map();for(const r of res){const k=catOf(r.F);if(!g.has(k))g.set(k,[]);g.get(k).push(r)}
     const order=[...CATS.map(c=>c[0])];
     $('#x-list').innerHTML=[...g].sort((a,b)=>order.indexOf(a[0])-order.indexOf(b[0])).map(([k,arr])=>{arr.sort((a,b)=>(byHand(b.F)-byHand(a.F))||a.F.lc.localeCompare(b.F.lc));
@@ -1367,7 +1382,7 @@ async function saveBlob(blob,name){
 
 /* ============ hojas, menú y avisos ============ */
 function openBS(html){const b=$('#bs');$('#toast').hidden=true;b.innerHTML=html;b.hidden=false;$('#scrim').hidden=false;document.body.classList.add('lock');const f=b.querySelector('button');f&&f.focus({preventScroll:true})}
-function closeBS(){const b=$('#bs');if(b.hidden)return;b.hidden=true;$('#scrim').hidden=true;document.body.classList.remove('lock');const f=S.bsCancel;S.bsCancel=null;if(f)f()}
+function closeBS(){S.inPreset=false;const b=$('#bs');if(b.hidden)return;b.hidden=true;$('#scrim').hidden=true;document.body.classList.remove('lock');const f=S.bsCancel;S.bsCancel=null;if(f)f()}
 function openMenu(){const G=t=>`<p class="lbl" style="margin:12px 6px 4px">${t}</p>`;
   openBS(`${S.demo?'':`${G('Tu diseño')}<button class="mi" data-m="save">${ic('M5 3h11l3 3v15H5zM8 3v6h8V3M8 21v-7h8v7')}<span>Guardar el diseño<small>Con un nombre, para volver a él cuando quieras</small></span></button>
     <button class="mi" data-m="designs">${ic('M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z')}<span>Mis diseños<small>Cargar, importar, llevar a la radio</small></span></button>`}
@@ -1423,7 +1438,7 @@ function bind(){
   let rz=0;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(S.route.n==='edit'&&S.eview==='img')drawEdit(S.curF)},150)});
 }
 async function boot(){themePref();bind();recall();loadSet();webInit();await myLoad().catch(()=>{});let ok=false;
-  try{const fl=await idb.get('files');if(fl&&fl.list&&fl.list.length&&await ingest(fl.list,{restore:true,png:fl.png,name:fl.name,t:fl.t})){applyState(await idb.get('state'));loadVistas().then(()=>{let ok=false;try{ok=localStorage.getItem('msz-corner3')==='1';localStorage.setItem('msz-corner3','1')}catch(_){}if(!ok)restyleInner();if(syncScreenTints()){bump();toast('Diseño puesto al día: el color de cada pantalla llega ya a sus listas y fondos')}}).catch(()=>{});await recallBase();ok=true}}catch(_){}
+  try{const fl=await idb.get('files');if(fl&&fl.list&&fl.list.length&&await ingest(fl.list,{restore:true,png:fl.png,name:fl.name,t:fl.t})){applyState(await idb.get('state'));warmIcons();loadVistas().then(()=>{let ok=false;try{ok=localStorage.getItem('msz-corner3')==='1';localStorage.setItem('msz-corner3','1')}catch(_){}let pend=false;try{pend=localStorage.getItem('msz-rbpend')==='1'}catch(_){}if(!ok||pend)restyleInner();if(syncScreenTints()){bump();toast('Diseño puesto al día: el color de cada pantalla llega ya a sus listas y fondos')}}).catch(()=>{});await recallBase();ok=true}}catch(_){}
   if(!ok)await demo();render()}
 const LGU_HDR='TEdVMAcAAAAABAAAOlIBBAAAAAABAAAANThR/QAAAAAAAAAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAMAAwADAAAAD+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+AAD+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v4AAP7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/gAA/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFwJFEAAAAAAAAAAA==',LGU_X0='AipxJbuKvRzlvC394UMVoZfBPE5/oKURFFvzemBMVoOoVmAOPHOgrmEM8zzynmRXqI6DVw6wGNoyZRlkEd88RLZVlrakzCTyATyhnoilklJOeeYrVdKanXJqq/IUwl8423eqeSMzGxddKEeXahtzMMvTDvpbFaYHZdaEOkxsgcCWYknsmKUqywFQB1sWpTOUWZcvP9rmDUwROxGSULQ2wtldN+gXBMjG69aXZb3TTiWi35Yzw5zuo27M0Rdt2mQli9nIDGkXw0OPAsZ0RxIXDcjrpFU3b0TKamTdKCL9yFWD5+i1jIg9+1M98AnLNLJ6YKBOaYx61gDl/lxqoaXxxRI+lowuZSm1khgL6hlyGyFuBhx1zL5GBzU9i8VUOkRo97Xi+TUiz7ScwxyjL+edt/FHKEY5oAWnoWU9ZtMJ+DjszHSpuRRPQTQYv4BGlN13WbSl6EFpWS1p3VU9c0KYsBklhQ4I9ZerjxCjlMVaTx8JQtayjcNe57y0T3yy/YbRG4Vk2iFl7URbS4y2y4K8c9kIFTr3wQSqQJw2nsu0dCGEVnSKOOXp37WLUn8qNkS4lkHL2Q5WCk6NZyzeqMLpKNymqtm2XXrZMTjdzeWHVzsBTXuwlNoLLrEQ5jzpa0NxnCkSybkW3Y7V2zHDOOY7yEoxuSN/C2+oLTIu++HRMY+ysccfET4qYB4mXscQroqznZWs1vuI9SL1kOEmmYA2FgE8f2TB6Mc0eGmLgw+Ys9OURJG4ZtYyg/OO8IdM5KkeXWR+5QMNdHTJm/VliET2A7+vuXXSXgs2BbXhL2jQucOR7SA0w4O/D2dZa6AINWkgpGgIA4bruiz4sk3xEnjjqFw90CYiDA90nGFQKcnSd426qXSW/C/P15bUYeag9nzwb14VUvNHG5solRw7wGjcMuvNjKtkvK2vFhTd66DHLMRw/YGYQL3w/D5919KRpa14G9TwAx+Ni7EliBmgUM3s0HptQRjG13AXBcMlNBUdzE8a4VOcQ31z3GNt/WijTpBHGqKStnTlz+qYNzZk2Ud0KTM+/kMcTUOzZqSG68HwudpSuMee7xmW/oZM0i4h/jR9oFVPfigirz43skUXB0VgxRhsxTsSiCLbUhdWnuAFbcWSNzOgmYI+idNBYJqCPFDDV6CIP+QuIxDyVC8JQfnUgS0YMDvX28ojLJ0QafiqqBVs250eq2ceLVRj4YOh53SyiU5eJft/AyElNyM930pffytFp5JZeOvIVEWEZ5I4qmCy1ul6VSDoGRkkeZDjOLlLVqxdmJcIOXxGI0PTWTwoFanRkxrmV9Wm0xyHpWP11MQrg4jxQZ4HZfFF26nvpXRf34OuJ2ahc2uWfdh/8+ggPA==',LGU_X2='AAAAAHcHMJbuDmEsmQlRugdtxBlwavSP6WOlNZ5klaMO24gyedy4pODV6R6X0tmICbZMK36xfL3nuC0HkL8dkR23EGRqsCDy87lxSIS+Qd4a2tR9bd3k6/TUtVGD04XHE2yYVmRrqMD9Yvl6imXJ7BQBXE9jBmzZ+g89Y40IDfU7biDITGkQXtVgQeSiZ3FyPAPk0UsE1EfSDYX9pQq1azW1qPpCsphs27vJ1qy8+UAy2GzjRd9cddzWDc+r0T1ZJtkwrFHeADrI11GAv9BhFiG09LVWs8Qjz7qVmbi9pQ8oArieXwWICMYM2bKxC+kkL298h1hoTBHBYR2rtmYtPXbcQZAB23EGmNIgvO/VECpxsYWJBra1H5+/5KXouNQzeAfJog8A+TSWCaiO4Q6YGH9qDbsIbT0tkWRsl+ZjXAFra1H0HGxhYoVlMNjyYgBObAaV7RsBpXuCCPTB9Q/EV2Ww2cYSt+lQi7646vy5iHxi3R3fFdotSYzTfPP71ExlTbJhWDq1Uc6jvAB01Lsw4krfpUE92JXXpNHEbdPW9PtDaelqNG7Z/K1niEbaYLjQRAQtczMDHeWqCkxf3Q18yVAFcTwnAkGqvgsQEMkMIIZXaLUlIG+Fs7lm1AnOYeSfXt75DinZyZiw0Jgix9eotFmzPRcutA2Bt71cO8C6bK3tuIMgmr+ztgO24gx0sdKa6tVHOZ3Sd68E2yYVc9wWg+NjCxKUZDuEDW1qPnpqWqjkDs8Lkwn/nQoArid9B56x8A+TRIcIo9IeAfJoaQbC/vdiV12AZWfLGWw2cW5rBuf+1Bt2idMr4BDaelpn3UrM+bnfb46+7/kXt75DYLCO1dbWo+ih0ZN+ONjCxE/f8lLRu2fxprxXZz+1Bt1IsjZL2A0r2q8KG0w2A0r2QQR6YN9g78OoZ99VMW6O70ZpvnnLYbOMvGaDGiVv0qBSaOI2zAx3lbsLRwMiAha5VQUmL8W6O76yvQsoK7RaklyzagTC1/+ntdDPMSzZnotb3q4dm2TCsOxj8iZ1aqOcAm2TCpwJBqnrDjY/cgdnhQUAVxOVv0qC4rh6FHuxK64Mths4ktKOm+XVvg183O+3C9vfIYbT0tTx1OJCaN2z+B/ag26BvhbN9rkmW2+wd+EYt0d3iAha5v8PanBmBjvKEQELXI9lnv/4Yq5pYWv/0xZsz0WgCuJ41w3S7k4Eg1Q5A7PCp2cmYdBgFvdJaUdNPm53267RakrZ1lrcQN8LZjfYO/CpvK5T3ruexUeyz38wtf/pvb3yHMq6wopTs5MwJLSjprrQNgXN1waTVN5XKSPZZ7+zZnouxGFKuF1oGwIqbyuUtAu+N8MMjqFaBd8bLQLvjQ==';
 /* ============ paquete de actualización upgrade.lgu ============
@@ -1732,7 +1747,7 @@ function drawState(x,F,w,h,s,H,g,bgc){
   else if(src!=='none')drawIcon(x,keyPainter(src),cx,cy,isz,ic,glow);
 }
 function genHue(F,g){const p=g.per[F.path]||{};if(p.hue!=null)return p.hue;return g.color==='orig'?origHue(F):g.hue}
-function genTile(F,g){const fr=frames(F),fw=F.w/fr,h=F.h,c=document.createElement('canvas');c.width=F.w;c.height=h;const x=c.getContext('2d');const H=genHue(F,g),bgc=cornerBase(F);
+function genTile(F,g){const fr=frames(F),fw=F.w/fr,h=F.h,c=document.createElement('canvas');c.width=F.w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});const H=genHue(F,g),bgc=cornerBase(F);
   for(let s=0;s<fr;s++){x.save();x.translate(s*fw,0);x.beginPath();x.rect(0,0,fw,h);x.clip();drawState(x,F,fw,h,s,H,g,bgc);x.restore()}
   // la radio solo dibuja transparente (amarillo) en las imágenes que ya lo usaban: en las demás, esquinas y margen llevan el fondo de detrás
   if(g.corners==='key'&&F.keyCount){const m=document.createElement('canvas');m.width=F.w;m.height=h;const mx=m.getContext('2d');mx.fillStyle='#fff';const r=gRad(g,h);
@@ -2422,13 +2437,13 @@ function mortSelect(skins,id,when){const L=[],w=x=>L.push(x),n=skins.length;
 function curBytes(){S.ver++;for(const F of S.files)F.cv=null;const rs=withTwins(S.files.filter(changed).map(F=>({F,u:outBytes(F)})));return new Map(rs.map(r=>[r.F.path,r.u]))}
 function blankState(){for(const F of S.files){F.rep=null;F.cv=null}S.src=new Map();S.ops={global:null,sec:{},file:{}};S.ex={};S.frames={};S.icx={};S.stby=null}
 // list: [{name, cur:true} | {name, st} | {name, preset:P}]
-async function selectorZip(list,onp){await loadVistas().catch(()=>{});
+async function selectorZip(list,onp){await loadVistas().catch(()=>{});if(rbQ.length)await rbWait();
   const keep=snap(),src0=S.src,kd=[S.curDesign,S.curDesignName],maps=[];
   const back=()=>{Object.assign(S,{ops:structuredClone(keep.ops),ex:{...keep.ex},frames:{...keep.frames},layout:structuredClone(keep.layout),gen:genCopy(keep.gen),icx:structuredClone(keep.icx||{}),stby:keep.stby?{...keep.stby}:null});
     for(const F of S.files){F.rep=null;F.cv=null}for(const [F,r] of keep.reps)F.rep=r;S.src=src0;S.ver++};
   try{for(const [i,d] of list.entries()){onp&&onp(i,list.length);await new Promise(r=>setTimeout(r,20));
       if(d.cur){back();maps.push(curBytes());continue}
-      if(d.preset){back();const {T,L}=presetSet(d.preset);for(const F of [...T,...L])buildButton(F);maps.push(curBytes());continue}
+      if(d.preset){back();const {T,L}=presetSet(d.preset);await buildAsync([...T,...L],(a,b)=>onp&&onp(i+a/b,list.length));maps.push(curBytes());continue}
       blankState();const g0=S.gen;applyState(d.st);if(!d.st.gen)S.gen=null;else if(!S.gen.look)migrateLook(d.st);maps.push(curBytes())}}
   finally{back();S.curDesign=kd[0];S.curDesignName=kd[1];S.genCv=null;bump()}
   const U=[...new Set(maps.flatMap(m=>[...m.keys()]))],FF=new Map(U.map(p=>[p,S.files.find(F=>F.path===p)]));
@@ -2459,7 +2474,7 @@ async function selectorSheet(){if(S.demo){toast('Carga tu backup para preparar e
   bs.querySelector('#sel-go').onclick=async()=>{const vs=[...bs.querySelectorAll('#sel-l input:checked')].map(i=>i.value),list=[];
     for(const v of vs){if(v==='cur')list.push({name:S.curDesignName||'Mi diseño actual',cur:true});else if(v.startsWith('d:')){const p=await getPoint(v.slice(2));if(p)list.push({name:p.label,st:p.st})}else{const P=PRESETS.find(x=>x.id===v.slice(2));if(P)list.push({name:P.name,preset:P})}}
     closeBS();toast('Preparando el USB…',{ms:120000});
-    try{const r=await selectorZip(list,(i,n)=>toast(`Preparando el USB… diseño ${i+1} de ${n}`,{ms:120000}));const d=new Date();await saveBlob(r.zip,`mediaskinhz-usb-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.zip`);
+    try{const r=await selectorZip(list,(i,n)=>toast(`Preparando el USB… diseño ${Math.floor(i)+1} de ${n}${i%1?` · ${Math.round(i%1*100)} %`:''}`,{ms:120000}));const d=new Date();await saveBlob(r.zip,`mediaskinhz-usb-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.zip`);
       toast(`USB listo: menú con ${r.skins.length} diseños, copia de seguridad e informe`)}catch(e){console.error(e);toast('No se ha podido preparar el USB')}}}
 
 /* ============ lanzador del USB ============
@@ -3014,9 +3029,16 @@ function restyleAll(){applyButtons(genTargets());rebuildLater(styledOut())}
    Los 6 de Inicio se hacen al momento (son los de la vista previa) y el resto, por detrás a trozos sin bloquear; si llega otro cambio, se empieza de nuevo.
    Antes de exportar o guardar un diseño se termina lo pendiente (flushRebuild) */
 let rbQ=[],rbTok=0;
-function rebuildLater(list){const set=new Set(rbQ);for(const F of list)if(!set.has(F)){rbQ.push(F);set.add(F)}if(!rbQ.length)return;const tok=++rbTok;
-  const step=()=>{if(tok!==rbTok)return;const t0=performance.now();while(rbQ.length&&performance.now()-t0<24)buildButton(rbQ.shift());if(rbQ.length)setTimeout(step,20);else{S.genCv=null;S.ver++;schedule();saveState()}};setTimeout(step,120)}
-function flushRebuild(){if(!rbQ.length)return;rbTok++;while(rbQ.length)buildButton(rbQ.shift());S.genCv=null;S.ver++}
+// marca de «quedan botones por rehacer»: si la app se cierra a medias, al abrirla se terminan
+const rbMark=on=>{try{on?localStorage.setItem('msz-rbpend','1'):localStorage.removeItem('msz-rbpend')}catch(_){}};
+function rebuildLater(list){const set=new Set(rbQ);for(const F of list)if(!set.has(F)){rbQ.push(F);set.add(F)}if(!rbQ.length)return;rbMark(true);const tok=++rbTok;
+  const step=()=>{if(tok!==rbTok)return;const t0=performance.now();while(rbQ.length&&performance.now()-t0<24)buildButton(rbQ.shift());if(rbQ.length)setTimeout(step,20);else{S.genCv=null;S.ver++;schedule();saveState();rbMark(false)}};setTimeout(step,120)}
+// terminar lo pendiente a trozos, dejando respirar la pantalla (exportar, crear el USB…)
+function rbWait(onp){return new Promise(res=>{rbTok++;const step=()=>{const t0=performance.now();while(rbQ.length&&performance.now()-t0<40)buildButton(rbQ.shift());onp&&onp(rbQ.length);
+  if(rbQ.length)setTimeout(step,0);else{S.genCv=null;S.ver++;rbMark(false);saveState();res()}};step()})}
+// construir una lista grande a trozos (diseños listos del selector del USB)
+async function buildAsync(L,onp){for(let i=0;i<L.length;){const t0=performance.now();while(i<L.length&&performance.now()-t0<40)buildButton(L[i++]);onp&&onp(i,L.length);await new Promise(r=>setTimeout(r,0))}}
+function flushRebuild(){if(!rbQ.length)return;rbTok++;while(rbQ.length)buildButton(rbQ.shift());S.genCv=null;S.ver++;rbMark(false)}
 function btnSheet(F,after,el){
   const g=S.gen||(S.gen=defGen()),T=genTargets(),home=T.includes(F),look=home?btnLook():((g.per[F.path]||{}).look||'orig'),list=home&&!el?T:null,idx=list?list.indexOf(F):-1;S.gsel=F.path;const pvH=home&&!el,again=()=>btnSheet(F,after,el);
   const p=()=>g.per[F.path]||(g.per[F.path]={}),ps=g.per[F.path]||{};const cur=ps.icon||'orig',sug=icSuggest2(F).map(n=>'t:'+n);
@@ -3207,14 +3229,14 @@ function presetSheet(P0){
   let snap0=null;const restoreSnap=()=>{const s=snap0;Object.assign(S,{ops:structuredClone(s.ops),ex:{...s.ex},frames:{...s.frames},layout:structuredClone(s.layout),gen:genCopy(s.gen),icx:structuredClone(s.icx||{}),stby:s.stby?{...s.stby}:null});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;S.ver++};
   const first=()=>{snap0=snap();H.push(snap());if(H.length>80)H.shift();updUndo()};
   const cancel=()=>{if(P){restoreSnap();H.pop();updUndo();S.curDesign=keep[0];S.curDesignName=keep[1];saveState();render(true)}};
-  S.bsCancel=cancel;
+  S.bsCancel=cancel;S.inPreset=true;
   bs.querySelector('#ps-s').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;scr=b.dataset.s;bs.querySelectorAll('#ps-s .chip').forEach(x=>x.setAttribute('aria-pressed',x===b));if(P)build(scr);draw();
     if(scr!=='home'&&VW.st!==2)loadVistas().then(draw)};
   lst.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;const Q=PRESETS.find(p=>p.id===b.dataset.v);if(Q&&Q!==P){use(Q);b.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'})}};
   bs.querySelector('#ps-x').onclick=()=>closeBS();
   bs.querySelector('#ps-ok').onclick=async()=>{if(!P){closeBS();return}S.bsCancel=null;
-    const rest=[...all.T,...all.L].filter(F=>!done.has(F));toast(`Aplicando «${P.name}»…`,{ms:30000});closeBS();await new Promise(r=>setTimeout(r,30));
-    S.curDesign=null;S.curDesignName=null;applyButtons(rest);render(true);toast(`«${P.name}» aplicado a toda la radio (${all.T.length+all.L.length} botones)`,{label:'Deshacer',fn:undo})};
+    const rest=[...all.T,...all.L].filter(F=>!done.has(F));closeBS();
+    S.curDesign=null;S.curDesignName=null;applyButtons(rest.filter(F=>all.T.includes(F)));rebuildLater(rest.filter(F=>!all.T.includes(F)));render(true);toast(`«${P.name}» aplicado a toda la radio (${all.T.length+all.L.length} botones)`,{label:'Deshacer',fn:undo})};// Inicio al momento; el resto por detrás (lo que abras se hace antes)
   // miniaturas
   const cvs=[...lst.querySelectorAll('canvas')];let i=0;const step=()=>{for(let n=0;n<3&&i<cvs.length;n++,i++){if(!cvs[i].isConnected)return;const t=presetTile(PRESETS[i]);if(t)putMini(cvs[i],t)}if(i<cvs.length)requestAnimationFrame(step)};
   const go0=()=>{if(!bs.isConnected||bs.hidden)return;first();use(P0);requestAnimationFrame(step)};if(VW.st===2)go0();else loadVistas().then(go0,go0);
@@ -3554,7 +3576,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-11-02-1';
+const VER='2026-11-05-1';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3562,6 +3584,7 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-11-05-1',['Aplicar un diseño listo ya no congela la app: Inicio se ve al momento y los ~250 botones de dentro se rehacen por detrás (lo que abras se hace primero). Medido en un móvil medio simulado: de 11 s bloqueada a 0,3 s','Exportar y preparar el USB terminan lo pendiente sin congelar la pantalla, con el contador a la vista; en el selector del USB cada diseño muestra su porcentaje','Dibujar botones un 25 % más rápido (sin tramado cuando no hace falta) y los iconos de los botones se preparan en ratos libres tras cargar el backup','Mientras pruebas diseños listos en la hoja ya no se rehace todo por detrás a cada toque','Si cierras la app con botones a medio rehacer, se terminan al abrirla']],
   ['2026-11-02-1',['Botones de Teléfono (teclado: espacio, resultados…) que salían azules tras aplicar un diseño listo: arrastraban el tinte de un color de pantalla anterior y se teñían encima del botón nuevo. Ahora un botón con estilo lleva solo sus colores. Los diseños que ya tienes se arreglan solos al abrir la app','Color de pantalla después de un diseño listo: ahora también cambian las listas y carátulas que el diseño había calcado, las líneas de la barra de arriba y los iconos de las listas (antes se quedaban con el color del diseño)']],
   ['2026-10-30-7',['Fuera Pintura y Grafiti (diseños y estilos de botón)','Diseños nuevos inspirados en el coche: Cuadro digital (cian y ámbar; botón negro con regla de marcas y aguja de color, fondo con esferas de velocímetro) y Negro piano (azul y rojo; negro brillante con canto cromado, reflejo y línea de color fina)','Estilos de botón nuevos: Instrumentación y Negro piano']],
   ['2026-10-30-6',['Cajas alrededor de los botones de dentro (Ajustes, Multimedia, barras de abajo…) con formas redondeadas: las esquinas se rellenaban con un color sacado del botón original, que no coincidía con tu fondo teñido. Ahora llevan el trozo de fondo real que tienen detrás (mezclado si la misma tecla va en varios sitios), con o sin diseño listo. Los diseños que ya tenías se arreglan solos al abrir la app']],

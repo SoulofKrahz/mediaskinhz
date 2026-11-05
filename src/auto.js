@@ -321,13 +321,13 @@ function mortSelect(skins,id,when){const L=[],w=x=>L.push(x),n=skins.length;
 function curBytes(){S.ver++;for(const F of S.files)F.cv=null;const rs=withTwins(S.files.filter(changed).map(F=>({F,u:outBytes(F)})));return new Map(rs.map(r=>[r.F.path,r.u]))}
 function blankState(){for(const F of S.files){F.rep=null;F.cv=null}S.src=new Map();S.ops={global:null,sec:{},file:{}};S.ex={};S.frames={};S.icx={};S.stby=null}
 // list: [{name, cur:true} | {name, st} | {name, preset:P}]
-async function selectorZip(list,onp){await loadVistas().catch(()=>{});
+async function selectorZip(list,onp){await loadVistas().catch(()=>{});if(rbQ.length)await rbWait();
   const keep=snap(),src0=S.src,kd=[S.curDesign,S.curDesignName],maps=[];
   const back=()=>{Object.assign(S,{ops:structuredClone(keep.ops),ex:{...keep.ex},frames:{...keep.frames},layout:structuredClone(keep.layout),gen:genCopy(keep.gen),icx:structuredClone(keep.icx||{}),stby:keep.stby?{...keep.stby}:null});
     for(const F of S.files){F.rep=null;F.cv=null}for(const [F,r] of keep.reps)F.rep=r;S.src=src0;S.ver++};
   try{for(const [i,d] of list.entries()){onp&&onp(i,list.length);await new Promise(r=>setTimeout(r,20));
       if(d.cur){back();maps.push(curBytes());continue}
-      if(d.preset){back();const {T,L}=presetSet(d.preset);for(const F of [...T,...L])buildButton(F);maps.push(curBytes());continue}
+      if(d.preset){back();const {T,L}=presetSet(d.preset);await buildAsync([...T,...L],(a,b)=>onp&&onp(i+a/b,list.length));maps.push(curBytes());continue}
       blankState();const g0=S.gen;applyState(d.st);if(!d.st.gen)S.gen=null;else if(!S.gen.look)migrateLook(d.st);maps.push(curBytes())}}
   finally{back();S.curDesign=kd[0];S.curDesignName=kd[1];S.genCv=null;bump()}
   const U=[...new Set(maps.flatMap(m=>[...m.keys()]))],FF=new Map(U.map(p=>[p,S.files.find(F=>F.path===p)]));
@@ -358,7 +358,7 @@ async function selectorSheet(){if(S.demo){toast('Carga tu backup para preparar e
   bs.querySelector('#sel-go').onclick=async()=>{const vs=[...bs.querySelectorAll('#sel-l input:checked')].map(i=>i.value),list=[];
     for(const v of vs){if(v==='cur')list.push({name:S.curDesignName||'Mi diseño actual',cur:true});else if(v.startsWith('d:')){const p=await getPoint(v.slice(2));if(p)list.push({name:p.label,st:p.st})}else{const P=PRESETS.find(x=>x.id===v.slice(2));if(P)list.push({name:P.name,preset:P})}}
     closeBS();toast('Preparando el USB…',{ms:120000});
-    try{const r=await selectorZip(list,(i,n)=>toast(`Preparando el USB… diseño ${i+1} de ${n}`,{ms:120000}));const d=new Date();await saveBlob(r.zip,`mediaskinhz-usb-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.zip`);
+    try{const r=await selectorZip(list,(i,n)=>toast(`Preparando el USB… diseño ${Math.floor(i)+1} de ${n}${i%1?` · ${Math.round(i%1*100)} %`:''}`,{ms:120000}));const d=new Date();await saveBlob(r.zip,`mediaskinhz-usb-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.zip`);
       toast(`USB listo: menú con ${r.skins.length} diseños, copia de seguridad e informe`)}catch(e){console.error(e);toast('No se ha podido preparar el USB')}}}
 
 /* ============ lanzador del USB ============

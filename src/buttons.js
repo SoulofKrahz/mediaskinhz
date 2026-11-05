@@ -78,9 +78,16 @@ function restyleAll(){applyButtons(genTargets());rebuildLater(styledOut())}
    Los 6 de Inicio se hacen al momento (son los de la vista previa) y el resto, por detrás a trozos sin bloquear; si llega otro cambio, se empieza de nuevo.
    Antes de exportar o guardar un diseño se termina lo pendiente (flushRebuild) */
 let rbQ=[],rbTok=0;
-function rebuildLater(list){const set=new Set(rbQ);for(const F of list)if(!set.has(F)){rbQ.push(F);set.add(F)}if(!rbQ.length)return;const tok=++rbTok;
-  const step=()=>{if(tok!==rbTok)return;const t0=performance.now();while(rbQ.length&&performance.now()-t0<24)buildButton(rbQ.shift());if(rbQ.length)setTimeout(step,20);else{S.genCv=null;S.ver++;schedule();saveState()}};setTimeout(step,120)}
-function flushRebuild(){if(!rbQ.length)return;rbTok++;while(rbQ.length)buildButton(rbQ.shift());S.genCv=null;S.ver++}
+// marca de «quedan botones por rehacer»: si la app se cierra a medias, al abrirla se terminan
+const rbMark=on=>{try{on?localStorage.setItem('msz-rbpend','1'):localStorage.removeItem('msz-rbpend')}catch(_){}};
+function rebuildLater(list){const set=new Set(rbQ);for(const F of list)if(!set.has(F)){rbQ.push(F);set.add(F)}if(!rbQ.length)return;rbMark(true);const tok=++rbTok;
+  const step=()=>{if(tok!==rbTok)return;const t0=performance.now();while(rbQ.length&&performance.now()-t0<24)buildButton(rbQ.shift());if(rbQ.length)setTimeout(step,20);else{S.genCv=null;S.ver++;schedule();saveState();rbMark(false)}};setTimeout(step,120)}
+// terminar lo pendiente a trozos, dejando respirar la pantalla (exportar, crear el USB…)
+function rbWait(onp){return new Promise(res=>{rbTok++;const step=()=>{const t0=performance.now();while(rbQ.length&&performance.now()-t0<40)buildButton(rbQ.shift());onp&&onp(rbQ.length);
+  if(rbQ.length)setTimeout(step,0);else{S.genCv=null;S.ver++;rbMark(false);saveState();res()}};step()})}
+// construir una lista grande a trozos (diseños listos del selector del USB)
+async function buildAsync(L,onp){for(let i=0;i<L.length;){const t0=performance.now();while(i<L.length&&performance.now()-t0<40)buildButton(L[i++]);onp&&onp(i,L.length);await new Promise(r=>setTimeout(r,0))}}
+function flushRebuild(){if(!rbQ.length)return;rbTok++;while(rbQ.length)buildButton(rbQ.shift());S.genCv=null;S.ver++;rbMark(false)}
 function btnSheet(F,after,el){
   const g=S.gen||(S.gen=defGen()),T=genTargets(),home=T.includes(F),look=home?btnLook():((g.per[F.path]||{}).look||'orig'),list=home&&!el?T:null,idx=list?list.indexOf(F):-1;S.gsel=F.path;const pvH=home&&!el,again=()=>btnSheet(F,after,el);
   const p=()=>g.per[F.path]||(g.per[F.path]={}),ps=g.per[F.path]||{};const cur=ps.icon||'orig',sug=icSuggest2(F).map(n=>'t:'+n);
@@ -271,14 +278,14 @@ function presetSheet(P0){
   let snap0=null;const restoreSnap=()=>{const s=snap0;Object.assign(S,{ops:structuredClone(s.ops),ex:{...s.ex},frames:{...s.frames},layout:structuredClone(s.layout),gen:genCopy(s.gen),icx:structuredClone(s.icx||{}),stby:s.stby?{...s.stby}:null});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;S.ver++};
   const first=()=>{snap0=snap();H.push(snap());if(H.length>80)H.shift();updUndo()};
   const cancel=()=>{if(P){restoreSnap();H.pop();updUndo();S.curDesign=keep[0];S.curDesignName=keep[1];saveState();render(true)}};
-  S.bsCancel=cancel;
+  S.bsCancel=cancel;S.inPreset=true;
   bs.querySelector('#ps-s').onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;scr=b.dataset.s;bs.querySelectorAll('#ps-s .chip').forEach(x=>x.setAttribute('aria-pressed',x===b));if(P)build(scr);draw();
     if(scr!=='home'&&VW.st!==2)loadVistas().then(draw)};
   lst.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;const Q=PRESETS.find(p=>p.id===b.dataset.v);if(Q&&Q!==P){use(Q);b.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'})}};
   bs.querySelector('#ps-x').onclick=()=>closeBS();
   bs.querySelector('#ps-ok').onclick=async()=>{if(!P){closeBS();return}S.bsCancel=null;
-    const rest=[...all.T,...all.L].filter(F=>!done.has(F));toast(`Aplicando «${P.name}»…`,{ms:30000});closeBS();await new Promise(r=>setTimeout(r,30));
-    S.curDesign=null;S.curDesignName=null;applyButtons(rest);render(true);toast(`«${P.name}» aplicado a toda la radio (${all.T.length+all.L.length} botones)`,{label:'Deshacer',fn:undo})};
+    const rest=[...all.T,...all.L].filter(F=>!done.has(F));closeBS();
+    S.curDesign=null;S.curDesignName=null;applyButtons(rest.filter(F=>all.T.includes(F)));rebuildLater(rest.filter(F=>!all.T.includes(F)));render(true);toast(`«${P.name}» aplicado a toda la radio (${all.T.length+all.L.length} botones)`,{label:'Deshacer',fn:undo})};// Inicio al momento; el resto por detrás (lo que abras se hace antes)
   // miniaturas
   const cvs=[...lst.querySelectorAll('canvas')];let i=0;const step=()=>{for(let n=0;n<3&&i<cvs.length;n++,i++){if(!cvs[i].isConnected)return;const t=presetTile(PRESETS[i]);if(t)putMini(cvs[i],t)}if(i<cvs.length)requestAnimationFrame(step)};
   const go0=()=>{if(!bs.isConnected||bs.hidden)return;first();use(P0);requestAnimationFrame(step)};if(VW.st===2)go0();else loadVistas().then(go0,go0);

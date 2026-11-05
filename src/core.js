@@ -63,14 +63,20 @@ function quantize(d,w,h,opt){
   if(!used.length){used.push(0)}
   const cache=new Int16Array(32768).fill(-1);
   const near=(r,g,b)=>{const k=(r>>3)<<10|(g>>3)<<5|(b>>3);let v=cache[k];if(v>=0)return v;let bd=1e9;
-    for(const s of used){const dr=pal[s*3]-r,dg=pal[s*3+1]-g,db=pal[s*3+2]-b,dd=dr*dr*3+dg*dg*4+db*db*2;if(dd<bd){bd=dd;v=s}}cache[k]=v;return v};
+    for(let u=0;u<used.length;u++){const s=used[u],dr=pal[s*3]-r,dg=pal[s*3+1]-g,db=pal[s*3+2]-b,dd=dr*dr*3+dg*dg*4+db*db*2;if(dd<bd){bd=dd;v=s}}cache[k]=v;return v};
   const idx=new Uint8Array(N);
-  if(!opt.dither){for(let i=0;i<N;i++)idx[i]=key&&key[i]?keyIdx:near(d[i*4],d[i*4+1],d[i*4+2])}
-  else{const e=new Float32Array(N*3);for(let i=0;i<N;i++){e[i*3]=d[i*4];e[i*3+1]=d[i*4+1];e[i*3+2]=d[i*4+2]}
-    const add=(x,y,er,eg,eb,f)=>{if(x<0||x>=w||y>=h)return;const j=y*w+x;if(key&&key[j])return;e[j*3]+=er*f;e[j*3+1]+=eg*f;e[j*3+2]+=eb*f};
-    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x;if(key&&key[i]){idx[i]=keyIdx;continue}
-      const r=cl(Math.round(e[i*3]),0,255),g=cl(Math.round(e[i*3+1]),0,255),b=cl(Math.round(e[i*3+2]),0,255),p=near(r,g,b);idx[i]=p;
-      const er=r-pal[p*3],eg=g-pal[p*3+1],eb=b-pal[p*3+2];add(x+1,y,er,eg,eb,7/16);add(x-1,y+1,er,eg,eb,3/16);add(x,y+1,er,eg,eb,5/16);add(x+1,y+1,er,eg,eb,1/16)}}
+  // si cada tono cabe en su propia entrada de la paleta (lo normal en botones dibujados), el tramado no aporta nada visible y cuesta el doble
+  if(!opt.dither||cols.length<=MAX){for(let i=0;i<N;i++)idx[i]=key&&key[i]?keyIdx:near(d[i*4],d[i*4+1],d[i*4+2])}
+  else{// Floyd–Steinberg en línea (sin funciones por píxel: es lo que más pesa al rehacer cientos de botones)
+    const e=new Float32Array(N*3);for(let i=0;i<N;i++){e[i*3]=d[i*4];e[i*3+1]=d[i*4+1];e[i*3+2]=d[i*4+2]}const K=key||new Uint8Array(N);
+    for(let y=0;y<h;y++){const last=y===h-1;for(let x=0;x<w;x++){const i=y*w+x;if(K[i]){idx[i]=keyIdx;continue}
+      let r=e[i*3],g=e[i*3+1],b=e[i*3+2];r=r<0?0:r>255?255:Math.round(r);g=g<0?0:g>255?255:Math.round(g);b=b<0?0:b>255?255:Math.round(b);
+      const k=(r>>3)<<10|(g>>3)<<5|(b>>3);let p=cache[k];if(p<0)p=near(r,g,b);idx[i]=p;
+      const er=r-pal[p*3],eg=g-pal[p*3+1],eb=b-pal[p*3+2];if(!er&&!eg&&!eb)continue;let j;
+      if(x+1<w&&!K[j=i+1]){e[j*3]+=er*.4375;e[j*3+1]+=eg*.4375;e[j*3+2]+=eb*.4375}
+      if(!last){if(x>0&&!K[j=i+w-1]){e[j*3]+=er*.1875;e[j*3+1]+=eg*.1875;e[j*3+2]+=eb*.1875}
+        if(!K[j=i+w]){e[j*3]+=er*.3125;e[j*3+1]+=eg*.3125;e[j*3+2]+=eb*.3125}
+        if(x+1<w&&!K[j=i+w+1]){e[j*3]+=er*.0625;e[j*3+1]+=eg*.0625;e[j*3+2]+=eb*.0625}}}}}
   return {pal,idx,keyIdx};
 }
 const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();

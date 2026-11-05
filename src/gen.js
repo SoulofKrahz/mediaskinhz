@@ -273,7 +273,7 @@ function drawState(x,F,w,h,s,H,g,bgc){
   else if(src!=='none')drawIcon(x,keyPainter(src),cx,cy,isz,ic,glow);
 }
 function genHue(F,g){const p=g.per[F.path]||{};if(p.hue!=null)return p.hue;return g.color==='orig'?origHue(F):g.hue}
-function genTile(F,g){const fr=frames(F),fw=F.w/fr,h=F.h,c=document.createElement('canvas');c.width=F.w;c.height=h;const x=c.getContext('2d');const H=genHue(F,g),bgc=cornerBase(F);
+function genTile(F,g){const fr=frames(F),fw=F.w/fr,h=F.h,c=document.createElement('canvas');c.width=F.w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});const H=genHue(F,g),bgc=cornerBase(F);
   for(let s=0;s<fr;s++){x.save();x.translate(s*fw,0);x.beginPath();x.rect(0,0,fw,h);x.clip();drawState(x,F,fw,h,s,H,g,bgc);x.restore()}
   // la radio solo dibuja transparente (amarillo) en las imágenes que ya lo usaban: en las demás, esquinas y margen llevan el fondo de detrás
   if(g.corners==='key'&&F.keyCount){const m=document.createElement('canvas');m.width=F.w;m.height=h;const mx=m.getContext('2d');mx.fillStyle='#fff';const r=gRad(g,h);

@@ -126,8 +126,9 @@ function setFileOps(F,v){if(empty(v))delete S.ops.file[F.path];else S.ops.file[F
 const H=[];
 const genCopy=g=>g?{...g,per:Object.fromEntries(Object.entries(g.per||{}).map(([k,p])=>[k,{...p}]))}:null;
 function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),icx:structuredClone(S.icx||{}),stby:S.stby?{...S.stby}:null,reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep])}}
-function before(){S.curDesign=null;S.curDesignName=null;H.push(snap());if(H.length>80)H.shift();updUndo()}
-function undo(){const s=H.pop();if(!s)return;Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen,icx:s.icx||{},stby:s.stby||null});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
+function before(){if(typeof rbQ!=='undefined'&&rbQ.length)flushRebuild();// la foto para Deshacer tiene que llevar los botones ya al día
+  S.curDesign=null;S.curDesignName=null;H.push(snap());if(H.length>80)H.shift();updUndo()}
+function undo(){const s=H.pop();if(!s)return;if(typeof rbQ!=='undefined'){rbQ.length=0;rbTok++;rbMark(false)}Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen,icx:s.icx||{},stby:s.stby||null});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
   S.ver++;render(true);toast('Cambio deshecho');saveState()}
 function updUndo(){$('#ab-undo').disabled=!H.length}
 function bump(){S.ver++;schedule()}
@@ -137,7 +138,10 @@ function schedule(){if(!rafT)rafT=requestAnimationFrame(()=>{rafT=0;for(const p 
 /* Los botones con estilo llevan en esquinas y margen el trozo de fondo que tienen detrás. Si cambia un fondo de pantalla (color, imagen, diseño listo…),
    se rehacen los botones que van encima: los de Inicio al momento y los de dentro por detrás */
 let bgSeen=null;
-function bgWatch(){if(!S.gen||!S.files.length)return;const now=new Map();for(const [sc,n] of SCRBG){const B=byName(n);if(!B)continue;const ep=getEP(B);let h=0;for(let i=0;i<ep.length;i++)h=(h*31+ep[i])|0;now.set(sc,{h,rep:B.rep})}
+// los iconos de cada botón original se sacan una vez y se guardan; hacerlo en ratos libres tras cargar evita esperar la primera vez que se aplica un estilo
+function warmIcons(){const L=S.files.filter(F=>frames(F)>=2&&F.ico===undefined&&isBtnLike(F));let i=0;const step=()=>{const t0=performance.now();while(i<L.length&&performance.now()-t0<12){try{extractIcon(L[i])}catch(_){}i++}if(i<L.length)setTimeout(step,30)};setTimeout(step,1500)}
+function bgWatch(){if(S.inPreset){bgSeen=null;return}// probando diseños listos: lo que se ve ya se rehace allí; al aplicar, el resto va a la cola
+  if(!S.gen||!S.files.length)return;const now=new Map();for(const [sc,n] of SCRBG){const B=byName(n);if(!B)continue;const ep=getEP(B);let h=0;for(let i=0;i<ep.length;i++)h=(h*31+ep[i])|0;now.set(sc,{h,rep:B.rep})}
   const old=bgSeen;bgSeen=now;if(!old)return;const ch=[...now].filter(([sc,v])=>{const o=old.get(sc);return !o||o.h!==v.h||o.rep!==v.rep}).map(e=>e[0]);if(!ch.length)return;
   const T=genTargets();if(ch.includes('home')&&btnLook()!=='orig'){for(const F of T)buildButton(F);S.genCv=null;S.ver++;schedule()}
   rebuildLater(styledOut().filter(F=>{if(T.includes(F))return false;const P=vwPosAll(F);return !P.length||P.some(p=>ch.includes(p.s))}))}
@@ -172,7 +176,7 @@ async function fromFileList(fl){
     if(z&&arr.length===1){list=await readZip(await z.arrayBuffer(),n=>{if(/\.png$/i.test(n)){png++;return false}return /\.bmp$/i.test(n)})}
     else{list=[];for(const f of arr){const p=f._path||f.webkitRelativePath||f.name;if(/\.png$/i.test(p)){png++;continue}if(!/\.bmp$/i.test(p))continue;list.push({path:p,buf:await f.arrayBuffer()})}}
     const bkn=z&&arr.length===1?z.name:((arr[0]&&(arr[0]._path||arr[0].webkitRelativePath)||'').split('/').filter(Boolean)[0]||null);
-    if(await ingest(list,{png,name:bkn})){if(SET.stIcons!==false)statusIcons(true);setBase(null);S.stack=[];S.route={n:'home'};render();toast(`Backup cargado: ${S.files.length} imágenes`)}
+    if(await ingest(list,{png,name:bkn})){warmIcons();if(SET.stIcons!==false)statusIcons(true);setBase(null);S.stack=[];S.route={n:'home'};render();toast(`Backup cargado: ${S.files.length} imágenes`)}
   }catch(err){toast(err.message||'No se pudo leer el backup',{ms:6000})}
 }
 async function walkEntry(en,out){
@@ -225,6 +229,8 @@ function drawPreview(c,o){
   o=o||{};const x=c.getContext('2d'),scr=o.scr||'home';x.fillStyle='#000';x.fillRect(0,0,800,480);
   const rc=F=>o.orig?renderOrig(F,false):renderCanvas(F,false);
   const bg=byName(SCRBG.get(scr));if(bg)x.drawImage(rc(bg),0,0,bg.w/frames(bg),bg.h,0,0,800,480);
+  // si quedan botones de esta vista por rehacer (diseño recién aplicado), se hacen ya: lo que se ve tiene que estar al día
+  if(o.view&&!o.orig&&typeof rbQ!=='undefined'&&rbQ.length){const nm=new Set(o.view.c.map(c=>c[0])),now=rbQ.filter(F=>nm.has(F.lc));if(now.length){for(let i=rbQ.length-1;i>=0;i--)if(nm.has(rbQ[i].lc))rbQ.splice(i,1);now.forEach(buildButton)}}
   let pvV=null;if(o.view)drawView(x,o.view,rc,o.press,null,o.hov==null?-1:o.hov);
   // editor: si la imagen sale en una vista conocida, se dibuja en su sitio real dentro de esa vista
   const pv=o.place&&typeof vwFor==='function'?vwFor(o.place,scr):null;pvV=pv;if(pv){drawView(x,pv,rc,-1,{lc:o.place.lc,st:o.state||0},-1);o={...o,place:null,vlabel:(pv.band?pv.band+' · ':'')+pv.v}}
@@ -654,6 +660,9 @@ const byHand=F=>!!F.rep||!empty(S.ops.file[F.path]);
 const bkLabel=()=>S.demo?'imágenes de ejemplo':`«${S.bkName||S.root}» · ${S.files.length} imágenes${S.bkT?' · cargado el '+new Date(S.bkT).toLocaleDateString('es-ES'):''}`;
 function scrExport(v){
   setTitle('Exportar',`<span class="lw">Mediaskin<em>hz</em></span> · ${esc(bkLabel())}`);
+  // si aún se están rehaciendo botones por detrás (diseño recién aplicado), se terminan aquí sin congelar la pantalla y luego se muestra la lista
+  if(typeof rbQ!=='undefined'&&rbQ.length){++exTok;v.innerHTML=`<div class="stack" style="max-width:640px;margin:0 auto"><div class="card"><h2>Preparando los botones…</h2><p class="note">El diseño se está terminando de dibujar. Quedan <b id="x-rb">${rbQ.length}</b>.</p></div></div>`;
+    rbWait(n=>{const e=$('#x-rb');if(e)e.textContent=n}).then(()=>{if(S.route.n==='export')render(true)});return}
   const fs=S.files.filter(changed),tok=++exTok;
   if(!fs.length){v.innerHTML=`<div class="stack" style="max-width:640px;margin:0 auto"><div class="card"><h2>Todavía no hay cambios</h2><p>Cuando cambies un color o una imagen, aquí verás la lista de archivos, comprobados uno a uno, y el botón para descargar el ZIP.</p><button class="btn wide" data-go="theme">Elegir un diseño</button>${S.demo?'':'<button class="btn o wide" id="x-sel0">Preparar el USB completo (copias de seguridad y diseños listos)</button>'}</div></div>`;{const b=$('#x-sel0');if(b)b.onclick=selectorSheet}return}
   if(!S.xoff)S.xoff=new Set();const paths=new Set(fs.map(F=>F.path));for(const p of [...S.xoff])if(!paths.has(p))S.xoff.delete(p);
@@ -747,7 +756,7 @@ function scrExport(v){
     else if(t.dataset.g){for(const F of fs)if(catOf(F)===t.dataset.g){if(t.checked)S.xoff.delete(F.path);else S.xoff.add(F.path)}}upd()});
   const stepChk=()=>{if(tok!==exTok)return;const end=Math.min(fs.length,i+20);for(;i<end;i++)res.push({F:fs[i],...check(fs[i])});const n=$('#x-n');if(n)n.textContent=i;
     if(i<fs.length){setTimeout(stepChk,0);return}
-    done=true;const bad=res.filter(r=>!r.ok);$('#x-chk').innerHTML=bad.length?`<span class="warnbox">${bad.length} ${bad.length===1?'archivo tiene':'archivos tienen'} un aviso. Revísalos en la lista antes de copiarlos.</span>`:`<span class="ok">✓ ${res.length===1?'El archivo tiene':'Los '+res.length+' archivos tienen'} el mismo nombre, tamaño y formato que el original</span>`;
+    done=true;if(!$('#x-chk'))return;const bad=res.filter(r=>!r.ok);$('#x-chk').innerHTML=bad.length?`<span class="warnbox">${bad.length} ${bad.length===1?'archivo tiene':'archivos tienen'} un aviso. Revísalos en la lista antes de copiarlos.</span>`:`<span class="ok">✓ ${res.length===1?'El archivo tiene':'Los '+res.length+' archivos tienen'} el mismo nombre, tamaño y formato que el original</span>`;
     const g=new Map();for(const r of res){const k=catOf(r.F);if(!g.has(k))g.set(k,[]);g.get(k).push(r)}
     const order=[...CATS.map(c=>c[0])];
     $('#x-list').innerHTML=[...g].sort((a,b)=>order.indexOf(a[0])-order.indexOf(b[0])).map(([k,arr])=>{arr.sort((a,b)=>(byHand(b.F)-byHand(a.F))||a.F.lc.localeCompare(b.F.lc));
@@ -788,7 +797,7 @@ async function saveBlob(blob,name){
 
 /* ============ hojas, menú y avisos ============ */
 function openBS(html){const b=$('#bs');$('#toast').hidden=true;b.innerHTML=html;b.hidden=false;$('#scrim').hidden=false;document.body.classList.add('lock');const f=b.querySelector('button');f&&f.focus({preventScroll:true})}
-function closeBS(){const b=$('#bs');if(b.hidden)return;b.hidden=true;$('#scrim').hidden=true;document.body.classList.remove('lock');const f=S.bsCancel;S.bsCancel=null;if(f)f()}
+function closeBS(){S.inPreset=false;const b=$('#bs');if(b.hidden)return;b.hidden=true;$('#scrim').hidden=true;document.body.classList.remove('lock');const f=S.bsCancel;S.bsCancel=null;if(f)f()}
 function openMenu(){const G=t=>`<p class="lbl" style="margin:12px 6px 4px">${t}</p>`;
   openBS(`${S.demo?'':`${G('Tu diseño')}<button class="mi" data-m="save">${ic('M5 3h11l3 3v15H5zM8 3v6h8V3M8 21v-7h8v7')}<span>Guardar el diseño<small>Con un nombre, para volver a él cuando quieras</small></span></button>
     <button class="mi" data-m="designs">${ic('M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z')}<span>Mis diseños<small>Cargar, importar, llevar a la radio</small></span></button>`}
@@ -844,6 +853,6 @@ function bind(){
   let rz=0;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(S.route.n==='edit'&&S.eview==='img')drawEdit(S.curF)},150)});
 }
 async function boot(){themePref();bind();recall();loadSet();webInit();await myLoad().catch(()=>{});let ok=false;
-  try{const fl=await idb.get('files');if(fl&&fl.list&&fl.list.length&&await ingest(fl.list,{restore:true,png:fl.png,name:fl.name,t:fl.t})){applyState(await idb.get('state'));loadVistas().then(()=>{let ok=false;try{ok=localStorage.getItem('msz-corner3')==='1';localStorage.setItem('msz-corner3','1')}catch(_){}if(!ok)restyleInner();if(syncScreenTints()){bump();toast('Diseño puesto al día: el color de cada pantalla llega ya a sus listas y fondos')}}).catch(()=>{});await recallBase();ok=true}}catch(_){}
+  try{const fl=await idb.get('files');if(fl&&fl.list&&fl.list.length&&await ingest(fl.list,{restore:true,png:fl.png,name:fl.name,t:fl.t})){applyState(await idb.get('state'));warmIcons();loadVistas().then(()=>{let ok=false;try{ok=localStorage.getItem('msz-corner3')==='1';localStorage.setItem('msz-corner3','1')}catch(_){}let pend=false;try{pend=localStorage.getItem('msz-rbpend')==='1'}catch(_){}if(!ok||pend)restyleInner();if(syncScreenTints()){bump();toast('Diseño puesto al día: el color de cada pantalla llega ya a sus listas y fondos')}}).catch(()=>{});await recallBase();ok=true}}catch(_){}
   if(!ok)await demo();render()}
 boot();
