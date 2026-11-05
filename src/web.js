@@ -3,7 +3,7 @@
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-11-05-1';
+const VER='2026-11-05-2';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -11,6 +11,7 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-11-05-2',['Cambiar el estilo o el color de todos los botones de una pantalla ya no congela la app (en Teléfono, con los teclados, eran ~3 s): la vista que estás mirando se va redibujando según salen los botones y el resto se hace por detrás. Igual al pegar estilo en toda la pantalla, en todo el diseño o cambiar el tamaño de los iconos','Puedes tocar varios estilos seguidos sin esperar; Deshacer termina bien los botones que se habían quedado a medias']],
   ['2026-11-05-1',['Aplicar un diseño listo ya no congela la app: Inicio se ve al momento y los ~250 botones de dentro se rehacen por detrás (lo que abras se hace primero). Medido en un móvil medio simulado: de 11 s bloqueada a 0,3 s','Exportar y preparar el USB terminan lo pendiente sin congelar la pantalla, con el contador a la vista; en el selector del USB cada diseño muestra su porcentaje','Dibujar botones un 25 % más rápido (sin tramado cuando no hace falta) y los iconos de los botones se preparan en ratos libres tras cargar el backup','Mientras pruebas diseños listos en la hoja ya no se rehace todo por detrás a cada toque','Si cierras la app con botones a medio rehacer, se terminan al abrirla']],
   ['2026-11-02-1',['Botones de Teléfono (teclado: espacio, resultados…) que salían azules tras aplicar un diseño listo: arrastraban el tinte de un color de pantalla anterior y se teñían encima del botón nuevo. Ahora un botón con estilo lleva solo sus colores. Los diseños que ya tienes se arreglan solos al abrir la app','Color de pantalla después de un diseño listo: ahora también cambian las listas y carátulas que el diseño había calcado, las líneas de la barra de arriba y los iconos de las listas (antes se quedaban con el color del diseño)']],
   ['2026-10-30-7',['Fuera Pintura y Grafiti (diseños y estilos de botón)','Diseños nuevos inspirados en el coche: Cuadro digital (cian y ámbar; botón negro con regla de marcas y aguja de color, fondo con esferas de velocímetro) y Negro piano (azul y rojo; negro brillante con canto cromado, reflejo y línea de color fina)','Estilos de botón nuevos: Instrumentación y Negro piano']],

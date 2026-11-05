@@ -710,11 +710,11 @@ function setFileOps(F,v){if(empty(v))delete S.ops.file[F.path];else S.ops.file[F
 /* ============ deshacer ============ */
 const H=[];
 const genCopy=g=>g?{...g,per:Object.fromEntries(Object.entries(g.per||{}).map(([k,p])=>[k,{...p}]))}:null;
-function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),icx:structuredClone(S.icx||{}),stby:S.stby?{...S.stby}:null,reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep])}}
-function before(){if(typeof rbQ!=='undefined'&&rbQ.length)flushRebuild();// la foto para Deshacer tiene que llevar los botones ya al día
+function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),icx:structuredClone(S.icx||{}),stby:S.stby?{...S.stby}:null,reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep]),pend:typeof rbQ!=='undefined'?rbQ.slice():[]}}
+function before(){// sin esperar a la cola: la foto apunta qué botones estaban a medio rehacer y Deshacer los termina
   S.curDesign=null;S.curDesignName=null;H.push(snap());if(H.length>80)H.shift();updUndo()}
 function undo(){const s=H.pop();if(!s)return;if(typeof rbQ!=='undefined'){rbQ.length=0;rbTok++;rbMark(false)}Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen,icx:s.icx||{},stby:s.stby||null});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
-  S.ver++;render(true);toast('Cambio deshecho');saveState()}
+  S.ver++;if(s.pend&&s.pend.length)rebuildLater(s.pend);render(true);toast('Cambio deshecho');saveState()}
 function updUndo(){$('#ab-undo').disabled=!H.length}
 function bump(){S.ver++;schedule()}
 let rafT=0,slowT=0;
@@ -814,8 +814,8 @@ function drawPreview(c,o){
   o=o||{};const x=c.getContext('2d'),scr=o.scr||'home';x.fillStyle='#000';x.fillRect(0,0,800,480);
   const rc=F=>o.orig?renderOrig(F,false):renderCanvas(F,false);
   const bg=byName(SCRBG.get(scr));if(bg)x.drawImage(rc(bg),0,0,bg.w/frames(bg),bg.h,0,0,800,480);
-  // si quedan botones de esta vista por rehacer (diseño recién aplicado), se hacen ya: lo que se ve tiene que estar al día
-  if(o.view&&!o.orig&&typeof rbQ!=='undefined'&&rbQ.length){const nm=new Set(o.view.c.map(c=>c[0])),now=rbQ.filter(F=>nm.has(F.lc));if(now.length){for(let i=rbQ.length-1;i>=0;i--)if(nm.has(rbQ[i].lc))rbQ.splice(i,1);now.forEach(buildButton)}}
+  // si quedan botones de esta vista por rehacer, pasan los primeros de la cola y la vista se va redibujando según salen (sin congelar)
+  if(o.view&&!o.orig&&typeof rbQ!=='undefined'&&rbQ.length)rbHot(new Set(o.view.c.map(c=>c[0])));
   let pvV=null;if(o.view)drawView(x,o.view,rc,o.press,null,o.hov==null?-1:o.hov);
   // editor: si la imagen sale en una vista conocida, se dibuja en su sitio real dentro de esa vista
   const pv=o.place&&typeof vwFor==='function'?vwFor(o.place,scr):null;pvV=pv;if(pv){drawView(x,pv,rc,-1,{lc:o.place.lc,st:o.state||0},-1);o={...o,place:null,vlabel:(pv.band?pv.band+' · ':'')+pv.v}}
@@ -3015,10 +3015,10 @@ const touchedIn=()=>{const g=S.gen||{},T=genTargets();return S.files.filter(F=>{
 // marca para redibujar a la medida elegida los botones de estas imágenes que aún están como el original
 function markResize(L){const g=S.gen||(S.gen=defGen());for(const F of L){if(genTargets().includes(F)||frames(F)<2||!extractIcon(F))continue;const p=g.per[F.path]||(g.per[F.path]={});
   if(Math.abs((g.isIn||1.15)-1)<.01){delete p.rs;if(!Object.keys(p).length)delete g.per[F.path]}else if(!p.icon&&p.ihue==null&&(!p.look||p.look==='orig'))p.rs=1}}
-async function setIsIn(v,L){before();const g=S.gen||(S.gen=defGen());g.isIn=v;if(L)markResize(L);const A=touchedIn();toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));
+async function setIsIn(v,L){before();const g=S.gen||(S.gen=defGen());g.isIn=v;if(L)markResize(L);const A=touchedIn();
   // los que ya no tienen nada que redibujar vuelven al original
   for(const F of S.files)if(F.rep&&F.rep.by==='btn'&&!g.per[F.path]){F.rep=null;if(S.icx)delete S.icx[F.path]}
-  applyButtons(A);toast(`Iconos ${(ISIN.find(x=>x[0]===v)||['',''])[1].toLowerCase()} en ${A.length} botones`,{label:'Deshacer',fn:undo});return A.length}
+  applyButtons(A.filter(F=>genTargets().includes(F)));rebuildLater(A.filter(F=>!genTargets().includes(F)));S.ver++;schedule();toast(`Iconos ${(ISIN.find(x=>x[0]===v)||['',''])[1].toLowerCase()} en ${A.length} botones`,{label:'Deshacer',fn:undo});return A.length}
 // piezas que nunca llevan estilo de botón: iconos pequeños con estados (los tipos de número de la agenda…) y las barras de fila elegida de las listas
 const noStyle=F=>F.w/frames(F)<48||F.h<36||/list_press|list2_btn|parting_line/.test(F.lc);
 const canStyleOne=F=>frames(F)>=2&&!noStyle(F);
@@ -3031,14 +3031,21 @@ function restyleAll(){applyButtons(genTargets());rebuildLater(styledOut())}
 let rbQ=[],rbTok=0;
 // marca de «quedan botones por rehacer»: si la app se cierra a medias, al abrirla se terminan
 const rbMark=on=>{try{on?localStorage.setItem('msz-rbpend','1'):localStorage.removeItem('msz-rbpend')}catch(_){}};
-function rebuildLater(list){const set=new Set(rbQ);for(const F of list)if(!set.has(F)){rbQ.push(F);set.add(F)}if(!rbQ.length)return;rbMark(true);const tok=++rbTok;
-  const step=()=>{if(tok!==rbTok)return;const t0=performance.now();while(rbQ.length&&performance.now()-t0<24)buildButton(rbQ.shift());if(rbQ.length)setTimeout(step,20);else{S.genCv=null;S.ver++;schedule();saveState();rbMark(false)}};setTimeout(step,120)}
+function rebuildLater(list){const set=new Set(rbQ);for(const F of list)if(!set.has(F)){rbQ.push(F);set.add(F)}if(!rbQ.length)return;rbMark(true);
+  rbRun(120)}
+let rbHotN=0,rbT=0;
+function rbRun(delay){const tok=++rbTok;clearTimeout(rbT);const step=()=>{if(tok!==rbTok)return;const t0=performance.now();let hot=false;
+    while(rbQ.length&&performance.now()-t0<24){const F=rbQ.shift();buildButton(F);if(rbHotN>0){rbHotN--;hot=true}}
+    if(hot){S.genCv=null;S.ver++;schedule()}// lo que se está viendo: se redibuja según sale
+    if(rbQ.length)rbT=setTimeout(step,hot?0:20);else{S.genCv=null;S.ver++;schedule();saveState();rbMark(false)}};rbT=setTimeout(step,delay)}
+// los botones de la vista que se está mirando pasan delante en la cola
+function rbHot(names){const a=[],b=[];for(const F of rbQ)(names.has(F.lc)?a:b).push(F);if(!a.length||(rbHotN>=a.length&&rbQ.slice(0,a.length).every(F=>names.has(F.lc))))return;rbQ.length=0;rbQ.push(...a,...b);rbHotN=a.length;rbRun(0)}
 // terminar lo pendiente a trozos, dejando respirar la pantalla (exportar, crear el USB…)
-function rbWait(onp){return new Promise(res=>{rbTok++;const step=()=>{const t0=performance.now();while(rbQ.length&&performance.now()-t0<40)buildButton(rbQ.shift());onp&&onp(rbQ.length);
+function rbWait(onp){return new Promise(res=>{rbTok++;rbHotN=0;const step=()=>{const t0=performance.now();while(rbQ.length&&performance.now()-t0<40)buildButton(rbQ.shift());onp&&onp(rbQ.length);
   if(rbQ.length)setTimeout(step,0);else{S.genCv=null;S.ver++;rbMark(false);saveState();res()}};step()})}
 // construir una lista grande a trozos (diseños listos del selector del USB)
 async function buildAsync(L,onp){for(let i=0;i<L.length;){const t0=performance.now();while(i<L.length&&performance.now()-t0<40)buildButton(L[i++]);onp&&onp(i,L.length);await new Promise(r=>setTimeout(r,0))}}
-function flushRebuild(){if(!rbQ.length)return;rbTok++;while(rbQ.length)buildButton(rbQ.shift());S.genCv=null;S.ver++;rbMark(false)}
+function flushRebuild(){if(!rbQ.length)return;rbTok++;rbHotN=0;while(rbQ.length)buildButton(rbQ.shift());S.genCv=null;S.ver++;rbMark(false)}
 function btnSheet(F,after,el){
   const g=S.gen||(S.gen=defGen()),T=genTargets(),home=T.includes(F),look=home?btnLook():((g.per[F.path]||{}).look||'orig'),list=home&&!el?T:null,idx=list?list.indexOf(F):-1;S.gsel=F.path;const pvH=home&&!el,again=()=>btnSheet(F,after,el);
   const p=()=>g.per[F.path]||(g.per[F.path]={}),ps=g.per[F.path]||{};const cur=ps.icon||'orig',sug=icSuggest2(F).map(n=>'t:'+n);
@@ -3085,7 +3092,7 @@ function btnSheet(F,after,el){
   const all=q('#bt-all');if(all)all.onclick=async()=>{const me=g.per[F.path]||{},v=me.look||'orig',L=secBtns(F);if(!L.length)return;
     const nm=(LOOKS().find(x=>x[0]===v)||['','Original'])[1];
     if(!await confirmBS({title:`«${nm}» en ${SECL.get(F.sec)||F.sec}`,text:`El estilo, el color del marco y el color del icono de este botón se aplicarán a los ${L.length} botones de esta pantalla (se saltan las barras alargadas). El icono de cada uno se mantiene. Podrás deshacerlo.`,ok:'Aplicar a todos'}))return again();
-    before();for(const G of L){const q2=g.per[G.path]||(g.per[G.path]={});q2.look=v;for(const k of ['hue','ihue'])if(me[k]==null)delete q2[k];else q2[k]=me[k]}toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(L);toast(`${L.length} botones con «${nm}»`,{label:'Deshacer',fn:undo});again()};
+    before();for(const G of L){const q2=g.per[G.path]||(g.per[G.path]={});q2.look=v;for(const k of ['hue','ihue'])if(me[k]==null)delete q2[k];else q2[k]=me[k]}rebuildLater(L);S.ver++;schedule();toast(`${L.length} botones con «${nm}»`,{label:'Deshacer',fn:undo});again()};
   const sh=q('#bt-sh');if(sh)sh.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;before();g.shape=b.dataset.v;sh.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===b));restyleAll();done();pv();qq('#bt-lk canvas').forEach(cv=>{const k=cv.dataset.lk;if(k!=='orig')putMini(cv,miniTile(F,{...g,style:k},0))})};
   const isz=q('#bt-isz');if(isz)isz.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;await setIsIn(+b.dataset.v,[F]);done();again()};
   qq('[data-mo]').forEach(b=>b.onclick=()=>{const m=b.dataset.mo;
@@ -3257,7 +3264,7 @@ function tintOne(F){const h=S.clip&&S.clip.hue;const o={...defOps(),...(S.ops.fi
 function pasteOne(F){const c=S.clip;if(!c)return false;if(pasteAsTint(F))return tintOne(F);const g=S.gen||(S.gen=defGen()),home=genTargets().includes(F),p=g.per[F.path]||(g.per[F.path]={});
   if(!home&&frames(F)>=2&&canStyleOne(F))p.look=c.look;
   if(c.hue==null)delete p.hue;else p.hue=c.hue;if(c.ihue==null)delete p.ihue;else p.ihue=c.ihue;return true}
-function pasteStyle(L){const D=L.filter(Boolean);if(!D.length)return;before();let n=0;for(const F of D)if(pasteOne(F))n++;applyButtons(D.filter(F=>!pasteAsTint(F)));S.ver++;schedule();saveState();
+function pasteStyle(L){const D=L.filter(Boolean);if(!D.length)return;before();let n=0;for(const F of D)if(pasteOne(F))n++;rebuildLater(D.filter(F=>!pasteAsTint(F)));S.ver++;schedule();saveState();
   const homeDiff=D.some(F=>genTargets().includes(F))&&S.clip.look!==btnLook();
   toast(`Estilo pegado en ${n} ${n===1?'pieza':'piezas'}${homeDiff?' (en Inicio el estilo es común a los 6: se han pegado los colores)':''}`,{label:'Deshacer',fn:undo})}
 // todos los botones del diseño (Inicio y los de dentro de cada pantalla) a los que se les puede poner estilo; las barras de las listas, líneas y puntos no
@@ -3268,7 +3275,7 @@ function pasteAll(){const c=S.clip;if(!c||!c.look||c.look==='orig')return;const 
   for(const F of D){if(T.includes(F))continue;const p=g.per[F.path]||(g.per[F.path]={});p.look=c.look;
     // un botón que solo estaba teñido (sin estilo propio) conserva ese color en el estilo nuevo
     if(p.hue==null){const o=S.ops.file[F.path];if(o&&o.tA)p.hue=o.tH}}
-  applyButtons(D);S.ver++;schedule();saveState();
+  applyButtons(D.filter(F=>T.includes(F)));rebuildLater(D.filter(F=>!T.includes(F)));S.ver++;schedule();saveState();
   toast(`Estilo «${(LOOKS().find(x=>x[0]===c.look)||['',c.look])[1]}» en ${D.length} botones de todo el diseño. Los colores no cambian`,{label:'Deshacer',fn:undo})}
 // sin modo pegar ni barra: copiar es a propósito, y se pega también a propósito (mantener pulsado → Pegar aquí)
 function copyStyle(F){S.clip=styleOf(F);toast(`Estilo de «${S.clip.from}» copiado. Mantén pulsado otro botón para pegarlo`,{ms:3000})}
@@ -3392,7 +3399,7 @@ function tintScreen(s,files,sty,h){const g=S.gen||(S.gen=defGen()),T=new Set([..
     if(!Object.keys(o.map).length)delete o.map;setFileOps(F,o)}
   // el resplandor de color del fondo de la pantalla, del mismo color (el negro no cambia; para teñirlo está «Color del negro del fondo»)
   const B=byName(SCRBG.get(s==='common'?'radio':s));if(B&&!B.rep&&s!=='common'){const o={...defOps(),...(S.ops.file[B.path]||{})};if(h==null||h==='white')o.tA=0;else{o.tH=h;o.tA=100;o.tG=false}setFileOps(B,o)}
-  if(odd.length)applyButtons(odd)}
+  if(odd.length)rebuildLater(odd)}
 // Diseños hechos antes de que el color de la pantalla llegara a todo (listas grises, fondo…): si los botones de una pantalla
 // comparten un color de marco y sus listas aún no lo tienen, se aplica al cargar. Devuelve cuántas pantallas ha puesto al día
 const styOf=files=>files.filter(F=>isBtnLike(F)&&kindOf(F)==='btn'&&canStyleOne(F)&&F.w/frames(F)/F.h<=4.6);
@@ -3460,12 +3467,12 @@ function scrScreen(v,r){
     lk.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;const k=b.dataset.v,nm=(LOOKS().find(x=>x[0]===k)||['',''])[1];
       const L=k==='orig'?[...new Set([...sty,...btns.filter(G=>((g.per[G.path]||{}).look||'orig')!=='orig')])]:sty;
       lk.querySelectorAll('.ocd').forEach(x=>x.setAttribute('aria-pressed',x===b));before();for(const G of L)(g.per[G.path]||(g.per[G.path]={})).look=k;
-      toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(L);mountThumbs(v);schedule();toast(`«${nm}» en ${L.length} botones`,{label:'Deshacer',fn:undo})}}
+      rebuildLater(L);S.ver++;schedule();setTimeout(()=>mountThumbs(v),60);toast(`«${nm}» en ${L.length} botones`,{label:'Deshacer',fn:undo})}}
   // colores de marco e icono para todos los botones de la pantalla a la vez
   const allCol=async(key,h)=>{before();for(const G of sty){const q=g.per[G.path]||(g.per[G.path]={});if(h==null)delete q[key];else q[key]=h}
     // el color del marco también tiñe los detalles de la pantalla: los puntos de las opciones, la barra de la fila elegida en las listas, las líneas separadoras…
     if(key==='hue')tintScreen(s,files,sty,h);
-    toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(sty);render(true);toast(key==='hue'?`Color cambiado en ${sty.length} botones y los detalles de la pantalla`:`Color cambiado en ${sty.length} botones`,{label:'Deshacer',fn:undo})};
+    rebuildLater(sty);S.ver++;render(true);toast(key==='hue'?`Color cambiado en ${sty.length} botones y los detalles de la pantalla`:`Color cambiado en ${sty.length} botones`,{label:'Deshacer',fn:undo})};
   for(const [id,key] of [['#sc-fc','hue'],['#sc-icc','ihue']]){const sw=$(id+' .swg');if(!sw)continue;
     sw.onclick=e=>{const b=e.target.closest('button[data-h]');if(!b)return;const h=b.dataset.h;allCol(key,h==='none'?null:h==='white'?'white':+h)};
     sw.querySelector('[data-pick]').onchange=e=>allCol(key,Math.round(hexHsl(e.target.value)[0]))}
@@ -3576,7 +3583,7 @@ function scrStandby(v){const F=byName(STBF);setTitle('Pantalla de reposo','La ne
    - VER sale en Ajustes y la publicación la copia a version.txt; si hay una más nueva publicada, la app avisa.
    - En cada cambio: subir VER aquí y V en site/sw.js (formato AAAA-MM-DD-N y AAAA-MM-DD-N.M para cambios menores).
    - Solo se usa el service worker y la instalación cuando la página tiene manifest (la versión web, no la vista previa). */
-const VER='2026-11-05-1';
+const VER='2026-11-05-2';
 const APP='Mediaskinhz';
 const WEB=!!document.querySelector('link[rel=manifest]')&&/^https?:$/.test(location.protocol);
 const SWOK=WEB&&'serviceWorker' in navigator&&window.isSecureContext;
@@ -3584,6 +3591,7 @@ const LOGO=`<span class="logo" role="img" aria-label="${APP}"><svg class="lgi" v
 
 // Novedades: la primera es siempre la actual
 const CHANGES=[
+  ['2026-11-05-2',['Cambiar el estilo o el color de todos los botones de una pantalla ya no congela la app (en Teléfono, con los teclados, eran ~3 s): la vista que estás mirando se va redibujando según salen los botones y el resto se hace por detrás. Igual al pegar estilo en toda la pantalla, en todo el diseño o cambiar el tamaño de los iconos','Puedes tocar varios estilos seguidos sin esperar; Deshacer termina bien los botones que se habían quedado a medias']],
   ['2026-11-05-1',['Aplicar un diseño listo ya no congela la app: Inicio se ve al momento y los ~250 botones de dentro se rehacen por detrás (lo que abras se hace primero). Medido en un móvil medio simulado: de 11 s bloqueada a 0,3 s','Exportar y preparar el USB terminan lo pendiente sin congelar la pantalla, con el contador a la vista; en el selector del USB cada diseño muestra su porcentaje','Dibujar botones un 25 % más rápido (sin tramado cuando no hace falta) y los iconos de los botones se preparan en ratos libres tras cargar el backup','Mientras pruebas diseños listos en la hoja ya no se rehace todo por detrás a cada toque','Si cierras la app con botones a medio rehacer, se terminan al abrirla']],
   ['2026-11-02-1',['Botones de Teléfono (teclado: espacio, resultados…) que salían azules tras aplicar un diseño listo: arrastraban el tinte de un color de pantalla anterior y se teñían encima del botón nuevo. Ahora un botón con estilo lleva solo sus colores. Los diseños que ya tienes se arreglan solos al abrir la app','Color de pantalla después de un diseño listo: ahora también cambian las listas y carátulas que el diseño había calcado, las líneas de la barra de arriba y los iconos de las listas (antes se quedaban con el color del diseño)']],
   ['2026-10-30-7',['Fuera Pintura y Grafiti (diseños y estilos de botón)','Diseños nuevos inspirados en el coche: Cuadro digital (cian y ámbar; botón negro con regla de marcas y aguja de color, fondo con esferas de velocímetro) y Negro piano (azul y rojo; negro brillante con canto cromado, reflejo y línea de color fina)','Estilos de botón nuevos: Instrumentación y Negro piano']],

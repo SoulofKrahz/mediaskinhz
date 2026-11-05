@@ -64,10 +64,10 @@ const touchedIn=()=>{const g=S.gen||{},T=genTargets();return S.files.filter(F=>{
 // marca para redibujar a la medida elegida los botones de estas imágenes que aún están como el original
 function markResize(L){const g=S.gen||(S.gen=defGen());for(const F of L){if(genTargets().includes(F)||frames(F)<2||!extractIcon(F))continue;const p=g.per[F.path]||(g.per[F.path]={});
   if(Math.abs((g.isIn||1.15)-1)<.01){delete p.rs;if(!Object.keys(p).length)delete g.per[F.path]}else if(!p.icon&&p.ihue==null&&(!p.look||p.look==='orig'))p.rs=1}}
-async function setIsIn(v,L){before();const g=S.gen||(S.gen=defGen());g.isIn=v;if(L)markResize(L);const A=touchedIn();toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));
+async function setIsIn(v,L){before();const g=S.gen||(S.gen=defGen());g.isIn=v;if(L)markResize(L);const A=touchedIn();
   // los que ya no tienen nada que redibujar vuelven al original
   for(const F of S.files)if(F.rep&&F.rep.by==='btn'&&!g.per[F.path]){F.rep=null;if(S.icx)delete S.icx[F.path]}
-  applyButtons(A);toast(`Iconos ${(ISIN.find(x=>x[0]===v)||['',''])[1].toLowerCase()} en ${A.length} botones`,{label:'Deshacer',fn:undo});return A.length}
+  applyButtons(A.filter(F=>genTargets().includes(F)));rebuildLater(A.filter(F=>!genTargets().includes(F)));S.ver++;schedule();toast(`Iconos ${(ISIN.find(x=>x[0]===v)||['',''])[1].toLowerCase()} en ${A.length} botones`,{label:'Deshacer',fn:undo});return A.length}
 // piezas que nunca llevan estilo de botón: iconos pequeños con estados (los tipos de número de la agenda…) y las barras de fila elegida de las listas
 const noStyle=F=>F.w/frames(F)<48||F.h<36||/list_press|list2_btn|parting_line/.test(F.lc);
 const canStyleOne=F=>frames(F)>=2&&!noStyle(F);
@@ -80,14 +80,21 @@ function restyleAll(){applyButtons(genTargets());rebuildLater(styledOut())}
 let rbQ=[],rbTok=0;
 // marca de «quedan botones por rehacer»: si la app se cierra a medias, al abrirla se terminan
 const rbMark=on=>{try{on?localStorage.setItem('msz-rbpend','1'):localStorage.removeItem('msz-rbpend')}catch(_){}};
-function rebuildLater(list){const set=new Set(rbQ);for(const F of list)if(!set.has(F)){rbQ.push(F);set.add(F)}if(!rbQ.length)return;rbMark(true);const tok=++rbTok;
-  const step=()=>{if(tok!==rbTok)return;const t0=performance.now();while(rbQ.length&&performance.now()-t0<24)buildButton(rbQ.shift());if(rbQ.length)setTimeout(step,20);else{S.genCv=null;S.ver++;schedule();saveState();rbMark(false)}};setTimeout(step,120)}
+function rebuildLater(list){const set=new Set(rbQ);for(const F of list)if(!set.has(F)){rbQ.push(F);set.add(F)}if(!rbQ.length)return;rbMark(true);
+  rbRun(120)}
+let rbHotN=0,rbT=0;
+function rbRun(delay){const tok=++rbTok;clearTimeout(rbT);const step=()=>{if(tok!==rbTok)return;const t0=performance.now();let hot=false;
+    while(rbQ.length&&performance.now()-t0<24){const F=rbQ.shift();buildButton(F);if(rbHotN>0){rbHotN--;hot=true}}
+    if(hot){S.genCv=null;S.ver++;schedule()}// lo que se está viendo: se redibuja según sale
+    if(rbQ.length)rbT=setTimeout(step,hot?0:20);else{S.genCv=null;S.ver++;schedule();saveState();rbMark(false)}};rbT=setTimeout(step,delay)}
+// los botones de la vista que se está mirando pasan delante en la cola
+function rbHot(names){const a=[],b=[];for(const F of rbQ)(names.has(F.lc)?a:b).push(F);if(!a.length||(rbHotN>=a.length&&rbQ.slice(0,a.length).every(F=>names.has(F.lc))))return;rbQ.length=0;rbQ.push(...a,...b);rbHotN=a.length;rbRun(0)}
 // terminar lo pendiente a trozos, dejando respirar la pantalla (exportar, crear el USB…)
-function rbWait(onp){return new Promise(res=>{rbTok++;const step=()=>{const t0=performance.now();while(rbQ.length&&performance.now()-t0<40)buildButton(rbQ.shift());onp&&onp(rbQ.length);
+function rbWait(onp){return new Promise(res=>{rbTok++;rbHotN=0;const step=()=>{const t0=performance.now();while(rbQ.length&&performance.now()-t0<40)buildButton(rbQ.shift());onp&&onp(rbQ.length);
   if(rbQ.length)setTimeout(step,0);else{S.genCv=null;S.ver++;rbMark(false);saveState();res()}};step()})}
 // construir una lista grande a trozos (diseños listos del selector del USB)
 async function buildAsync(L,onp){for(let i=0;i<L.length;){const t0=performance.now();while(i<L.length&&performance.now()-t0<40)buildButton(L[i++]);onp&&onp(i,L.length);await new Promise(r=>setTimeout(r,0))}}
-function flushRebuild(){if(!rbQ.length)return;rbTok++;while(rbQ.length)buildButton(rbQ.shift());S.genCv=null;S.ver++;rbMark(false)}
+function flushRebuild(){if(!rbQ.length)return;rbTok++;rbHotN=0;while(rbQ.length)buildButton(rbQ.shift());S.genCv=null;S.ver++;rbMark(false)}
 function btnSheet(F,after,el){
   const g=S.gen||(S.gen=defGen()),T=genTargets(),home=T.includes(F),look=home?btnLook():((g.per[F.path]||{}).look||'orig'),list=home&&!el?T:null,idx=list?list.indexOf(F):-1;S.gsel=F.path;const pvH=home&&!el,again=()=>btnSheet(F,after,el);
   const p=()=>g.per[F.path]||(g.per[F.path]={}),ps=g.per[F.path]||{};const cur=ps.icon||'orig',sug=icSuggest2(F).map(n=>'t:'+n);
@@ -134,7 +141,7 @@ function btnSheet(F,after,el){
   const all=q('#bt-all');if(all)all.onclick=async()=>{const me=g.per[F.path]||{},v=me.look||'orig',L=secBtns(F);if(!L.length)return;
     const nm=(LOOKS().find(x=>x[0]===v)||['','Original'])[1];
     if(!await confirmBS({title:`«${nm}» en ${SECL.get(F.sec)||F.sec}`,text:`El estilo, el color del marco y el color del icono de este botón se aplicarán a los ${L.length} botones de esta pantalla (se saltan las barras alargadas). El icono de cada uno se mantiene. Podrás deshacerlo.`,ok:'Aplicar a todos'}))return again();
-    before();for(const G of L){const q2=g.per[G.path]||(g.per[G.path]={});q2.look=v;for(const k of ['hue','ihue'])if(me[k]==null)delete q2[k];else q2[k]=me[k]}toast('Aplicando…',{ms:20000});await new Promise(r=>setTimeout(r,30));applyButtons(L);toast(`${L.length} botones con «${nm}»`,{label:'Deshacer',fn:undo});again()};
+    before();for(const G of L){const q2=g.per[G.path]||(g.per[G.path]={});q2.look=v;for(const k of ['hue','ihue'])if(me[k]==null)delete q2[k];else q2[k]=me[k]}rebuildLater(L);S.ver++;schedule();toast(`${L.length} botones con «${nm}»`,{label:'Deshacer',fn:undo});again()};
   const sh=q('#bt-sh');if(sh)sh.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;before();g.shape=b.dataset.v;sh.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===b));restyleAll();done();pv();qq('#bt-lk canvas').forEach(cv=>{const k=cv.dataset.lk;if(k!=='orig')putMini(cv,miniTile(F,{...g,style:k},0))})};
   const isz=q('#bt-isz');if(isz)isz.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;await setIsIn(+b.dataset.v,[F]);done();again()};
   qq('[data-mo]').forEach(b=>b.onclick=()=>{const m=b.dataset.mo;
@@ -306,7 +313,7 @@ function tintOne(F){const h=S.clip&&S.clip.hue;const o={...defOps(),...(S.ops.fi
 function pasteOne(F){const c=S.clip;if(!c)return false;if(pasteAsTint(F))return tintOne(F);const g=S.gen||(S.gen=defGen()),home=genTargets().includes(F),p=g.per[F.path]||(g.per[F.path]={});
   if(!home&&frames(F)>=2&&canStyleOne(F))p.look=c.look;
   if(c.hue==null)delete p.hue;else p.hue=c.hue;if(c.ihue==null)delete p.ihue;else p.ihue=c.ihue;return true}
-function pasteStyle(L){const D=L.filter(Boolean);if(!D.length)return;before();let n=0;for(const F of D)if(pasteOne(F))n++;applyButtons(D.filter(F=>!pasteAsTint(F)));S.ver++;schedule();saveState();
+function pasteStyle(L){const D=L.filter(Boolean);if(!D.length)return;before();let n=0;for(const F of D)if(pasteOne(F))n++;rebuildLater(D.filter(F=>!pasteAsTint(F)));S.ver++;schedule();saveState();
   const homeDiff=D.some(F=>genTargets().includes(F))&&S.clip.look!==btnLook();
   toast(`Estilo pegado en ${n} ${n===1?'pieza':'piezas'}${homeDiff?' (en Inicio el estilo es común a los 6: se han pegado los colores)':''}`,{label:'Deshacer',fn:undo})}
 // todos los botones del diseño (Inicio y los de dentro de cada pantalla) a los que se les puede poner estilo; las barras de las listas, líneas y puntos no
@@ -317,7 +324,7 @@ function pasteAll(){const c=S.clip;if(!c||!c.look||c.look==='orig')return;const 
   for(const F of D){if(T.includes(F))continue;const p=g.per[F.path]||(g.per[F.path]={});p.look=c.look;
     // un botón que solo estaba teñido (sin estilo propio) conserva ese color en el estilo nuevo
     if(p.hue==null){const o=S.ops.file[F.path];if(o&&o.tA)p.hue=o.tH}}
-  applyButtons(D);S.ver++;schedule();saveState();
+  applyButtons(D.filter(F=>T.includes(F)));rebuildLater(D.filter(F=>!T.includes(F)));S.ver++;schedule();saveState();
   toast(`Estilo «${(LOOKS().find(x=>x[0]===c.look)||['',c.look])[1]}» en ${D.length} botones de todo el diseño. Los colores no cambian`,{label:'Deshacer',fn:undo})}
 // sin modo pegar ni barra: copiar es a propósito, y se pega también a propósito (mantener pulsado → Pegar aquí)
 function copyStyle(F){S.clip=styleOf(F);toast(`Estilo de «${S.clip.from}» copiado. Mantén pulsado otro botón para pegarlo`,{ms:3000})}

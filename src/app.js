@@ -125,11 +125,11 @@ function setFileOps(F,v){if(empty(v))delete S.ops.file[F.path];else S.ops.file[F
 /* ============ deshacer ============ */
 const H=[];
 const genCopy=g=>g?{...g,per:Object.fromEntries(Object.entries(g.per||{}).map(([k,p])=>[k,{...p}]))}:null;
-function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),icx:structuredClone(S.icx||{}),stby:S.stby?{...S.stby}:null,reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep])}}
-function before(){if(typeof rbQ!=='undefined'&&rbQ.length)flushRebuild();// la foto para Deshacer tiene que llevar los botones ya al día
+function snap(){return {ops:structuredClone(S.ops),ex:{...S.ex},frames:{...S.frames},layout:structuredClone(S.layout),gen:genCopy(S.gen),icx:structuredClone(S.icx||{}),stby:S.stby?{...S.stby}:null,reps:S.files.filter(F=>F.rep).map(F=>[F,F.rep]),pend:typeof rbQ!=='undefined'?rbQ.slice():[]}}
+function before(){// sin esperar a la cola: la foto apunta qué botones estaban a medio rehacer y Deshacer los termina
   S.curDesign=null;S.curDesignName=null;H.push(snap());if(H.length>80)H.shift();updUndo()}
 function undo(){const s=H.pop();if(!s)return;if(typeof rbQ!=='undefined'){rbQ.length=0;rbTok++;rbMark(false)}Object.assign(S,{ops:s.ops,ex:s.ex,frames:s.frames,layout:s.layout,gen:s.gen,icx:s.icx||{},stby:s.stby||null});for(const F of S.files)F.rep=null;for(const [F,r] of s.reps)F.rep=r;
-  S.ver++;render(true);toast('Cambio deshecho');saveState()}
+  S.ver++;if(s.pend&&s.pend.length)rebuildLater(s.pend);render(true);toast('Cambio deshecho');saveState()}
 function updUndo(){$('#ab-undo').disabled=!H.length}
 function bump(){S.ver++;schedule()}
 let rafT=0,slowT=0;
@@ -229,8 +229,8 @@ function drawPreview(c,o){
   o=o||{};const x=c.getContext('2d'),scr=o.scr||'home';x.fillStyle='#000';x.fillRect(0,0,800,480);
   const rc=F=>o.orig?renderOrig(F,false):renderCanvas(F,false);
   const bg=byName(SCRBG.get(scr));if(bg)x.drawImage(rc(bg),0,0,bg.w/frames(bg),bg.h,0,0,800,480);
-  // si quedan botones de esta vista por rehacer (diseño recién aplicado), se hacen ya: lo que se ve tiene que estar al día
-  if(o.view&&!o.orig&&typeof rbQ!=='undefined'&&rbQ.length){const nm=new Set(o.view.c.map(c=>c[0])),now=rbQ.filter(F=>nm.has(F.lc));if(now.length){for(let i=rbQ.length-1;i>=0;i--)if(nm.has(rbQ[i].lc))rbQ.splice(i,1);now.forEach(buildButton)}}
+  // si quedan botones de esta vista por rehacer, pasan los primeros de la cola y la vista se va redibujando según salen (sin congelar)
+  if(o.view&&!o.orig&&typeof rbQ!=='undefined'&&rbQ.length)rbHot(new Set(o.view.c.map(c=>c[0])));
   let pvV=null;if(o.view)drawView(x,o.view,rc,o.press,null,o.hov==null?-1:o.hov);
   // editor: si la imagen sale en una vista conocida, se dibuja en su sitio real dentro de esa vista
   const pv=o.place&&typeof vwFor==='function'?vwFor(o.place,scr):null;pvV=pv;if(pv){drawView(x,pv,rc,-1,{lc:o.place.lc,st:o.state||0},-1);o={...o,place:null,vlabel:(pv.band?pv.band+' · ':'')+pv.v}}
